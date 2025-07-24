@@ -21,7 +21,7 @@ npm run build
 ```
 
 ### Development
-- Development server: `http://localhost:3000`
+- Development server: `http://localhost:3001`
 - Auto-reload enabled
 - TypeScript support
 - Tailwind CSS ready
