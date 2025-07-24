@@ -32,6 +32,18 @@ jobs:
         username: centos
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: "out/*"
-        target: "/usr/share/nginx/html/"
+        target: "/tmp/paiptree-deploy/"
         strip_components: 1
-        rm: true
+        
+    - name: Move files to nginx directory
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: 3.35.59.119
+        username: centos
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sudo rm -rf /usr/share/nginx/html/*
+          sudo cp -r /tmp/paiptree-deploy/* /usr/share/nginx/html/
+          sudo chown -R nginx:nginx /usr/share/nginx/html/
+          sudo chmod -R 755 /usr/share/nginx/html/
+          rm -rf /tmp/paiptree-deploy/
