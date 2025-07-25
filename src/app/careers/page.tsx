@@ -146,7 +146,7 @@ export default function CareersPage() {
                 <div className="text-4xl mb-4">🔬</div>
                 <h3 className="text-xl font-semibold mb-4">Research Excellence</h3>
                 <p className="text-gray-400 leading-relaxed">
-                  We push the boundaries of what's possible through rigorous research and innovation.
+                  We push the boundaries of what&apos;s possible through rigorous research and innovation.
                 </p>
               </div>
               
@@ -320,8 +320,8 @@ export default function CareersPage() {
             </h2>
             
             <p className="text-xl text-gray-400 mb-12">
-              Don't see a role that fits? We're always looking for exceptional talent at Paiptree. 
-              Send us your resume and let's start a conversation.
+              Don&apos;t see a role that fits? We&apos;re always looking for exceptional talent at Paiptree. 
+              Send us your resume and let&apos;s start a conversation.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

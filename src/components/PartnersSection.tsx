@@ -13,7 +13,7 @@ const PartnersSection = () => {
     <section className="py-12 bg-black overflow-hidden">
       <div className="container mx-auto px-6 text-center max-w-6xl">
         <h2 className="text-lg font-medium text-gray-500 mb-12">
-          Trusted by the world's most innovative businesses.
+          Trusted by the world&apos;s most innovative businesses.
         </h2>
         <div className="relative">
           <div className="flex items-center gap-x-16 infinite-scroll opacity-60">

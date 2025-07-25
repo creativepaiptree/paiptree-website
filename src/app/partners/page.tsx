@@ -199,8 +199,8 @@ export default function PartnersPage() {
                 </div>
                 
                 <blockquote className="text-lg text-gray-300 mb-6 italic">
-                  "Integrating Paiptree's models into Creative Cloud has revolutionized how our users approach creative work. 
-                  The seamless AI-powered image generation has increased user engagement by 300%."
+                  &quot;Integrating Paiptree&apos;s models into Creative Cloud has revolutionized how our users approach creative work. 
+                  The seamless AI-powered image generation has increased user engagement by 300%.&quot;
                 </blockquote>
                 
                 <div className="flex items-center">
@@ -224,8 +224,8 @@ export default function PartnersPage() {
                 </div>
                 
                 <blockquote className="text-lg text-gray-300 mb-6 italic">
-                  "The partnership with Paiptree has enabled us to offer cutting-edge AI design tools to millions of users. 
-                  Our AI-powered features now account for 40% of all designs created on our platform."
+                  &quot;The partnership with Paiptree has enabled us to offer cutting-edge AI design tools to millions of users. 
+                  Our AI-powered features now account for 40% of all designs created on our platform.&quot;
                 </blockquote>
                 
                 <div className="flex items-center">
@@ -251,7 +251,7 @@ export default function PartnersPage() {
             
             <p className="text-xl text-gray-400 mb-12">
               Join our ecosystem of partners and help shape the future of generative AI. 
-              Let's build something amazing together.
+              Let&apos;s build something amazing together.
             </p>
             
             <div className="glass-card max-w-2xl mx-auto">

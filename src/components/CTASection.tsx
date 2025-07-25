@@ -16,7 +16,7 @@ export default function CTASection() {
         
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <Button variant="primary" size="lg" className="rounded-xl">
-            Let's get started
+            Let&apos;s get started
           </Button>
         </div>
       </div>

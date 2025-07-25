@@ -41,9 +41,9 @@ export default function HeroSection() {
           <div className="animate-fade-in">
             {/* Main heading - Stability.ai 정확한 스타일 */}
             <h1 className="font-archivo font-normal text-white mb-6" style={{ fontSize: '57.6px', lineHeight: '56.448px' }}>
-              <span className="block">We'll help you</span>
+              <span className="block">We&apos;ll help you</span>
               <span className="block">make it like</span>
-              <span className="block">nobody's</span>
+              <span className="block">nobody&apos;s</span>
               <span className="block gradient-text">business.</span>
             </h1>
             
@@ -55,7 +55,7 @@ export default function HeroSection() {
             {/* CTA Button */}
             <div className="mb-16">
               <Button variant="primary" size="lg" className="rounded-xl">
-                Let's get started
+                Let&apos;s get started
               </Button>
             </div>
 
