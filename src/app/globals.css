@@ -116,6 +116,47 @@ a {
   }
 }
 
+/* Infinite carousel animation */
+.infinite-carousel {
+  animation: infiniteCarousel 30s linear infinite;
+}
+
+@keyframes infiniteCarousel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Energy bar animation */
+.energy-bar-animation {
+  animation: energyBar 3s ease-in-out infinite;
+}
+
+@keyframes energyBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(400%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Progress fill animation for carousel buttons */
+@keyframes fillProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
 /* Mesh gradient background - 훨씬 더 서브틀하게 */
 .mesh-gradient {
   background: 

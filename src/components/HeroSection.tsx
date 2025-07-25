@@ -40,7 +40,7 @@ export default function HeroSection() {
           {/* 좌측 텍스트 영역 */}
           <div className="animate-fade-in">
             {/* Main heading - Stability.ai 정확한 스타일 */}
-            <h1 className="font-archivo font-normal text-white mb-6" style={{ fontSize: '57.6px', lineHeight: '56.448px' }}>
+            <h1 className="font-archivo font-normal text-white mb-6" style={{ fontSize: '57.6px', lineHeight: '1.1' }}>
               <span className="block">We&apos;ll help you</span>
               <span className="block">make it like</span>
               <span className="block">nobody&apos;s</span>
