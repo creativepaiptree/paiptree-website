@@ -5,10 +5,10 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Paiptree - AI-driven Smart Agriculture | FarmersMind Platform',
-  description: 'AI 기반 스마트 양계 솔루션으로 농장 생산성을 혁신하고, 데이터 중심의 지속가능한 농업 생태계를 구축합니다.',
-  keywords: 'AI, 스마트농업, 양계, 농장관리, FarmersMind, 농업혁신, 축산업',
-  authors: [{ name: 'Paiptree Inc.' }],
+  title: 'paiptree. - AI for everyone',
+  description: 'Activating humanity\'s potential through generative AI. Open models in every modality, for everyone, everywhere.',
+  keywords: 'AI, generative AI, stable diffusion, machine learning, artificial intelligence',
+  authors: [{ name: 'paiptree.' }],
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

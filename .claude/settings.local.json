@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gemini:*)",
+      "WebFetch(domain:stability.ai)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(npm run dev:*)"
+    ],
+    "deny": []
+  }
+}
