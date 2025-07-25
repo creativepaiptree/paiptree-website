@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Section from './ui/Section';
 
 interface CarouselCard {
   id: string;
@@ -65,13 +64,11 @@ export default function InfiniteCarouselSection() {
   }, [isPaused]);
 
   return (
-    <Section 
-      className="py-20 overflow-hidden" 
-      background="light"
-      withNoiseOverlay
-    >
+    <section className="py-20 overflow-hidden bg-gray-50 relative">
+      {/* Noise overlay */}
+      <div className="absolute inset-0 noise-overlay"></div>
       {/* Top Navigation Buttons */}
-      <div className="container mx-auto px-6 mb-12">
+      <div className="max-w-8xl mx-auto px-6 mb-12 relative z-10">
         <div className="flex justify-center gap-2 flex-wrap">
           {carouselData.map((card, index) => (
             <button
@@ -96,7 +93,7 @@ export default function InfiniteCarouselSection() {
       </div>
 
       {/* Carousel */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden z-10">
         <div 
           className="flex gap-6 transition-transform duration-500 ease-in-out"
           onMouseEnter={() => setIsPaused(true)}
@@ -175,6 +172,6 @@ export default function InfiniteCarouselSection() {
           ))}
         </div>
       </div>
-    </Section>
+    </section>
   );
 }
