@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CarouselCard {
   id: string;
@@ -49,26 +50,28 @@ const carouselData: CarouselCard[] = [
 ];
 
 export default function InfiniteCarouselSection() {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   // Auto-advance carousel every 6 seconds
   useEffect(() => {
     if (isPaused) return;
-    
+
     const timer = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % carouselData.length);
     }, 6000);
-    
+
     return () => clearInterval(timer);
   }, [isPaused]);
 
   return (
-    <section className="py-20 overflow-hidden bg-gray-50 relative">
+    <section className="py-16 overflow-hidden bg-gray-300 relative">
       {/* Noise overlay */}
       <div className="absolute inset-0 noise-overlay"></div>
+
       {/* Top Navigation Buttons */}
-      <div className="max-w-8xl mx-auto px-6 mb-12 relative z-10">
+      <div className="max-w-8xl mx-auto px-6 mb-6 relative z-10">
         <div className="flex justify-center gap-2 flex-wrap">
           {carouselData.map((card, index) => (
             <button
@@ -77,16 +80,15 @@ export default function InfiniteCarouselSection() {
               onClick={() => setCurrentIndex(index)}
             >
               {/* Background fill animation */}
-              <div 
-                className={`absolute inset-0 bg-blue-500 opacity-20 ${
-                  index === currentIndex && !isPaused 
-                    ? 'animate-[fillProgress_6s_linear_infinite]' 
+              <div
+                className={`absolute inset-0 bg-blue-500 opacity-20 ${index === currentIndex && !isPaused
+                    ? 'animate-[fillProgress_6s_linear_infinite]'
                     : 'w-0'
-                }`}
+                  }`}
               ></div>
-              
+
               {/* Button text */}
-              <span className="relative z-10">{card.title}</span>
+              <span className="relative z-10">{t(`infiniteCarousel.cards.${card.id}.title`)}</span>
             </button>
           ))}
         </div>
@@ -94,27 +96,27 @@ export default function InfiniteCarouselSection() {
 
       {/* Carousel */}
       <div className="relative overflow-hidden z-10">
-        <div 
+        <div
           className="flex gap-6 transition-transform duration-500 ease-in-out"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
-          style={{ 
+          style={{
             transform: `translateX(calc(50vw - 480px - ${currentIndex * 984}px))`
           }}
         >
           {carouselData.map((card, index) => (
             <div
               key={card.id}
-              className="flex-shrink-0 w-[960px] h-[600px] relative rounded-2xl overflow-hidden group cursor-pointer"
+              className="flex-shrink-0 w-[960px] h-[600px] relative rounded-lg overflow-hidden group cursor-pointer"
             >
               {/* Background image */}
-              <div 
+              <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                 style={{
                   backgroundImage: `url(${card.backgroundImage})`
                 }}
               ></div>
-              
+
               {/* Background pattern/mockup */}
               <div className="absolute inset-0 opacity-20">
                 {card.id === '1' && (
@@ -158,11 +160,9 @@ export default function InfiniteCarouselSection() {
 
               {/* Label */}
               <div className="absolute top-6 left-6 right-6">
-                <div className="inline-block bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <h3 className="text-sm text-white mb-1">{card.title}</h3>
-                  {card.subtitle && (
-                    <p className="text-xl text-white/80">{card.subtitle}</p>
-                  )}
+                <div className="inline-block bg-white/30 backdrop-blur-sm rounded px-4 py-2">
+                  <h3 className="text-sm text-white mb-1">{t(`infiniteCarousel.cards.${card.id}.title`)}</h3>
+                  <p className="text-2xl text-white/80">{t(`infiniteCarousel.cards.${card.id}.subtitle`)}</p>
                 </div>
               </div>
 

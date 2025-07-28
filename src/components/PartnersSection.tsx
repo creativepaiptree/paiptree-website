@@ -1,5 +1,10 @@
 // src/components/PartnersSection.tsx
+'use client';
+
+import { useTranslation } from '@/hooks/useTranslation';
+
 const PartnersSection = () => {
+  const { t } = useTranslation();
   const partnerLogos = [
     // Placeholder logos. Replace with actual partner logos.
     { name: 'aws', src: 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg', width: 100 },
@@ -13,7 +18,7 @@ const PartnersSection = () => {
     <section className="py-12 bg-black overflow-hidden">
       <div className="container mx-auto px-6 text-center max-w-6xl">
         <h2 className="text-lg font-medium text-gray-500 mb-12">
-          Trusted by the world&apos;s most innovative businesses.
+          {t('partners.title')}
         </h2>
         <div className="relative">
           <div className="flex items-center gap-x-16 infinite-scroll opacity-60">

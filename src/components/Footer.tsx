@@ -1,31 +1,36 @@
 // src/components/Footer.tsx
+'use client';
+
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const Footer = () => {
+  const { t } = useTranslation();
+  
   const footerLinks = {
     Company: [
-      { name: 'Board of Directors', href: '/company/board' },
-      { name: 'Partners', href: '/partners' },
-      { name: 'Safety', href: '/company/safety' },
-      { name: 'Research', href: '/research' },
-      { name: 'Careers', href: '/careers' },
-      { name: 'News', href: '/news' },
+      { name: t('footer.links.company.boardOfDirectors'), href: '/company/board' },
+      { name: t('footer.links.company.partners'), href: '/partners' },
+      { name: t('footer.links.company.safety'), href: '/company/safety' },
+      { name: t('footer.links.company.research'), href: '/research' },
+      { name: t('footer.links.company.careers'), href: '/careers' },
+      { name: t('footer.links.company.news'), href: '/news' },
     ],
     Models: [
-      { name: 'Image', href: '/models/image' },
-      { name: 'Video', href: '/models/video' },
-      { name: 'Audio', href: '/models/audio' },
-      { name: '3D', href: '/models/3d' },
+      { name: t('footer.links.models.image'), href: '/models/image' },
+      { name: t('footer.links.models.video'), href: '/models/video' },
+      { name: t('footer.links.models.audio'), href: '/models/audio' },
+      { name: t('footer.links.models.3d'), href: '/models/3d' },
     ],
     Deployment: [
-      { name: 'Self-Hosted License', href: '/deployment/self-hosted' },
-      { name: 'Platform API', href: '/deployment/api' },
-      { name: 'Cloud Platforms', href: '/deployment/cloud' },
+      { name: t('footer.links.deployment.selfHosted'), href: '/deployment/self-hosted' },
+      { name: t('footer.links.deployment.platformApi'), href: '/deployment/api' },
+      { name: t('footer.links.deployment.cloudPlatforms'), href: '/deployment/cloud' },
     ],
     Resources: [
-      { name: 'Learning Hub', href: '/resources/learning' },
-      { name: 'Customer Stories', href: '/resources/customers' },
-      { name: 'Contact Us', href: '/contact' },
+      { name: t('footer.links.resources.learningHub'), href: '/resources/learning' },
+      { name: t('footer.links.resources.customerStories'), href: '/resources/customers' },
+      { name: t('footer.links.resources.contactUs'), href: '/contact' },
     ],
   };
 
@@ -36,12 +41,12 @@ const Footer = () => {
           <div className="col-span-2 md:col-span-1">
             <h3 className="text-xl font-bold mb-4">Paiptree</h3>
             <p className="text-gray-400 text-sm">
-              Unlocking the power of open-source generative AI to expand human creativity.
+              {t('footer.description')}
             </p>
           </div>
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
-              <h4 className="font-semibold mb-4">{title}</h4>
+              <h4 className="font-semibold mb-4">{t(`footer.categories.${title.toLowerCase()}`)}</h4>
               <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.name}>
@@ -56,7 +61,7 @@ const Footer = () => {
         </div>
         <div className="border-t border-gray-900 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm mb-4 md:mb-0">
-            © {new Date().getFullYear()} Paiptree Ltd. All Rights Reserved.
+            {t('footer.copyright', { year: new Date().getFullYear() })}
           </p>
           <div className="flex space-x-4">
             {/* Add social links here if needed */}

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'paiptree. - AI for everyone',
-  description: 'Activating humanity\'s potential through generative AI. Open models in every modality, for everyone, everywhere.',
-  keywords: 'AI, generative AI, stable diffusion, machine learning, artificial intelligence',
+  title: 'Paiptree - AI-driven Smart Agriculture Solutions',
+  description: 'SEED THE FUTURE, NOT THE PRESENT. AI 기반 스마트 양계 솔루션으로 농업의 미래를 혁신합니다.',
+  keywords: 'AI, smart farming, agriculture, poultry, livestock, FarmersMind, IoT, agtech',
   authors: [{ name: 'paiptree.' }],
   icons: {
     icon: [
@@ -27,7 +28,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+      </body>
     </html>
   )
 }
