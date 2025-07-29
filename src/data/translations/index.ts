@@ -17,6 +17,6 @@ function mergeTranslations(...translationObjects: any[]) {
 export const translations = mergeTranslations(
   commonTranslations,
   homeTranslations
-) as const;
+);
 
 export type TranslationKeys = typeof translations.ko;
