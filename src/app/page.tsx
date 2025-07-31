@@ -2,11 +2,10 @@ import Header from '@/components/Header';
 import VideoHeroSection from '@/components/VideoHeroSection';
 import InfiniteCarouselSection from '@/components/InfiniteCarouselSection';
 import PlatformSection from '@/components/PlatformSection';
-import CreativeUsecasesSection from '@/components/CreativeUsecasesSection';
 import CaseStudiesSection from '@/components/CaseStudiesSection';
 import PartnersSection from '@/components/PartnersSection';
 import NewsSection from '@/components/NewsSection';
-import CTASection from '@/components/CTASection';
+import CTACardsSection from '@/components/CTACardsSection';
 import Footer from '@/components/Footer';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 
@@ -19,11 +18,10 @@ export default function Home() {
           <VideoHeroSection />
           <InfiniteCarouselSection />
           <PlatformSection />
-          <CreativeUsecasesSection />
           <CaseStudiesSection />
           <PartnersSection />
           <NewsSection />
-          <CTASection />
+          <CTACardsSection />
         </main>
         <Footer />
       </div>
