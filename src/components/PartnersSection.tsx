@@ -2,6 +2,7 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import Image from 'next/image';
 
 const PartnersSection = () => {
   const { t } = useTranslation();
@@ -43,21 +44,25 @@ const PartnersSection = () => {
           <div className="flex items-center gap-x-12 infinite-scroll opacity-60">
             {/* 첫 번째 세트 */}
             {partnerLogos.map((logo, index) => (
-              <img
+              <Image
                 key={`first-${logo.name}-${index}`}
                 src={logo.src}
                 alt={`${logo.name} logo`}
-                style={{ width: `${logo.width * 0.8}px`, filter: 'brightness(0) invert(1)' }}
+                width={logo.width * 0.8}
+                height={80}
+                style={{ filter: 'brightness(0) invert(1)' }}
                 className="h-auto flex-shrink-0"
               />
             ))}
             {/* 두 번째 세트 (무한 루프를 위한 복제) */}
             {partnerLogos.map((logo, index) => (
-              <img
+              <Image
                 key={`second-${logo.name}-${index}`}
                 src={logo.src}
                 alt={`${logo.name} logo`}
-                style={{ width: `${logo.width * 0.8}px`, filter: 'brightness(0) invert(1)' }}
+                width={logo.width * 0.8}
+                height={80}
+                style={{ filter: 'brightness(0) invert(1)' }}
                 className="h-auto flex-shrink-0"
               />
             ))}

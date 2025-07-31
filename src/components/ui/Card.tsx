@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 export interface FeatureCardProps {
   icon?: string;
@@ -74,7 +75,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
       <div className={`aspect-[3/4] bg-gradient-to-br ${gradient} rounded-3xl overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
         <div className="absolute inset-0 flex items-center justify-center">
           {image ? (
-            <img src={image} alt={title} className="w-full h-full object-cover" />
+            <Image src={image} alt={title} width={400} height={400} className="w-full h-full object-cover" />
           ) : (
             <div className="text-6xl opacity-60">{emoji}</div>
           )}
@@ -109,7 +110,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       {image ? (
         <div className="w-full h-32 bg-gray-800 rounded-lg mb-4 overflow-hidden">
-          <img src={image} alt={name} className="w-full h-full object-cover" />
+          <Image src={image} alt={name} width={400} height={128} className="w-full h-full object-cover" />
         </div>
       ) : icon && (
         <div className="w-16 h-16 bg-gradient-to-br from-stability-purple/20 to-stability-pink/20 rounded-2xl flex items-center justify-center mb-4">
