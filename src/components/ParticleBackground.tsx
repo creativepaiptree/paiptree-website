@@ -78,9 +78,9 @@ export default function ParticleBackground({
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Particle system
+        // Palantir-style Particle system
         const particles: Particle[] = [];
-        const colors = ['#6366F1', '#D946EF', '#3B82F6'];
+        const colors = ['#8B5CF6', '#3B82F6', '#6366F1']; // Purple-Blue palette
 
         // Create particles with dynamic count
         for (let i = 0; i < particleCount; i++) {
@@ -89,8 +89,8 @@ export default function ParticleBackground({
                 y: Math.random() * canvas.height,
                 vx: (Math.random() - 0.5) * 0.3,
                 vy: (Math.random() - 0.5) * 0.3,
-                size: Math.random() * 1.5 + 0.5,
-                opacity: Math.random() * 0.1 + 0.05,
+                size: Math.random() * 1.2 + 0.3, // Smaller, more subtle particles
+                opacity: Math.random() * 0.08 + 0.03, // More subtle opacity
                 color: colors[Math.floor(Math.random() * colors.length)],
                 pulse: Math.random() * Math.PI * 2,
                 pulseSpeed: Math.random() * 0.02 + 0.01
@@ -129,14 +129,14 @@ export default function ParticleBackground({
                 const pulseSize = particle.size + Math.sin(particle.pulse) * 0.2;
                 const pulseOpacity = particle.opacity + Math.sin(particle.pulse) * 0.03;
 
-                // Draw particle with glow effect - 글로우 더 약하게
+                // Palantir-style subtle glow effect
                 ctx.save();
-                ctx.globalAlpha = pulseOpacity * 0.1;
+                ctx.globalAlpha = pulseOpacity * 0.06; // Even more subtle glow
                 ctx.beginPath();
-                ctx.arc(particle.x, particle.y, pulseSize * 3, 0, Math.PI * 2);
+                ctx.arc(particle.x, particle.y, pulseSize * 2.5, 0, Math.PI * 2);
                 const gradient = ctx.createRadialGradient(
                     particle.x, particle.y, 0,
-                    particle.x, particle.y, pulseSize * 3
+                    particle.x, particle.y, pulseSize * 2.5
                 );
                 gradient.addColorStop(0, particle.color);
                 gradient.addColorStop(1, 'transparent');
@@ -160,14 +160,14 @@ export default function ParticleBackground({
                         const dy = particle.y - otherParticle.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
 
-                        if (distance < 100) { // Reduced connection distance
+                        if (distance < 80) { // Palantir-style shorter connections
                             ctx.save();
-                            ctx.globalAlpha = (100 - distance) / 100 * 0.02;
+                            ctx.globalAlpha = (80 - distance) / 80 * 0.015; // More subtle connections
                             ctx.beginPath();
                             ctx.moveTo(particle.x, particle.y);
                             ctx.lineTo(otherParticle.x, otherParticle.y);
                             ctx.strokeStyle = particle.color;
-                            ctx.lineWidth = 0.3;
+                            ctx.lineWidth = 0.2; // Thinner lines
                             ctx.stroke();
                             ctx.restore();
                         }
@@ -196,7 +196,7 @@ export default function ParticleBackground({
     return (
         <canvas
             ref={canvasRef}
-            className={`fixed inset-0 pointer-events-none z-0 opacity-15 ${className}`}
+            className={`fixed inset-0 pointer-events-none z-0 opacity-10 ${className}`}
             style={{ background: 'transparent' }}
         />
     );

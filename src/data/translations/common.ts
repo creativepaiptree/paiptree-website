@@ -4,16 +4,17 @@ export const commonTranslations = {
     // Header Navigation
     header: {
       nav: {
-        products: "제품",
-        research: "연구",
-        news: "뉴스",
-        partners: "파트너",
-        careers: "채용"
+        about: "회사소개",
+        services: "서비스",
+        culture: "조직문화",
+        blog: "블로그",
+        newsroom: "뉴스룸",
+        careers: "인재영입"
       }
     },
     // Footer Section
     footer: {
-      description: "오픈소스 제너레이티브 AI의 힘을 활용하여 인간의 창의성을 확장합니다.",
+      description: "AI 기반 스마트 양계 플랫폼으로 농장부터 유통까지 연결합니다.",
       categories: {
         company: "회사",
         models: "모델",
@@ -53,10 +54,11 @@ export const commonTranslations = {
     // Header Navigation
     header: {
       nav: {
-        products: "Products",
-        research: "Research",
-        news: "News",
-        partners: "Partners",
+        about: "About",
+        services: "Services",
+        culture: "Culture",
+        blog: "Blog",
+        newsroom: "Newsroom",
         careers: "Careers"
       }
     },

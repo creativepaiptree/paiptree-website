@@ -1,30 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Button from './ui/Button';
+import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { NavigationItem } from '@/types';
 import LanguageToggle from './LanguageToggle';
 import { useTranslation } from '@/hooks/useTranslation';
 
-interface HeaderProps {
-  className?: string;
-}
-
 const navigationItems: NavigationItem[] = [
-  { label: 'Products', href: '/stable-image' },
-  { label: 'Research', href: '/research' },
-  { label: 'News', href: '/news' },
-  { label: 'Partners', href: '/partners' },
+  { label: 'About', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Culture', href: '/culture' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Newsroom', href: '/newsroom' },
   { label: 'Careers', href: '/careers' }
 ];
 
-export default function Header({ className = '' }: HeaderProps) {
+export default function Header() {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  // 활성 메뉴 확인 함수
+  const isActiveMenu = (href: string) => {
+    if (href === '/about') {
+      return pathname === '/about' || pathname === '/';
+    }
+    return pathname === href;
+  };
 
   return (
     <header className="fixed top-4 left-4 right-4 z-50">
-      <nav className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl px-6 py-4 max-w-7xl mx-auto">
+      <nav className="glass-card px-6 py-4 container-max">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
@@ -39,9 +45,11 @@ export default function Header({ className = '' }: HeaderProps) {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-gray-200 transition-colors text-sm font-medium"
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#00ABE6'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = ''}
+                className={`nav-link body-md font-medium transition-all duration-300 ${
+                  isActiveMenu(item.href) 
+                    ? 'nav-link-active' 
+                    : 'text-gradient-hover'
+                }`}
               >
                 {t(`header.nav.${item.label.toLowerCase()}`)}
               </a>
@@ -73,9 +81,11 @@ export default function Header({ className = '' }: HeaderProps) {
                 <a
                   key={item.href}
                   href={item.href}
-                  className="block text-gray-300 transition-colors text-sm font-medium"
-                  onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#00ABE6'}
-                  onMouseLeave={(e) => (e.target as HTMLElement).style.color = ''}
+                  className={`block nav-link body-md font-medium transition-all duration-300 ${
+                    isActiveMenu(item.href) 
+                      ? 'nav-link-active' 
+                      : 'text-gradient-hover'
+                  }`}
                 >
                   {t(`header.nav.${item.label.toLowerCase()}`)}
                 </a>

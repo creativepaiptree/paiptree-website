@@ -72,7 +72,7 @@ export default function PlatformSection() {
             <div className="flex-1 order-2 lg:order-1 max-w-[200px]">
               <div className="text-sm text-gray-500 mb-4 text-right lg:text-left">/0.3</div>
               <div className="text-lg text-black leading-tight text-right lg:text-left hidden lg:block">
-                <p>{t('platformSection.platform2.description')}</p>
+                <p>{t('platformSection.platform3.description')}</p>
               </div>
             </div>
 
@@ -81,7 +81,7 @@ export default function PlatformSection() {
               <div>
                 <div className="text-6xl lg:text-9xl font-bold text-black">TmS</div>
                 <div className="text-sm text-black mt-2 lg:hidden">
-                  {t('platformSection.platform2.description')}
+                  {t('platformSection.platform3.description')}
                 </div>
               </div>
             </div>

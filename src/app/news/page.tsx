@@ -1,8 +1,24 @@
+import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
-import Footer from '@/components/Footer';
+import { redirect } from 'next/navigation';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
+import { title } from 'process';
 
-const newsArticles = [
+export default function NewsPage() {
+  // News 페이지는 Newsroom 페이지로 리다이렉트 (뉴스 내용이 Newsroom으로 확장됨)
+  redirect('/newsroom');
+}
   {
     id: 1,
     title: 'Introducing Stable Diffusion 3.0: Our Most Advanced Model Yet',

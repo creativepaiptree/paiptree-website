@@ -21,7 +21,7 @@ export default function MiddleSection() {
             <p className="text-xl text-gray-400 mb-10 leading-relaxed">
               Case Study: Enterprise retailers choose Stability AI to generate product imagery at scale while maintaining brand consistency and quality standards.
             </p>
-            <button className="bg-white text-black px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button className="btn-primary">
               Read case study
             </button>
           </div>
@@ -37,7 +37,7 @@ export default function MiddleSection() {
             <p className="text-xl text-gray-400 mb-10 leading-relaxed">
               The flexible deployment you need to get to the outcomes you want. Enterprise-grade security, custom training, and dedicated support.
             </p>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-white hover:text-black transition-all duration-300">
+            <button className="btn-secondary">
               Contact sales
             </button>
           </div>

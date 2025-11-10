@@ -1,5 +1,9 @@
 import { commonTranslations } from './common';
-import { homeTranslations } from './home';
+import { aboutTranslations } from './about';
+import { servicesTranslations } from './services';
+import { cultureTranslations } from './culture';
+import { blogTranslations } from './blog';
+import { newsroomTranslations } from './newsroom';
 
 // 모든 번역을 합치는 헬퍼 함수
 function mergeTranslations(...translationObjects: any[]) {
@@ -16,7 +20,11 @@ function mergeTranslations(...translationObjects: any[]) {
 // 모든 번역 데이터를 합침
 export const translations = mergeTranslations(
   commonTranslations,
-  homeTranslations
+  aboutTranslations,
+  servicesTranslations,
+  cultureTranslations,
+  blogTranslations,
+  newsroomTranslations
 );
 
 export type TranslationKeys = typeof translations.ko;

@@ -96,75 +96,62 @@ const departments = ['All', 'Research', 'Engineering', 'Product', 'Design', 'Inf
 
 export default function CareersPage() {
   return (
-    <div className="min-h-screen bg-stability-dark text-white overflow-x-hidden">
+    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: 'var(--bg-primary)' }}>
       <ParticleBackground />
       <Header />
       
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="py-24 px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="section-padding">
+          <div className="container-max">
             <div className="text-center mb-16">
-              <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+              <div className="inline-flex items-center px-4 py-2 rounded-full glass-card mb-8">
+                <span className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mr-2 animate-pulse"></span>
+                <span className="body-sm">Careers</span>
+              </div>
+              
+              <h1 className="heading-xl mb-8">
                 Join Our <span className="gradient-text">Mission</span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-4xl mx-auto leading-relaxed">
+              <p className="body-lg mb-12 max-w-4xl mx-auto">
                 Help us democratize AI and build the future of generative models. 
                 Work with world-class researchers and engineers at Paiptree on breakthrough technology.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button className="bg-white text-black px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-300">
+                <button className="btn-primary">
                   View Open Positions
                 </button>
-                <button className="btn-secondary px-8 py-4 text-lg">
-                  Life at Paiptree
+                <button className="btn-secondary">
+                  Explore Our Culture
                 </button>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Company Values */}
-        <section className="py-24 px-6 bg-stability-gray-900/10">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-16">
-              Our <span className="gradient-text">Values</span>
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="glass-card text-center">
-                <div className="text-4xl mb-4">🌍</div>
-                <h3 className="text-xl font-semibold mb-4">Open & Accessible</h3>
-                <p className="text-gray-400 leading-relaxed">
-                  We believe AI should be open and accessible to everyone, not controlled by a few.
-                </p>
-              </div>
-              
-              <div className="glass-card text-center">
-                <div className="text-4xl mb-4">🔬</div>
-                <h3 className="text-xl font-semibold mb-4">Research Excellence</h3>
-                <p className="text-gray-400 leading-relaxed">
-                  We push the boundaries of what&apos;s possible through rigorous research and innovation.
-                </p>
-              </div>
-              
-              <div className="glass-card text-center">
-                <div className="text-4xl mb-4">🤝</div>
-                <h3 className="text-xl font-semibold mb-4">Collaborative</h3>
-                <p className="text-gray-400 leading-relaxed">
-                  We work together across disciplines to solve complex challenges and create impact.
-                </p>
-              </div>
+        {/* Culture Link Section */}
+        <section className="py-16 px-6" style={{ background: 'var(--bg-secondary)' }}>
+          <div className="container-max">
+            <div className="text-center">
+              <h2 className="heading-lg mb-6">
+                Want to Learn About Our <span className="gradient-text">Culture</span>?
+              </h2>
+              <p className="body-lg mb-8 max-w-2xl mx-auto">
+                Discover our values, work environment, and what makes Paiptree a great place to work.
+              </p>
+              <button className="btn-secondary">
+                Explore Our Culture
+              </button>
             </div>
           </div>
         </section>
 
         {/* Benefits */}
-        <section className="py-24 px-6">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-16">
+        <section className="section-padding">
+          <div className="container-max">
+            <h2 className="heading-lg text-center mb-16">
               Why Work <span className="gradient-text">With Us</span>
             </h2>
             
@@ -181,9 +168,9 @@ export default function CareersPage() {
         </section>
 
         {/* Job Openings */}
-        <section className="py-24 px-6 bg-stability-gray-900/10">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-16">
+        <section className="section-padding" style={{ background: 'var(--bg-secondary)' }}>
+          <div className="container-max">
+            <h2 className="heading-lg text-center mb-16">
               Open <span className="gradient-text">Positions</span>
             </h2>
             
@@ -325,7 +312,7 @@ export default function CareersPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="bg-white text-black px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-300">
+              <button className="btn-primary">
                 Send Resume
               </button>
               <button className="btn-secondary px-8 py-4 text-lg">

@@ -1,55 +1,12 @@
+import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import ParticleBackground from '@/components/ParticleBackground';
-import Footer from '@/components/Footer';
+import { redirect } from 'next/navigation';
 
-const partners = [
-  {
-    name: 'Adobe',
-    description: 'Creative Cloud integration bringing AI-powered image generation directly to designers worldwide.',
-    category: 'Creative Tools',
-    logo: '🎨',
-    partnership: 'Technology Integration'
-  },
-  {
-    name: 'Microsoft',
-    description: 'Azure cloud infrastructure partnership enabling scalable AI model deployment and distribution.',
-    category: 'Cloud Infrastructure',
-    logo: '☁️',
-    partnership: 'Infrastructure Partner'
-  },
-  {
-    name: 'NVIDIA',
-    description: 'Hardware optimization and GPU acceleration for faster model training and inference.',
-    category: 'Hardware',
-    logo: '🚀',
-    partnership: 'Technology Partner'
-  },
-  {
-    name: 'Hugging Face',
-    description: 'Open source model distribution and community collaboration platform integration.',
-    category: 'AI Platform',
-    logo: '🤗',
-    partnership: 'Distribution Partner'
-  },
-  {
-    name: 'Canva',
-    description: 'AI-powered design tools integration for millions of creators and businesses.',
-    category: 'Design Platform',
-    logo: '🎯',
-    partnership: 'Product Integration'
-  },
-  {
-    name: 'Discord',
-    description: 'Community-driven AI art generation and sharing platform for creative communities.',
-    category: 'Community',
-    logo: '💬',
-    partnership: 'Community Partner'
-  }
-];
-
-const partnershipTypes = [
-  {
-    title: 'Technology Integration',
+export default function PartnersPage() {
+  // Partners 페이지는 About 페이지로 리다이렉트 (파트너 내용이 About에 통합됨)
+  redirect('/about');
+}
     description: 'Embed our AI models directly into your applications and workflows.',
     icon: '🔧',
     benefits: ['API Access', 'Custom Models', 'Technical Support', 'Co-marketing']
@@ -95,7 +52,7 @@ export default function PartnersPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button className="bg-white text-black px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-300">
+                <button className="btn-primary">
                   Become a Partner
                 </button>
                 <button className="btn-secondary px-8 py-4 text-lg">

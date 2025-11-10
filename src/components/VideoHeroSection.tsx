@@ -15,18 +15,31 @@ const VideoHeroSection = () => {
                backgroundPosition: 'center right',
                backgroundRepeat: 'no-repeat'
              }}>
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black opacity-50"></div>
+      {/* Palantir-style Dark Overlay */}
+      <div className="absolute inset-0 bg-black opacity-60"></div>
+      
+      {/* Subtle mesh gradient overlay */}
+      <div className="absolute inset-0 mesh-gradient"></div>
 
       {/* Content Container */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-        <div className="max-w-2xl">
-          <h1 className="text-4xl md:text-6xl font-semibold leading-tight mb-6 text-white tracking-tight">
+      <div className="relative z-10 container-max px-6 w-full">
+        <div className="max-w-4xl">
+          <h1 className="heading-xl mb-8 text-white">
             {t('videoHero.title')}
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-xl">
+          <p className="body-lg mb-12 max-w-2xl">
             {t('videoHero.description')}
           </p>
+          
+          {/* Palantir-style CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button className="btn-primary">
+              Get Started
+            </button>
+            <button className="btn-secondary">
+              Learn More
+            </button>
+          </div>
         </div>
       </div>
     </section>

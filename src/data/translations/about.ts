@@ -1,5 +1,5 @@
-// 홈페이지 번역
-export const homeTranslations = {
+// 회사소개 페이지 번역 (기존 홈페이지에서 변경)
+export const aboutTranslations = {
   ko: {
     // Video Hero Section
     videoHero: {
