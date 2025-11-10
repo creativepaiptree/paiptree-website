@@ -24,7 +24,7 @@ export default function ServicesPage() {
               </h1>
               
               <p className="body-lg mb-12 max-w-4xl mx-auto">
-                Transform your business with Paiptree's comprehensive AI platform. 
+                Transform your business with Paiptree&apos;s comprehensive AI platform. 
                 From image generation to custom enterprise solutions, we provide the tools you need to innovate.
               </p>
               
@@ -358,7 +358,7 @@ export default function ServicesPage() {
                 Ready to <span className="gradient-text">Get Started</span>?
               </h2>
               <p className="body-lg mb-12 max-w-2xl mx-auto">
-                Join thousands of developers and businesses already using Paiptree's AI services 
+                Join thousands of developers and businesses already using Paiptree&apos;s AI services 
                 to transform their applications and workflows.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

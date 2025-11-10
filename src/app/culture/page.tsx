@@ -198,7 +198,7 @@ export default function CulturePage() {
                   </div>
                   
                   <blockquote className="body-md italic mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    "{story.quote}"
+                    &ldquo;{story.quote}&rdquo;
                   </blockquote>
                 </div>
               ))}
