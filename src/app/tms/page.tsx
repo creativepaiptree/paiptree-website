@@ -80,21 +80,21 @@ export default function TmsPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={handleDownload}
-              className="w-full sm:w-auto px-8 py-4 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl cursor-pointer"
+              className="w-full sm:w-[240px] px-8 py-4 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl cursor-pointer"
             >
               {t('tms.download.buttons.android')}
             </button>
             <a
               href="#features"
-              className="w-full sm:w-auto px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all"
+              className="w-full sm:w-[240px] px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all text-center"
             >
-              더 알아보기
+              {t('tms.download.buttons.learnMore')}
             </a>
           </div>
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce z-10">
           <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>

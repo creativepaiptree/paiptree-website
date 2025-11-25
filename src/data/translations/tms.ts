@@ -56,7 +56,8 @@ export const tmsTranslations = {
         buttons: {
           android: "Android 다운로드",
           ios: "iOS 다운로드",
-          contact: "도입 문의"
+          contact: "도입 문의",
+          learnMore: "더 알아보기"
         }
       },
       footer: {
@@ -121,7 +122,8 @@ export const tmsTranslations = {
         buttons: {
           android: "Download for Android",
           ios: "Download for iOS",
-          contact: "Request Demo"
+          contact: "Request Demo",
+          learnMore: "Learn More"
         }
       },
       footer: {
