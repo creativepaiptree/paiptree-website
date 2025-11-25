@@ -2,10 +2,23 @@
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import PlatformCarousel from '@/components/PlatformCarousel';
 
 export default function TmsPage() {
   const { t } = useTranslation();
   const { language, toggleLanguage } = useLanguage();
+
+  const footerLinks = {
+    product: language === 'ko' 
+      ? ["TMS 소개", "주요 기능", "요금제", "고객 사례"]
+      : ["About TMS", "Features", "Pricing", "Case Studies"],
+    company: language === 'ko'
+      ? ["회사 소개", "팀", "채용", "파트너십"]
+      : ["About Us", "Team", "Careers", "Partnership"],
+    support: language === 'ko'
+      ? ["고객 지원", "문서", "FAQ", "문의하기"]
+      : ["Customer Support", "Documentation", "FAQ", "Contact"]
+  };
 
   const handleDownload = async () => {
     try {
@@ -75,18 +88,20 @@ export default function TmsPage() {
 
           {/* Spacer for background image */}
           <div className="h-80 md:h-[30rem]"></div>
+        </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        {/* CTA Buttons - Independent Container */}
+        <div className="w-full max-w-2xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
             <button
               onClick={handleDownload}
-              className="w-full sm:w-[240px] px-8 py-4 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl cursor-pointer"
+              className="flex-1 sm:max-w-[300px] px-8 py-4 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl cursor-pointer whitespace-nowrap"
             >
               {t('tms.download.buttons.android')}
             </button>
             <a
               href="#features"
-              className="w-full sm:w-[240px] px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all text-center"
+              className="flex-1 sm:max-w-[300px] px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all text-center whitespace-nowrap"
             >
               {t('tms.download.buttons.learnMore')}
             </a>
@@ -101,10 +116,58 @@ export default function TmsPage() {
         </div>
       </section>
 
-      {/* Features Section - Minimal Cards */}
-      <section id="features" className="min-h-screen flex items-center px-6 py-20 bg-gray-50">
+      {/* Platform Integration Section with Carousel */}
+      <PlatformCarousel />
+
+      {/* Enterprise Features Section - Grid Cards */}
+      <section className="bg-white">
+        <div className="lg:pt-[140px] lg:pb-[160px] pt-[40px] pb-[60px] flex flex-col items-center px-5">
+          {/* Header */}
+          <div className="text-center mb-8 lg:mb-[60px]">
+            <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
+              {t('tms.enterprise.badge')}
+            </p>
+            <h2 className="text-3xl md:text-3xl font-bold text-gray-900">
+              {t('tms.enterprise.title')}
+            </h2>
+          </div>
+
+          {/* Grid Cards */}
+          <div className="grid lg:grid-cols-3 grid-cols-2 gap-[24px] max-w-[1200px] w-full justify-center">
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
+              <div
+                key={index}
+                className="rounded-xl shadow-[1px_1px_18px_0px_rgba(97,121,148,0.12)] bg-white overflow-hidden hover:shadow-[1px_1px_24px_0px_rgba(97,121,148,0.18)] transition-shadow"
+              >
+                {/* Image Container with Background */}
+                <div className="w-full aspect-[768/488] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                  <img
+                    alt={t(`tms.enterprise.cards.${index}.title`)}
+                    src={t(`tms.enterprise.cards.${index}.image`)}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+                <div className="lg:p-5 lg:pb-8 p-4 pb-5 flex flex-col gap-2">
+                  <h3 className="lg:text-2xl text-base font-semibold text-[#222] leading-[150%]">
+                    {t(`tms.enterprise.cards.${index}.title`)}
+                  </h3>
+                  <p className="lg:text-lg text-sm font-medium leading-[140%] text-[#4E5968]">
+                    {t(`tms.enterprise.cards.${index}.description`)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Key Features Section */}
+      <section id="features" className="min-h-screen flex flex-col items-center justify-center px-6 py-20 bg-gray-50">
         <div className="max-w-5xl mx-auto w-full">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-16 text-center">
+          <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-16 text-center">
             {t('tms.features.title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -126,11 +189,11 @@ export default function TmsPage() {
         </div>
       </section>
 
-      {/* Benefits Section - Big Typography */}
+      {/* Security & Stability Section */}
       <section className="min-h-screen flex items-center px-6 py-20 bg-white">
-        <div className="max-w-4xl mx-auto w-full">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-12 text-center">
-            {t('tms.benefits.title')}
+        <div className="max-w-2xl mx-auto w-full">
+          <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-12 text-center">
+            {t('tms.security.title')}
           </h2>
           <div className="space-y-12">
             {[0, 1, 2].map((index) => (
@@ -138,11 +201,11 @@ export default function TmsPage() {
                 key={index}
                 className="group"
               >
-                <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
-                  {t(`tms.benefits.items.${index}.title`)}
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 group-hover:text-green-600 transition-colors">
+                  {t(`tms.security.items.${index}.title`)}
                 </h3>
-                <p className="text-xl text-gray-600 leading-relaxed pl-4 border-l-4 border-gray-200 group-hover:border-blue-600 transition-colors">
-                  {t(`tms.benefits.items.${index}.description`)}
+                <p className="text-lg text-gray-600 leading-relaxed pl-4 border-l-4 border-gray-200 group-hover:border-green-600 transition-colors">
+                  {t(`tms.security.items.${index}.description`)}
                 </p>
               </div>
             ))}
@@ -150,45 +213,55 @@ export default function TmsPage() {
         </div>
       </section>
 
-      {/* Download Section - Dark with Contrast */}
-      <section id="download" className="min-h-screen flex items-center px-6 py-20 bg-black text-white">
-        <div className="max-w-3xl mx-auto text-center w-full">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            {t('tms.download.title')}
-          </h2>
-          <p className="text-xl text-gray-400 mb-12 leading-relaxed whitespace-pre-line">
-            {t('tms.download.description')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
-            <a
-              href="https://play.google.com/store"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-4 px-8 bg-white text-black font-bold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-2xl"
-            >
-              {t('tms.download.buttons.android')}
-            </a>
-            <a
-              href="https://apps.apple.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-4 px-8 bg-white text-black font-bold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-2xl"
-            >
-              {t('tms.download.buttons.ios')}
-            </a>
-          </div>
-          <button className="mt-6 px-8 py-4 bg-transparent text-white font-semibold rounded-full border-2 border-white hover:bg-white hover:text-black transition-all">
-            {t('tms.download.buttons.contact')}
-          </button>
-        </div>
-      </section>
+      {/* Footer - Detailed */}
+      <footer className="text-gray-300" style={{ backgroundColor: 'rgb(22, 22, 22)' }}>
+        <div className="max-w-[1280px] px-6 pt-7 pb-10 flex flex-col gap-4">
+          {/* Logo */}
+          <img 
+            src="/logo-primary-light.svg" 
+            alt="Paiptree Logo" 
+            className="h-6 w-auto brightness-0 invert self-start"
+          />
 
-      {/* Footer - Minimal */}
-      <footer className="px-6 py-12 bg-black text-center text-gray-500 text-sm border-t border-gray-900">
-        <p className="font-medium text-gray-400 mb-2">
-          {t('tms.footer.company')}
-        </p>
-        <p>{t('tms.footer.copyright')}</p>
+          {/* Desktop Layout */}
+          <div className="hidden xl:flex flex-col gap-6">
+            {/* Company Info Row 1 */}
+            <div className="flex items-center gap-5 text-sm leading-[150%] text-[#C7C7C7]">
+              <p className="font-semibold">{t('tms.footer.company')}</p>
+              <div className="w-[1px] h-3 bg-[#494949]"></div>
+              <p>{t('tms.footer.ceo')}</p>
+              <div className="w-[1px] h-3 bg-[#494949]"></div>
+              <p>{t('tms.footer.businessNumber')}</p>
+              <div className="w-[1px] h-3 bg-[#494949]"></div>
+              <p>{t('tms.footer.corporateNumber')}</p>
+            </div>
+
+            {/* Company Info Row 2 */}
+            <div className="flex items-center gap-5 text-sm leading-[150%] text-[#C7C7C7]">
+              <p>{t('tms.footer.address')}</p>
+            </div>
+
+            {/* Copyright */}
+            <div className="flex w-full justify-end">
+              <p className="text-xs text-[#8b8b8b]">{t('tms.footer.copyright')}</p>
+            </div>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="flex xl:hidden flex-col gap-6">
+            {/* Company Info */}
+            <div className="flex flex-col gap-1 text-[13px] leading-[140%] text-[#C7C7C7]">
+              <p className="font-semibold">{t('tms.footer.company')}</p>
+              <p>{t('tms.footer.ceo')}</p>
+              <p>{t('tms.footer.businessNumber')}</p>
+              <p>{t('tms.footer.corporateNumber')}</p>
+              <p>{t('tms.footer.address')}</p>
+            </div>
+
+            {/* Copyright Mobile */}
+            <p className="text-xs text-[#8b8b8b]">{t('tms.footer.copyright')}</p>
+          </div>
+        </div>
       </footer>
     </div>
   );

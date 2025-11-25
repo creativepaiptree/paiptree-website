@@ -4,7 +4,9 @@ export const aboutTranslations = {
     // Video Hero Section
     videoHero: {
       title: "가금류 산업을 위한 AI 통합 에이전트, FarmersMind",
-      description: "FarmersMind는 CCTV와 센서 데이터를 학습한 AI 에이전트가 농장과 기업을 연결해 생산·물류·품질 의사결정을 자동화합니다."
+      description: "FarmersMind는 CCTV와 센서 데이터를 학습한 AI 에이전트가 농장과 기업을 연결해 생산·물류·품질 의사결정을 자동화합니다.",
+      getStarted: "시작하기",
+      learnMore: "더 알아보기"
     },
     // Platform Section
     platformSection: {
@@ -112,7 +114,9 @@ export const aboutTranslations = {
     // Video Hero Section
     videoHero: {
       title: "FarmersMind, the AI Integrated Agent for Poultry Operations",
-      description: "FarmersMind connects farms and enterprises with AI agents trained on CCTV and sensor data, automating production, logistics, and quality decisions."
+      description: "FarmersMind connects farms and enterprises with AI agents trained on CCTV and sensor data, automating production, logistics, and quality decisions.",
+      getStarted: "Get Started",
+      learnMore: "Learn More"
     },
     // Platform Section
     platformSection: {

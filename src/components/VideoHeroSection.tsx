@@ -33,11 +33,11 @@ const VideoHeroSection = () => {
           
           {/* Palantir-style CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="btn-primary">
-              Get Started
+            <button className="btn-primary w-full sm:w-auto">
+              {t('videoHero.getStarted')}
             </button>
-            <button className="btn-secondary">
-              Learn More
+            <button className="btn-secondary w-full sm:w-auto">
+              {t('videoHero.learnMore')}
             </button>
           </div>
         </div>

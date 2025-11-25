@@ -9,7 +9,7 @@ const CTACardsSection = () => {
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Request a Demo Card */}
-          <Link href="/request-demo" className="group">
+          <Link href="/request-demo" className="group w-full">
             <div className="bg-gray-200 hover:bg-gray-300 transition-colors duration-300 rounded p-4 h-40 flex items-start justify-between">
               <h3 className="text-5xl font-medium text-black">
                 Request a Demo
@@ -26,7 +26,7 @@ const CTACardsSection = () => {
           </Link>
 
           {/* Start Building Card */}
-          <Link href="/get-started" className="group">
+          <Link href="/get-started" className="group w-full">
             <div className="bg-black hover:bg-gray-800 transition-colors duration-300 rounded p-4 h-40 flex items-start justify-between">
               <h3 className="text-5xl font-medium text-white">
                 Start Building
