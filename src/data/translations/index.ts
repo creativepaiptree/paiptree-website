@@ -4,6 +4,7 @@ import { servicesTranslations } from './services';
 import { cultureTranslations } from './culture';
 import { blogTranslations } from './blog';
 import { newsroomTranslations } from './newsroom';
+import { tmsTranslations } from './tms';
 
 // 모든 번역을 합치는 헬퍼 함수
 function mergeTranslations(...translationObjects: any[]) {
@@ -24,7 +25,8 @@ export const translations = mergeTranslations(
   servicesTranslations,
   cultureTranslations,
   blogTranslations,
-  newsroomTranslations
+  newsroomTranslations,
+  tmsTranslations
 );
 
 export type TranslationKeys = typeof translations.ko;
