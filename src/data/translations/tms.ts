@@ -31,42 +31,42 @@ export const tmsTranslations = {
           {
             title: "배차 최적화",
             description: "복잡한 주문에 필요 차량 산정",
-            image: "/advantages/advantage-0.png"
+            image: "/tms_m1.webp"
           },
           {
             title: "실시간 관제",
             description: "현재 위치, 진행 상태 자동 기록",
-            image: "/advantages/advantage-1.png"
+            image: "/tms_m2.webp"
           },
           {
             title: "ERP 통합운영",
             description: "기사·차량·농장·도계장 데이터 통합",
-            image: "/advantages/advantage-2.png"
+            image: "/tms_m3.webp"
           },
           {
-            title: "AI 경로 추천",
+            title: "AI 경로 최적화",
             description: "실시간 교통정보를 반영한 최적경로 예측",
-            image: "/advantages/advantage-3.png"
+            image: "/tms_m4.webp"
           },
           {
             title: "자동 기록",
             description: "운행·체류·출입 기록 자동 관리",
-            image: "/advantages/advantage-4.png"
+            image: "/tms_m5.webp"
           },
           {
             title: "데이터 분석",
             description: "운영 효율화를 위한 데이터 기반 인사이트",
-            image: "/advantages/advantage-5.png"
+            image: "/tms_m6.webp"
           },
           {
             title: "알림 시스템",
             description: "화주, 고객 대상 실시간 배송 조회",
-            image: "/advantages/advantage-6.png"
+            image: "/tms_m7.webp"
           },
           {
             title: "보고서 생성 (예정)",
             description: "고객사를 위한 KPI 기반 보고서",
-            image: "/advantages/advantage-7.png"
+            image: "/tms_m8.webp"
           }
         ]
       },
@@ -78,7 +78,7 @@ export const tmsTranslations = {
             keyword: "주문",
             title: "등록하기",
             description: "복잡했던 기존의 주문 처리 방식을\nTMS로 쉽고 빠르게 경험해 보세요.",
-            image: "/usage/order.png",
+            image: "/tms_s1.png",
             cards: [
               {
                 icon: "📄",
@@ -93,10 +93,10 @@ export const tmsTranslations = {
             ]
           },
           {
-            keyword: "배차",
-            title: "쉽고 빠른 5초",
-            description: "AI 엔진을 활용한 배차로\n5초만에 빠른 배차를 진행해 보세요.",
-            image: "/usage/dispatch.png",
+            keyword: "손쉬운",
+            title: "자동 배차 입력",
+            description: "AI 엔진을 활용한 배차로\n빠르게 일정을 자동화 하세요.",
+            image: "/tms_s2.png",
             cards: [
               {
                 icon: "🚛",
@@ -114,7 +114,7 @@ export const tmsTranslations = {
             keyword: "관제",
             title: "실시간 차량",
             description: "차량 별 이동 경로와\n정확한 도착 예정 시각을 알려드려요.",
-            image: "/usage/control.png",
+            image: "/tms_s3.png",
             cards: [
               {
                 icon: "📍",
@@ -218,42 +218,42 @@ export const tmsTranslations = {
           {
             title: "Dispatch Optimization",
             description: "Calculate required vehicles for complex orders",
-            image: "/advantages/advantage-0.png"
+            image: "/tms_m1.webp"
           },
           {
             title: "Real-time Control",
             description: "Auto-record current location and status",
-            image: "/advantages/advantage-1.png"
+            image: "/tms_m2.webp"
           },
           {
             title: "ERP Integration",
             description: "Unified driver, vehicle, farm, and plant data",
-            image: "/advantages/advantage-2.png"
+            image: "/tms_m3.webp"
           },
           {
-            title: "AI Route Recommendation",
+            title: "AI Route Optimization",
             description: "Optimal route prediction with real-time traffic",
-            image: "/advantages/advantage-3.png"
+            image: "/tms_m4.webp"
           },
           {
             title: "Auto Recording",
             description: "Automatic management of operation records",
-            image: "/advantages/advantage-4.png"
+            image: "/tms_m5.webp"
           },
           {
             title: "Data Analytics",
             description: "Data-driven insights for operational efficiency",
-            image: "/advantages/advantage-5.png"
+            image: "/tms_m6.webp"
           },
           {
             title: "Notification System",
             description: "Real-time delivery tracking for customers",
-            image: "/advantages/advantage-6.png"
+            image: "/tms_m7.webp"
           },
           {
             title: "Report Generation (Coming Soon)",
             description: "KPI-based reports for clients",
-            image: "/advantages/advantage-7.png"
+            image: "/tms_m8.webp"
           }
         ]
       },

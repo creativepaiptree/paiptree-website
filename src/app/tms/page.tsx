@@ -2,7 +2,7 @@
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import PlatformCarousel from '@/components/PlatformCarousel';
+
 import { featureIcons } from '@/components/FeatureIcons';
 
 export default function TmsPage() {
@@ -117,8 +117,7 @@ export default function TmsPage() {
         </div>
       </section>
 
-      {/* Platform Integration Section with Carousel */}
-      <PlatformCarousel />
+
 
       {/* Enterprise Features Section - Grid Cards */}
       <section className="bg-white">
