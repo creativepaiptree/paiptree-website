@@ -265,7 +265,7 @@ export const tmsTranslations = {
             keyword: "Order",
             title: "Registration",
             description: "Experience easy and fast order processing\nwith TMS.",
-            image: "/usage/order.png",
+            image: "/tms_s1.png",
             cards: [
               {
                 icon: "📄",
@@ -280,10 +280,10 @@ export const tmsTranslations = {
             ]
           },
           {
-            keyword: "Dispatch",
-            title: "Quick 5-Second",
-            description: "Complete dispatch in 5 seconds\nwith AI-powered optimization.",
-            image: "/usage/dispatch.png",
+            keyword: "Easy",
+            title: "Auto Dispatch Input",
+            description: "Automate your schedule quickly\nwith AI-powered dispatch.",
+            image: "/tms_s2.png",
             cards: [
               {
                 icon: "🚛",
@@ -301,7 +301,7 @@ export const tmsTranslations = {
             keyword: "Control",
             title: "Real-time Vehicle",
             description: "Track vehicle routes and\nget accurate arrival times.",
-            image: "/usage/control.png",
+            image: "/tms_s3.png",
             cards: [
               {
                 icon: "📍",
