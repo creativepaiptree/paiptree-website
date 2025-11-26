@@ -14,10 +14,10 @@ export default function PlatformCarousel() {
   });
 
   const tabs = [
-    { key: 'realtime', image: '/p1.png' },
-    { key: 'dispatch', image: '/p2.png' },
-    { key: 'temperature', image: '/p3.png' },
-    { key: 'analytics', image: '/p4.png' }
+    { key: 'realtime', image: '/tms_1.png' },
+    { key: 'dispatch', image: '/tms_2.png' },
+    { key: 'erp', image: '/tms_3.png' },
+    { key: 'plan', image: '/tms_4.png' }
   ];
 
   const scrollTo = useCallback(
@@ -89,15 +89,18 @@ export default function PlatformCarousel() {
                 {tabs.map((tab, index) => (
                   <div
                     key={tab.key}
-                    className="xl:basis-[60%] basis-[100%] flex-[0_0_auto] min-w-0"
+                    className="xl:basis-[60%] basis-[100%] flex-[0_0_auto] min-w-0 px-3"
                   >
-                    <div className="xl:h-[600px] xl:aspect-auto aspect-[335/183] flex items-center justify-center">
+                    <div className="xl:h-[600px] h-[280px] w-full overflow-hidden rounded-lg shadow-[10px_10px_30px_0px_rgba(97,121,148,0.1)]">
                       <img
                         alt={t(`tms.platform.tabs.${tab.key}`)}
                         src={tab.image}
-                        className="w-full max-w-[996px] object-contain shadow-[10px_10px_30px_0px_rgba(97,121,148,0.1)] rounded-lg"
+                        className="w-full h-full object-cover"
                       />
                     </div>
+                    <p className="text-center text-[#4E5968] text-sm lg:text-base mt-4">
+                      {t(`tms.platform.descriptions.${tab.key}`)}
+                    </p>
                   </div>
                 ))}
               </div>

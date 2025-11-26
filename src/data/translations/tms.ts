@@ -14,8 +14,14 @@ export const tmsTranslations = {
         tabs: {
           realtime: "실시간 추적",
           dispatch: "배차 관리",
-          temperature: "온도 모니터링",
-          analytics: "데이터 분석"
+          erp: "ERP 통합운영",
+          plan: "차량관리"
+        },
+        descriptions: {
+          realtime: "차량 위치와 운행 상태를 실시간으로 확인하세요",
+          dispatch: "주문에 맞춰 최적의 배차를 자동으로 생성합니다",
+          erp: "기존 ERP 시스템과 손쉽게 연동됩니다",
+          plan: "차량과 기사 정보를 한눈에 관리하세요"
         }
       },
       enterprise: {
@@ -195,8 +201,14 @@ export const tmsTranslations = {
         tabs: {
           realtime: "Real-time Tracking",
           dispatch: "Dispatch Management",
-          temperature: "Temperature Monitoring",
-          analytics: "Data Analytics"
+          erp: "ERP Integration",
+          plan: "Vehicle Management"
+        },
+        descriptions: {
+          realtime: "Track vehicle location and status in real-time",
+          dispatch: "Automatically generate optimal dispatch for orders",
+          erp: "Easily integrate with your existing ERP system",
+          plan: "Manage vehicles and drivers at a glance"
         }
       },
       enterprise: {
