@@ -3,6 +3,7 @@
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PlatformCarousel from '@/components/PlatformCarousel';
+import { featureIcons } from '@/components/FeatureIcons';
 
 export default function TmsPage() {
   const { t } = useTranslation();
@@ -164,51 +165,146 @@ export default function TmsPage() {
         </div>
       </section>
 
-      {/* Key Features Section */}
-      <section id="features" className="min-h-screen flex flex-col items-center justify-center px-6 py-20 bg-gray-50">
-        <div className="max-w-5xl mx-auto w-full">
-          <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-16 text-center">
-            {t('tms.features.title')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[0, 1, 2, 3].map((index) => (
+      {/* Key Features Section - TMS 사용법 */}
+      <section id="features" className="bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="lg:pt-[140px] lg:pb-[160px] pt-[40px] pb-[60px] flex flex-col items-center px-5">
+          {/* Header */}
+          <div className="text-center mb-8 lg:mb-[60px]">
+            <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
+              {t('tms.features.badge')}
+            </p>
+            <h2 className="lg:text-[40px] text-[28px] font-bold leading-[140%] text-[#2B2C2E] lg:mt-[10px] mt-[6px]">
+              <span className="text-black">{t('tms.features.title').split(' ')[0]}</span> {t('tms.features.title').split(' ').slice(1).join(' ')}
+            </h2>
+          </div>
+
+          {/* Features Blocks - Alternating Layout */}
+          <div className="lg:mt-[80px] mt-[52px] flex flex-col lg:gap-[140px] gap-[80px] max-w-[1232px] w-full mx-4">
+            {[0, 1, 2].map((index) => (
               <div
                 key={index}
-                className="p-8 bg-white rounded-3xl hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                className={`flex justify-between whitespace-pre-line break-keep lg:gap-0 gap-5 ${
+                  index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'
+                } flex-col`}
               >
-                <div className="text-5xl mb-6">{t(`tms.features.list.${index}.icon`)}</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  {t(`tms.features.list.${index}.title`)}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {t(`tms.features.list.${index}.description`)}
-                </p>
+                {/* Text Content */}
+                <div className="flex flex-col lg:gap-[60px] gap-[20px]">
+                  <div className={`flex flex-col lg:gap-5 gap-2.5 ${index % 2 === 1 ? 'lg:items-end lg:text-end' : 'lg:items-start lg:text-start'} items-start text-start`}>
+                    <h3 className="lg:text-[36px] text-[24px] font-bold leading-[140%] text-black">
+                      <span className="text-black">{t(`tms.features.blocks.${index}.keyword`)}</span> {t(`tms.features.blocks.${index}.title`)}
+                    </h3>
+                    <div className="h-[3px] w-full bg-black"></div>
+                    <p className="lg:text-xl text-base font-medium leading-[140%] text-[#4E5968] whitespace-pre-line">
+                      {t(`tms.features.blocks.${index}.description`)}
+                    </p>
+                  </div>
+
+                  {/* Feature Cards - 2개씩 */}
+                  <div className="flex flex-col lg:gap-[32px] gap-3">
+                    {[0, 1].map((cardIndex) => {
+                      const iconKey = t(`tms.features.blocks.${index}.cards.${cardIndex}.icon`);
+                      const IconComponent = featureIcons[iconKey];
+                      return (
+                        <div key={cardIndex} className="lg:w-[452px] w-full lg:rounded-xl rounded-lg border border-[#D8DDEA] lg:py-4 lg:px-5 py-3 px-4 bg-white flex flex-col justify-center">
+                          <div className="flex lg:gap-3 gap-2 items-center">
+                            <div className="w-6 h-6 flex-shrink-0">
+                              {IconComponent ? <IconComponent /> : <span className="text-2xl">{iconKey}</span>}
+                            </div>
+                            <h4 className="lg:text-lg text-base font-semibold leading-[35px] text-[#2B2C2E]">
+                              {t(`tms.features.blocks.${index}.cards.${cardIndex}.title`)}
+                            </h4>
+                          </div>
+                          <p className="lg:text-base text-sm font-normal leading-[24px] text-[#494949] mt-1 lg:ml-[36px] whitespace-pre-line">
+                            {t(`tms.features.blocks.${index}.cards.${cardIndex}.description`)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Image */}
+                <div className="lg:w-[52%] w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center overflow-hidden">
+                  <img
+                    alt={t(`tms.features.blocks.${index}.keyword`)}
+                    src={t(`tms.features.blocks.${index}.image`)}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Security & Stability Section */}
-      <section className="min-h-screen flex items-center px-6 py-20 bg-white">
-        <div className="max-w-2xl mx-auto w-full">
-          <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-12 text-center">
-            {t('tms.security.title')}
-          </h2>
-          <div className="space-y-12">
-            {[0, 1, 2].map((index) => (
-              <div
-                key={index}
-                className="group"
-              >
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 group-hover:text-green-600 transition-colors">
-                  {t(`tms.security.items.${index}.title`)}
+      {/* Security Section */}
+      <section className="bg-[#f4f9ff]">
+        <div className="lg:pt-[140px] lg:pb-[160px] pt-[40px] pb-[60px] flex flex-col items-center px-5 gap-[60px]">
+          {/* Header */}
+          <div className="flex flex-col items-center">
+            <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
+              {t('tms.security.badge')}
+            </p>
+            <h2 className="lg:text-[40px] text-[28px] font-bold leading-[140%] text-[#2B2C2E]">
+              {t('tms.security.title')} <span className="text-[#4A7CFF]">{t('tms.security.highlight')}</span>
+            </h2>
+          </div>
+
+          {/* Cards */}
+          <div className="flex w-full justify-center lg:flex-row flex-col gap-6 max-w-[1200px]">
+            {/* Card 1 - Cloud 24/7 */}
+            <div className="flex flex-col items-center rounded-xl gap-4 bg-white lg:w-[384px] w-full pt-[40px] pb-[40px] px-[20px] shadow-sm relative overflow-hidden">
+              <div className="absolute right-0 pointer-events-none" style={{ top: '28px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="181" height="163" viewBox="0 0 181 163" fill="none">
+                  <path opacity="0.05" d="M145 81.5C145 60.789 128.211 44 107.5 44C91.789 44 78.5 53.789 73 67.5C54.789 67.5 40 82.289 40 100.5C40 118.711 54.789 133.5 73 133.5H140C155.464 133.5 168 120.964 168 105.5C168 91.536 157.964 80.036 145 78.5V81.5Z" fill="#222222"/>
+                </svg>
+              </div>
+              <div className="flex flex-col items-center relative z-10 gap-2">
+                <h3 className="lg:text-2xl text-lg font-semibold text-[#222] leading-[150%] text-center">
+                  {t('tms.security.cards.0.title')}
                 </h3>
-                <p className="text-lg text-gray-600 leading-relaxed pl-4 border-l-4 border-gray-200 group-hover:border-green-600 transition-colors">
-                  {t(`tms.security.items.${index}.description`)}
+                <p className="lg:text-base text-sm text-[#4E5968] text-center">
+                  {t('tms.security.cards.0.description')}
                 </p>
               </div>
-            ))}
+            </div>
+
+            {/* Card 2 - Encryption */}
+            <div className="flex flex-col items-center rounded-xl gap-4 bg-white lg:w-[384px] w-full pt-[40px] pb-[40px] px-[20px] shadow-sm relative overflow-hidden">
+              <div className="absolute right-0 pointer-events-none" style={{ top: '20px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="148" height="172" viewBox="0 0 148 172" fill="none">
+                  <path opacity="0.05" d="M74 10C47.5 10 26 31.5 26 58V78H18C12.477 78 8 82.477 8 88V152C8 157.523 12.477 162 18 162H130C135.523 162 140 157.523 140 152V88C140 82.477 135.523 78 130 78H122V58C122 31.5 100.5 10 74 10ZM46 58C46 42.536 58.536 30 74 30C89.464 30 102 42.536 102 58V78H46V58ZM82 120V140H66V120C60.477 120 56 115.523 56 110C56 104.477 60.477 100 66 100H82C87.523 100 92 104.477 92 110C92 115.523 87.523 120 82 120Z" fill="#222222"/>
+                </svg>
+              </div>
+              <div className="flex flex-col items-center relative z-10 gap-2">
+                <h3 className="lg:text-2xl text-lg font-semibold text-[#222] leading-[150%] text-center">
+                  {t('tms.security.cards.1.title')}
+                </h3>
+                <p className="lg:text-base text-sm text-[#4E5968] text-center">
+                  {t('tms.security.cards.1.description')}
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3 - Standard Process */}
+            <div className="flex flex-col items-center rounded-xl gap-4 bg-white lg:w-[384px] w-full pt-[40px] pb-[40px] px-[20px] shadow-sm relative overflow-hidden">
+              <div className="absolute right-0 pointer-events-none" style={{ top: '-4px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="178" height="225" viewBox="0 0 178 225" fill="none">
+                  <path opacity="0.05" d="M89 20L20 50V100C20 147.5 48.5 191.5 89 205C129.5 191.5 158 147.5 158 100V50L89 20ZM79 155L49 125L60.5 113.5L79 132L117.5 93.5L129 105L79 155Z" fill="#222222"/>
+                </svg>
+              </div>
+              <div className="flex flex-col items-center relative z-10 gap-2">
+                <h3 className="lg:text-2xl text-lg font-semibold text-[#222] leading-[150%] text-center">
+                  {t('tms.security.cards.2.title')}
+                </h3>
+                <p className="lg:text-base text-sm text-[#4E5968] text-center">
+                  {t('tms.security.cards.2.description')}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

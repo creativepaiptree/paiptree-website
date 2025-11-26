@@ -8,7 +8,7 @@ export default function ServicesPage() {
     <div className="min-h-screen text-white overflow-x-hidden" style={{ background: 'var(--bg-primary)' }}>
       <ParticleBackground />
       <Header />
-      
+
       <main className="pt-20">
         {/* Hero Section */}
         <section className="section-padding">
@@ -18,16 +18,16 @@ export default function ServicesPage() {
                 <span className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mr-2 animate-pulse"></span>
                 <span className="body-sm">AI Solutions</span>
               </div>
-              
+
               <h1 className="heading-xl mb-8">
                 <span className="gradient-text">AI Solutions</span> for Enterprise
               </h1>
-              
+
               <p className="body-lg mb-12 max-w-4xl mx-auto">
-                Transform your business with Paiptree&apos;s comprehensive AI platform. 
+                Transform your business with Paiptree&apos;s comprehensive AI platform.
                 From image generation to custom enterprise solutions, we provide the tools you need to innovate.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button className="btn-primary">
                   Explore Services
@@ -48,7 +48,7 @@ export default function ServicesPage() {
                 Integrated AI <span className="gradient-text">Ecosystem</span>
               </h2>
               <p className="body-lg max-w-3xl mx-auto">
-                From creative tools to enterprise infrastructure, our AI services work together 
+                From creative tools to enterprise infrastructure, our AI services work together
                 to deliver comprehensive solutions for every business need.
               </p>
             </div>
@@ -61,7 +61,7 @@ export default function ServicesPage() {
             <h2 className="heading-lg text-center mb-16">
               Our <span className="gradient-text">Services</span>
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
               {/* Stable Image Service */}
               <div className="glass-card group">
@@ -70,7 +70,7 @@ export default function ServicesPage() {
                 </div>
                 <h3 className="heading-sm mb-4">Stable Image</h3>
                 <p className="body-md mb-6">
-                  Generate stunning, high-quality images from text descriptions with our state-of-the-art 
+                  Generate stunning, high-quality images from text descriptions with our state-of-the-art
                   diffusion models. Perfect for creative professionals and businesses.
                 </p>
                 <div className="space-y-3 mb-6">
@@ -99,7 +99,7 @@ export default function ServicesPage() {
                 </div>
                 <h3 className="heading-sm mb-4">API Platform</h3>
                 <p className="body-md mb-6">
-                  Powerful and flexible AI APIs for developers. Integrate our models into your applications 
+                  Powerful and flexible AI APIs for developers. Integrate our models into your applications
                   with simple REST APIs and comprehensive documentation.
                 </p>
                 <div className="space-y-3 mb-6">
@@ -128,7 +128,7 @@ export default function ServicesPage() {
                 </div>
                 <h3 className="heading-sm mb-4">Enterprise Solutions</h3>
                 <p className="body-md mb-6">
-                  Custom AI solutions tailored for large-scale enterprises. On-premise deployment, 
+                  Custom AI solutions tailored for large-scale enterprises. On-premise deployment,
                   custom training, and dedicated support for mission-critical applications.
                 </p>
                 <div className="space-y-3 mb-6">
@@ -157,7 +157,7 @@ export default function ServicesPage() {
                 </div>
                 <h3 className="heading-sm mb-4">Developer Tools</h3>
                 <p className="body-md mb-6">
-                  Professional tools for AI model development, fine-tuning, and deployment. 
+                  Professional tools for AI model development, fine-tuning, and deployment.
                   Everything you need to build and scale AI applications.
                 </p>
                 <div className="space-y-3 mb-6">
@@ -190,11 +190,11 @@ export default function ServicesPage() {
                 Built on <span className="gradient-text">Cutting-Edge</span> Technology
               </h2>
               <p className="body-lg max-w-3xl mx-auto">
-                Our AI services are powered by the latest advances in machine learning, 
+                Our AI services are powered by the latest advances in machine learning,
                 deployed on enterprise-grade infrastructure for reliability and scale.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {['PyTorch', 'CUDA', 'Kubernetes', 'AWS', 'Docker', 'TensorRT', 'Redis', 'PostgreSQL'].map((tech, index) => (
                 <div key={index} className="glass-card text-center group hover:bg-white/10">
@@ -215,7 +215,7 @@ export default function ServicesPage() {
                   Developer-First <span className="gradient-text">API</span>
                 </h2>
                 <p className="body-lg mb-8">
-                  Get started in minutes with our intuitive APIs. Comprehensive documentation, 
+                  Get started in minutes with our intuitive APIs. Comprehensive documentation,
                   code examples, and SDKs in multiple languages.
                 </p>
                 <div className="space-y-4 mb-8">
@@ -242,12 +242,12 @@ export default function ServicesPage() {
                   View Documentation
                 </button>
               </div>
-              
+
               <div className="glass-card">
                 <h3 className="heading-sm mb-6">API Example</h3>
                 <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
                   <pre className="text-sm text-green-400">
-{`curl -X POST "https://api.paiptree.com/v1/generate" \\
+                    {`curl -X POST "https://api.paiptree.com/v1/generate" \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
@@ -276,7 +276,7 @@ export default function ServicesPage() {
               </h2>
               <p className="body-lg">Choose the plan that fits your needs</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               <div className="glass-card text-center">
                 <h3 className="heading-sm mb-4">Starter</h3>
@@ -300,7 +300,7 @@ export default function ServicesPage() {
                   Get Started
                 </button>
               </div>
-              
+
               <div className="glass-card text-center" style={{ borderColor: 'var(--accent-from)' }}>
                 <h3 className="heading-sm mb-4">Professional</h3>
                 <div className="text-4xl font-bold gradient-text mb-4">$49</div>
@@ -323,7 +323,7 @@ export default function ServicesPage() {
                   Choose Pro
                 </button>
               </div>
-              
+
               <div className="glass-card text-center">
                 <h3 className="heading-sm mb-4">Enterprise</h3>
                 <div className="text-4xl font-bold gradient-text mb-4">Custom</div>
@@ -358,7 +358,7 @@ export default function ServicesPage() {
                 Ready to <span className="gradient-text">Get Started</span>?
               </h2>
               <p className="body-lg mb-12 max-w-2xl mx-auto">
-                Join thousands of developers and businesses already using Paiptree&apos;s AI services 
+                Join thousands of developers and businesses already using Paiptree&apos;s AI services
                 to transform their applications and workflows.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -373,7 +373,7 @@ export default function ServicesPage() {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

@@ -65,33 +65,70 @@ export const tmsTranslations = {
         ]
       },
       features: {
-        title: "🔧 주요 기능",
-        list: [
+        badge: "TMS 사용법",
+        title: "주문-배차-관제 끝!",
+        blocks: [
           {
-            icon: "🔔",
-            title: "실시간 배차 알림",
-            description: "운행 지시 자동 전달"
+            keyword: "주문",
+            title: "등록하기",
+            description: "복잡했던 기존의 주문 처리 방식을\nTMS로 쉽고 빠르게 경험해 보세요.",
+            image: "/usage/order.png",
+            cards: [
+              {
+                icon: "📄",
+                title: "직접 주문등록",
+                description: "ERP 연동 없이 단독으로 배차를 운영 관리하세요\n간편하게 누구나 입력작업이 가능합니다!"
+              },
+              {
+                icon: "🔄",
+                title: "ERP 시스템 연동",
+                description: "기존에 사용하던 시스템과 연동해 보세요.\nTMS API는 ERP와 연동이 쉽고 동기화를 자동으로 진행합니다."
+              }
+            ]
           },
           {
-            icon: "🗺️",
-            title: "최적 경로 안내",
-            description: "도착/출발 자동기록"
+            keyword: "배차",
+            title: "쉽고 빠른 5초",
+            description: "AI 엔진을 활용한 배차로\n5초만에 빠른 배차를 진행해 보세요.",
+            image: "/usage/dispatch.png",
+            cards: [
+              {
+                icon: "🚛",
+                title: "배차 최적화",
+                description: "차량수와 출하하는 물량에 맞춰 자동으로 매칭해 보세요.\n기사별, 차량크기별 최적화 관리도 가능해요."
+              },
+              {
+                icon: "🔗",
+                title: "경로 최적화",
+                description: "AI엔진이 입력한 중간 경유지를 지역지도를 기반으로 분석하여 최적의 스케쥴을 알려줍니다."
+              }
+            ]
           },
           {
-            icon: "📝",
-            title: "운행 로그 자동기록",
-            description: "체류시간 자동기록"
-          },
-          {
-            icon: "📊",
-            title: "운영 통계",
-            description: "기사/차량별 운영 통계"
+            keyword: "관제",
+            title: "실시간 차량",
+            description: "차량 별 이동 경로와\n정확한 도착 예정 시각을 알려드려요.",
+            image: "/usage/control.png",
+            cards: [
+              {
+                icon: "📍",
+                title: "실시간 차량 관제",
+                description: "TMS 드라이버앱을 통해 기사님들의 운행 위치별 포인트 기록 및 실시간 관제도 가능합니다."
+              },
+              {
+                icon: "⏰",
+                title: "시작과 도착 예정 확인",
+                description: "모든 차량의 시작과 경유지 및 도착지에 대한 예정시간을 안내드려요.\n나중에 시간을 따로 체크할 필요가 없습니다."
+              }
+            ]
           }
         ]
       },
       security: {
-        title: "🔒 안정성과 데이터 보안",
-        items: [
+        badge: "안정성과 데이터 보안",
+        title: "안정성의",
+        highlight: "TMS",
+        cards: [
           {
             title: "클라우드 기반 24/7 안정 운영",
             description: "언제 어디서나 안정적인 서비스 제공"
@@ -101,7 +138,7 @@ export const tmsTranslations = {
             description: "철저한 데이터 보안 및 개인정보 보호"
           },
           {
-            title: "현장 검증된 파이프트리 표준 프로세스 적용",
+            title: "현장 검증된 표준 프로세스",
             description: "검증된 물류 프로세스로 안전한 운영"
           }
         ]
@@ -209,43 +246,80 @@ export const tmsTranslations = {
         ]
       },
       features: {
-        title: "🔧 Key Features",
-        list: [
+        badge: "How to Use TMS",
+        title: "Order-Dispatch-Control Done!",
+        blocks: [
           {
-            icon: "🔔",
-            title: "Real-time Dispatch Alerts",
-            description: "Auto-deliver operation instructions"
+            keyword: "Order",
+            title: "Registration",
+            description: "Experience easy and fast order processing\nwith TMS.",
+            image: "/usage/order.png",
+            cards: [
+              {
+                icon: "📄",
+                title: "Direct Order Registration",
+                description: "Manage dispatch operations standalone without ERP integration. Simple and easy!"
+              },
+              {
+                icon: "🔄",
+                title: "ERP System Integration",
+                description: "Connect with your existing systems. TMS API easily integrates with ERP, OMS, WMS."
+              }
+            ]
           },
           {
-            icon: "🗺️",
-            title: "Optimal Route Guidance",
-            description: "Auto-record arrival/departure"
+            keyword: "Dispatch",
+            title: "Quick 5-Second",
+            description: "Complete dispatch in 5 seconds\nwith AI-powered optimization.",
+            image: "/usage/dispatch.png",
+            cards: [
+              {
+                icon: "🚛",
+                title: "Dispatch Optimization",
+                description: "Minimize vehicles or balance work hours. Regional driver management is also available."
+              },
+              {
+                icon: "🔗",
+                title: "Route Optimization",
+                description: "AI engine analyzes traffic data to provide optimal destinations and schedules."
+              }
+            ]
           },
           {
-            icon: "📝",
-            title: "Auto Operation Logs",
-            description: "Auto-record stay time"
-          },
-          {
-            icon: "📊",
-            title: "Operation Statistics",
-            description: "Driver/vehicle operation stats"
+            keyword: "Control",
+            title: "Real-time Vehicle",
+            description: "Track vehicle routes and\nget accurate arrival times.",
+            image: "/usage/control.png",
+            cards: [
+              {
+                icon: "📍",
+                title: "Real-time Vehicle Tracking",
+                description: "When drivers use the TMS Driver app, GPS tracks real-time movement."
+              },
+              {
+                icon: "⏰",
+                title: "Accurate ETA",
+                description: "Get notified of arrival times via alerts. No more wondering when delivery/pickup will happen."
+              }
+            ]
           }
         ]
       },
       security: {
-        title: "🔒 Stability and Data Security",
-        items: [
+        badge: "Stability & Data Security",
+        title: "Stability of",
+        highlight: "TMS",
+        cards: [
           {
             title: "Cloud-based 24/7 Stable Operations",
             description: "Reliable service anytime, anywhere"
           },
           {
-            title: "Encrypted Location/Personal Data Processing",
+            title: "Encrypted Location/Personal Data",
             description: "Thorough data security and privacy protection"
           },
           {
-            title: "Field-Verified Paiptree Standard Process",
+            title: "Field-Verified Standard Process",
             description: "Safe operations with proven logistics processes"
           }
         ]
