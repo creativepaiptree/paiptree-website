@@ -165,7 +165,7 @@ export const tmsTranslations = {
         businessNumber: "사업자등록번호: 549-81-01876",
         corporateNumber: "법인등록번호: 110111-7495199",
         address: "사업장 소재지: 대전광역시 서구 구봉산북로21번길 52, 2층(관저동)",
-        copyright: "© 2025 Paiptree. All rights reserved.",
+        copyright: "© 2025 Paiptree Inc. All rights reserved.",
         product: {
           title: "제품",
           links: ["TMS 소개", "주요 기능", "요금제", "고객 사례"]
@@ -351,8 +351,8 @@ export const tmsTranslations = {
         ceo: "CEO: Jang Yuchang, Lee Byungkwon",
         businessNumber: "Business Registration Number: 549-81-01876",
         corporateNumber: "Corporate Registration Number: 110111-7495199",
-        address: "Address: 52, Gubongsanbuk-ro 21beon-gil, Seo-gu, Daejeon, 2nd Floor (Gwanjeo-dong)",
-        copyright: "© 2025 Paiptree. All rights reserved.",
+        address: "Address: 52, Gubongsanbuk-ro 21beon-gil, Seo-gu, Daejeon, 2nd Floor",
+        copyright: "© 2025 Paiptree Inc. All rights reserved.",
         product: {
           title: "Product",
           links: ["About TMS", "Features", "Pricing", "Case Studies"]
