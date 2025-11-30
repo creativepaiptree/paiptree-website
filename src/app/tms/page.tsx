@@ -46,8 +46,8 @@ export default function TmsPage() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo - Top Left */}
-          <a href="/tms" className="text-4xl font-bold text-black hover:text-gray-700 transition-colors tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif', letterSpacing: '-0.05em' }}>
-            tms
+          <a href="/tms">
+            <img src="/logo_tms_b.svg" alt="TMS Logo" className="h-8" />
           </a>
 
           {/* Language Toggle - Top Right */}
