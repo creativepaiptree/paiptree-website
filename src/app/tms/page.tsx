@@ -58,7 +58,7 @@ export default function TmsPage() {
               onClick={toggleLanguage}
               className="px-5 py-1 bg-transparent text-black border border-black rounded text-sm font-medium hover:bg-black hover:text-white transition-all"
             >
-              {language === 'ko' ? 'EN' : '한'}
+              {language === 'ko' ? 'KO' : 'EN'}
             </button>
             
             {/* Hamburger Menu Button */}
