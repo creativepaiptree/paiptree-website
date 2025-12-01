@@ -76,7 +76,7 @@ export default function TmsPage() {
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[160px]">
                   <a
-                    href="https://docs.google.com/presentation/d/19jRc_ZTTY53nDG82gx97kyH3Fc2CijS1_lsWMwDoGuw/edit"
+                    href="https://drive.google.com/file/d/1UQfjyRRMhnVtp395De5Q3V9yCUriRlH7/view?usp=drive_link"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
