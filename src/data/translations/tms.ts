@@ -4,7 +4,7 @@ export const tmsTranslations = {
     tms: {
       hero: {
         badge: "물류 최적화 솔루션",
-        title: "복잡한 물류, 빠르고 간편하게 TMS!",
+        title: "복잡한 물류, 빠르고 간편하게 TMS",
         subtitle: "파이프트리의 관제기술로\n쉽고 빠르게 배차를 경험하세요!",
         description: ""
       },
