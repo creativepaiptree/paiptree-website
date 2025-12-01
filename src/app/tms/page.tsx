@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -8,6 +9,7 @@ import { featureIcons } from '@/components/FeatureIcons';
 export default function TmsPage() {
   const { t } = useTranslation();
   const { language, toggleLanguage } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const footerLinks = {
     product: language === 'ko' 
@@ -50,13 +52,42 @@ export default function TmsPage() {
             <img src="/logo_tms_b.svg" alt="TMS Logo" className="h-8" />
           </a>
 
-          {/* Language Toggle - Top Right */}
-          <button
-            onClick={toggleLanguage}
-            className="px-5 py-1 bg-transparent text-black border border-black rounded text-sm font-medium hover:bg-black hover:text-white transition-all"
-          >
-            {language === 'ko' ? 'EN' : '한'}
-          </button>
+          {/* Right Side - Language Toggle & Hamburger Menu */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleLanguage}
+              className="px-5 py-1 bg-transparent text-black border border-black rounded text-sm font-medium hover:bg-black hover:text-white transition-all"
+            >
+              {language === 'ko' ? 'EN' : '한'}
+            </button>
+            
+            {/* Hamburger Menu Button */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2"
+              >
+                <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[160px]">
+                  <a
+                    href="https://docs.google.com/presentation/d/19jRc_ZTTY53nDG82gx97kyH3Fc2CijS1_lsWMwDoGuw/edit"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {language === 'ko' ? '📖 메뉴얼 보기' : '📖 View Manual'}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
