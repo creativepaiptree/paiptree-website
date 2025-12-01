@@ -164,7 +164,8 @@ export const tmsTranslations = {
         ceo: "대표: 장유창, 이병권",
         businessNumber: "사업자등록번호: 549-81-01876",
         corporateNumber: "법인등록번호: 110111-7495199",
-        address: "사업장 소재지: 대전광역시 서구 구봉산북로21번길 52, 2층(관저동)",
+        addressSeoul: "서울: 서초구 태봉로 114, 8층",
+        address: "대전: 대전광역시 서구 구봉산북로21번길 52, 2층(관저동)",
         copyright: "© 2025 Paiptree Inc. All rights reserved.",
         product: {
           title: "제품",
@@ -351,7 +352,8 @@ export const tmsTranslations = {
         ceo: "CEO: Jang Yuchang, Lee Byungkwon",
         businessNumber: "Business Registration Number: 549-81-01876",
         corporateNumber: "Corporate Registration Number: 110111-7495199",
-        address: "Address: 52, Gubongsanbuk-ro 21beon-gil, Seo-gu, Daejeon, 2nd Floor",
+        addressSeoul: "Seoul: 8F, 114, Taebong-ro, Seocho-gu, 06764",
+        address: "Daejeon: 52, Gubongsanbuk-ro 21beon-gil, Seo-gu, 2nd Floor",
         copyright: "© 2025 Paiptree Inc. All rights reserved.",
         product: {
           title: "Product",

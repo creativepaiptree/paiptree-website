@@ -364,6 +364,8 @@ export default function TmsPage() {
 
             {/* Company Info Row 2 */}
             <div className="flex items-center gap-5 text-sm leading-[150%] text-[#C7C7C7]">
+              <p>{t('tms.footer.addressSeoul')}</p>
+              <div className="w-[1px] h-3 bg-[#494949]"></div>
               <p>{t('tms.footer.address')}</p>
             </div>
 
@@ -381,6 +383,7 @@ export default function TmsPage() {
               <p>{t('tms.footer.ceo')}</p>
               <p>{t('tms.footer.businessNumber')}</p>
               <p>{t('tms.footer.corporateNumber')}</p>
+              <p>{t('tms.footer.addressSeoul')}</p>
               <p>{t('tms.footer.address')}</p>
             </div>
 
