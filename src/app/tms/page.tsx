@@ -111,7 +111,7 @@ export default function TmsPage() {
           <div className="mb-8 text-base font-bold tracking-wide uppercase text-gray-500">
             {t('tms.hero.badge')}
           </div>
-          <h1 className="text-3xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight whitespace-pre-line">
+          <h1 className="lg:text-[40px] text-[28px] font-bold text-gray-900 mb-6 leading-[140%] whitespace-pre-line">
             {t('tms.hero.title').replace(', ', ',\n')}
           </h1>
           <p className="text-base md:text-lg text-gray-600 leading-relaxed whitespace-pre-line">
@@ -158,7 +158,7 @@ export default function TmsPage() {
             <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
               {t('tms.enterprise.badge')}
             </p>
-            <h2 className="text-3xl md:text-3xl font-bold text-gray-900">
+            <h2 className="lg:text-[40px] text-[28px] font-bold text-gray-900 leading-[140%]">
               {t('tms.enterprise.title')}
             </h2>
           </div>
@@ -203,8 +203,8 @@ export default function TmsPage() {
             <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
               {t('tms.features.badge')}
             </p>
-            <h2 className="lg:text-[40px] text-[28px] font-bold leading-[140%] text-[#2B2C2E] lg:mt-[10px] mt-[6px]">
-              <span className="text-black">{t('tms.features.title').split(' ')[0]}</span> {t('tms.features.title').split(' ').slice(1).join(' ')}
+            <h2 className="lg:text-[40px] text-[28px] font-bold text-gray-900 leading-[140%]">
+              {t('tms.features.title')}
             </h2>
           </div>
 
@@ -278,7 +278,7 @@ export default function TmsPage() {
             <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
               {t('tms.security.badge')}
             </p>
-            <h2 className="lg:text-[40px] text-[28px] font-bold leading-[140%] text-[#2B2C2E]">
+            <h2 className="lg:text-[40px] text-[28px] font-bold text-gray-900 leading-[140%]">
               {t('tms.security.title')} <span className="text-[#4A7CFF]">{t('tms.security.highlight')}</span>
             </h2>
           </div>
