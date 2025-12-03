@@ -48,8 +48,8 @@ export default function TmsPage() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo - Top Left */}
-          <a href="/tms">
-            <img src="/logo_tms_b.svg" alt="TMS Logo" className="h-8" />
+          <a href="/tms" className="flex items-center">
+            <img src="/logo_tms_nb.svg" alt="TMS Logo" className="h-5 w-auto" />
           </a>
 
           {/* Right Side - Language Toggle & Hamburger Menu */}
