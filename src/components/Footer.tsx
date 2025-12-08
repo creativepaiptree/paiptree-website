@@ -66,7 +66,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <p className="body-sm" style={{ color: 'var(--text-muted)' }}>
-            © 2025 Paiptree Ltd. All Rights Reserved.
+            © 2025 Paiptree Inc. All Rights Reserved.
           </p>
           
           {/* Social Links */}
