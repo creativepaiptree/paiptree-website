@@ -4,10 +4,12 @@ import Footer from '@/components/Footer';
 const blogPosts = [
   {
     id: 1,
-    title: 'AI 기반 스마트 양계 시스템의 미래',
-    date: '2024-03-15',
-    author: '김민수',
-    tags: ['AI', '스마트팜', '데이터']
+    title: '체리부로 TMS 도입 현황 및 서비스 방안',
+    date: '2025-12-12',
+    author: 'ZORO',
+    tags: ['체리부로', 'TMS', '기술 검토'],
+    link: '/blog/1/cheriburo_tms_template.html',
+    thumbnail: '/blog/1/frame-1.png'
   },
   {
     id: 2,
@@ -84,38 +86,69 @@ export default function BlogPage() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-12">
               {/* Left: Blog Posts List */}
               <div className="space-y-0" style={{ maxWidth: '800px' }}>
-                {blogPosts.map((post) => (
-                  <div key={post.id} className="blog-list-item group cursor-pointer">
-                    {/* Content - Tags, Title, Author & Date */}
-                    <div className="content-section">
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.map((tag, index) => (
-                          <span key={index} className="blog-tag-inline">
-                            {tag}
-                          </span>
-                        ))}
+                {blogPosts.map((post) => {
+                  const cardContent = (
+                    <>
+                      {/* Content - Tags, Title, Author & Date */}
+                      <div className="content-section">
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {post.tags.map((tag, index) => (
+                            <span key={index} className="blog-tag-inline">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        {/* Title */}
+                        <h3 className="blog-list-title-light mb-3 group-hover:text-purple-600 transition-colors">
+                          {post.title}
+                        </h3>
+                        
+                        {/* Author & Date */}
+                        <div className="flex items-center gap-2 text-sm" style={{ color: '#9CA3AF' }}>
+                          <span>{post.author}</span>
+                          <span>|</span>
+                          <span>{new Date(post.date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}</span>
+                        </div>
                       </div>
                       
-                      {/* Title */}
-                      <h3 className="blog-list-title-light mb-3 group-hover:text-purple-600 transition-colors">
-                        {post.title}
-                      </h3>
-                      
-                      {/* Author & Date */}
-                      <div className="flex items-center gap-2 text-sm" style={{ color: '#9CA3AF' }}>
-                        <span>{post.author}</span>
-                        <span>|</span>
-                        <span>{new Date(post.date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}</span>
+                      {/* Thumbnail - Right Side */}
+                      <div className="thumbnail-section">
+                        {post.thumbnail ? (
+                          <img
+                            src={post.thumbnail}
+                            alt={`${post.title} 썸네일`}
+                            className="w-48 h-32 rounded-lg object-cover flex-shrink-0"
+                            style={{ border: '1px solid rgba(0, 0, 0, 0.6)' }}
+                          />
+                        ) : (
+                          <div className="w-48 h-32 blog-thumbnail rounded-lg flex-shrink-0"></div>
+                        )}
                       </div>
+                    </>
+                  );
+                  
+                  if (post.link) {
+                    return (
+                      <a
+                        key={post.id}
+                        href={post.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="blog-list-item group cursor-pointer"
+                      >
+                        {cardContent}
+                      </a>
+                    );
+                  }
+                  
+                  return (
+                    <div key={post.id} className="blog-list-item group cursor-pointer">
+                      {cardContent}
                     </div>
-                    
-                    {/* Thumbnail - Right Side */}
-                    <div className="thumbnail-section">
-                      <div className="w-48 h-32 blog-thumbnail rounded-lg flex-shrink-0"></div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               
               {/* Right: Tags Sidebar */}

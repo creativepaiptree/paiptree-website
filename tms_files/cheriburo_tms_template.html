@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>체리부로 TMS 도입 현황 및 서비스 방안</title>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: #E5E5E5;
+            overflow: auto;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* 슬라이드 컨테이너 */
+        .slide-container {
+            width: 1000px;
+            height: 600px;
+            position: relative;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
+        }
+        
+        /* 개별 슬라이드 */
+        .slide {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: 50px 1fr;
+            grid-template-rows: auto 1fr auto;
+        }
+        
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* 좌측 프로젝트명 영역 */
+        .project-label {
+            grid-column: 1;
+            grid-row: 1 / 4;
+            background: #ffffff;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+            border-right: 1px solid #E0E0E0;
+        }
+        
+        .project-label span {
+            color: #000000;
+            font-size: 9px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+        
+        /* 메인 컨텐츠 영역 */
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            padding: 20px 36px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 상단 로고 영역 */
+        .header {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 20px 36px 0 36px;
+        }
+        
+        .logo {
+            height: 18px;
+        }
+        
+        /* 하단 카피라이트 */
+        .footer {
+            grid-column: 2;
+            grid-row: 3;
+            padding: 0 36px 16px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8px;
+            color: #999999;
+        }
+        
+        /* 페이지 넘버 */
+        .page-number {
+            font-size: 11px;
+            color: #000000;
+            font-weight: 500;
+        }
+        
+        /* 섹션 넘버 */
+        .section-number {
+            font-size: 12px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+        
+        /* 섹션 타이틀 */
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 18px;
+            line-height: 1.2;
+        }
+        
+        /* 컨텐츠 박스 */
+        .content-box {
+            background: #F5F5F5;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .content-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000000;
+        }
+        
+        .content-box p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #333333;
+        }
+        
+        /* 다크 박스 (강조용) */
+        .dark-box {
+            background: #000000;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .dark-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+        
+        .dark-box p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ffffff;
+        }
+        
+        .dark-box ul li {
+            color: #ffffff;
+        }
+        
+        /* 2단 레이아웃 */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+        
+        .two-column > .content-box,
+        .two-column > .dark-box {
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 커버 슬라이드 */
+        .cover-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .cover-slide .main-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+        
+        .cover-slide .sub-title {
+            font-size: 14px;
+            font-weight: 400;
+            color: #666666;
+            margin-bottom: 28px;
+        }
+        
+        .cover-slide .date {
+            font-size: 12px;
+            color: #999999;
+        }
+        
+        /* 페이지 인디케이터 */
+        .page-indicator {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+        
+        .indicator-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #CCCCCC;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .indicator-dot.active {
+            background: #000000;
+            width: 18px;
+            border-radius: 3px;
+        }
+        
+        /* 네비게이션 힌트 */
+        .nav-hint {
+            position: absolute;
+            bottom: 16px;
+            right: 20px;
+            font-size: 10px;
+            color: #999999;
+            opacity: 0.5;
+        }
+        
+        /* 리스트 스타일 */
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        ul li {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #333333;
+            padding-left: 14px;
+            position: relative;
+        }
+        
+        ul li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #000000;
+            font-weight: 700;
+        }
+        
+        /* 체크리스트 */
+        .checklist li::before {
+            content: "✓";
+            color: #000000;
+        }
+        
+        /* 테이블 스타일 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        
+        table th,
+        table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        table th {
+            font-weight: 700;
+            font-size: 11px;
+            color: #000000;
+            background: #F5F5F5;
+        }
+        
+        table td {
+            font-size: 11px;
+            color: #333333;
+        }
+        
+        /* 타임라인 */
+        .timeline {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            background: #F5F5F5;
+            padding: 12px 10px;
+            border-radius: 5px;
+        }
+        
+        .timeline-item::after {
+            content: "→";
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #999999;
+            z-index: 1;
+        }
+        
+        .timeline-item:last-child::after {
+            content: "";
+        }
+        
+        .timeline-date {
+            font-size: 12px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 6px;
+        }
+        
+        .timeline-content {
+            font-size: 10px;
+            color: #666666;
+            line-height: 1.4;
+        }
+        
+        /* 비교 테이블 */
+        .comparison-table {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .comparison-column h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #000000;
+        }
+        
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        .comparison-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #000000;
+        }
+        
+        .comparison-value {
+            font-size: 12px;
+            color: #666666;
+        }
+        
+        /* 4분할 그리드 */
+        .four-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .grid-card {
+            background: #F5F5F5;
+            padding: 18px;
+            border-radius: 6px;
+            text-align: center;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .grid-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #000000;
+        }
+        
+        .grid-card .subtitle {
+            font-size: 11px;
+            color: #666666;
+            margin-bottom: 8px;
+        }
+        
+        .grid-card .stars {
+            font-size: 13px;
+            color: #FFD700;
+        }
+        
+        /* 프로세스 플로우 */
+        .process-flow {
+            background: #F5F5F5;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+        }
+        
+        .flow-content {
+            font-size: 11px;
+            color: #333333;
+        }
+        
+        /* 세로 프로세스 플로우 */
+        .vertical-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .vertical-flow.warning {
+            background: #FFF5F5;
+        }
+        
+        .vertical-flow.success {
+            background: #F0FFF0;
+        }
+        
+        .vertical-flow .flow-item {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333333;
+            padding: 6px 12px;
+            background: #ffffff;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .vertical-flow .flow-arrow-down {
+            font-size: 14px;
+            color: #999999;
+            margin: 4px 0;
+        }
+        
+        .result-list {
+            margin-top: 10px;
+        }
+        
+        .result-list li {
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .result-list.warning li {
+            color: #C62828;
+        }
+        
+        .result-list.success li {
+            color: #2E7D32;
+        }
+        
+        /* 핵심 메시지 강조 */
+        .critical-message {
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            color: #EF5350 !important;
+            line-height: 1.5 !important;
+        }
+        
+        /* 강조 텍스트 */
+        .highlight {
+            color: #FF0000;
+            font-weight: 700;
+        }
+
+        .solution-highlight {
+            font-weight: 700;
+            color: #C62828;
+        }
+        
+        .star-icon {
+            color: #FFD700;
+            font-size: 14px;
+            margin-left: 6px;
+        }
+        
+        /* 솔루션 2x2 그리드 */
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .solution-card {
+            background: #F5F5F5;
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .solution-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 2px;
+        }
+        
+        .solution-desc {
+            font-size: 10px;
+            color: #666666;
+            margin-bottom: 4px;
+        }
+        
+        
+        .solution-flow {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .flow-step {
+            padding: 4px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 0 auto;
+            white-space: nowrap;
+            border: 1px solid currentColor;
+        }
+        
+        .flow-step .step-number {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: transparent;
+            color: inherit;
+            font-size: 8px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .flow-plan1 .flow-step {
+            background: #113D7B;
+            color: #ffffff;
+        }
+        
+        .flow-plan2 .flow-step {
+            background: #ECEFF1;
+            color: #1F2A37;
+        }
+        
+        .flow-plan3 .flow-step {
+            background: #FFF3E0;
+            color: #7A4100;
+        }
+        
+        .flow-plan4 .flow-step {
+            background: #E0F7F2;
+            color: #005A4A;
+        }
+        
+        .solution-pros-cons {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 9px;
+            line-height: 1.4;
+        }
+        
+        .solution-pros-cons .pros {
+            color: #2E7D32;
+        }
+        
+        .solution-pros-cons .cons {
+            color: #C62828;
+        }
+        
+        
+        .solution-burden {
+            font-size: 10px;
+            color: #666666;
+            margin-top: auto;
+            padding-top: 6px;
+            border-top: 1px solid #E0E0E0;
+        }
+        
+        /* 애니메이션 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        
+        <!-- 슬라이드 1: 커버 -->
+        <div class="slide active" data-slide="1">
+            <div class="project-label">
+                <span>Cheriburo TMS Implementation Project</span>
+            </div>
+            
+            <div class="header">
+                <img src="paiptree_B.png" alt="PAIPTREE" class="logo">
+            </div>
+            
+            <div class="main-content cover-slide">
+                <h1 class="main-title">체리부로 TMS<br>도입 현황 및 서비스 방안</h1>
+                <p class="sub-title">통합 운영 사업장 맞춤형 솔루션 제안</p>
+                <p class="date">2024.12.12</p>
+            </div>
+            
+            <div class="footer">
+                <span>Copyright © 2025 Paiptree Inc. All rights reserved.</span>
+                <span class="page-number">01</span>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 2: 프로젝트 진행 상황 -->
+        <div class="slide" data-slide="2">
+            <div class="project-label">
+                <span>Cheriburo TMS Implementation Project</span>
+            </div>
+            
+            <div class="header">
+                <img src="paiptree_B.png" alt="PAIPTREE" class="logo">
+            </div>
+            
+            <div class="main-content">
+                <div class="section-number">01</div>
+                <h2 class="section-title">Current Status</h2>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">11.24</div>
+                        <div class="timeline-content">메일 발송<br>데이터 입력 요청</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">12.10</div>
+                        <div class="timeline-content">전화 미팅<br>핵심 이슈 발견</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">12.12</div>
+                        <div class="timeline-content">기술 검토<br>솔루션 도출</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">12.1X</div>
+                        <div class="timeline-content">팀장 미팅<br>방향 결정</div>
+                    </div>
+                </div>
+                
+                <div class="content-box">
+                    <h3>완료 사항</h3>
+                    <ul class="checklist">
+                        <li>BD 분리 및 계정 발급 완료 (TMS팀 협조)</li>
+                        <li>1차 운영 테스트 완료 (각종 상황 대비 시나리오 검증)</li>
+                        <li>고객사 기본 정보 수집 (차량/농장/시간 데이터)</li>
+                        <li>내부 기술 검토 완료 (4가지 솔루션 도출)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <span>Copyright © 2025 Paiptree Inc. All rights reserved.</span>
+                <span class="page-number">02</span>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 3: 핵심 이슈 발견 -->
+        <div class="slide" data-slide="3">
+            <div class="project-label">
+                <span>Cheriburo TMS Implementation Project</span>
+            </div>
+            
+            <div class="header">
+                <img src="paiptree_B.png" alt="PAIPTREE" class="logo">
+            </div>
+            
+            <div class="main-content">
+                <div class="section-number">02</div>
+                <h2 class="section-title">Critical Issue Identified</h2>
+                
+                <div class="comparison-table">
+                    <div class="comparison-column">
+                        <h4>신우 (분리형 운영)</h4>
+                        <div class="comparison-row">
+                            <span class="comparison-label">조직 구조</span>
+                            <span class="comparison-value">출하↔운송 분리</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">출하 관리</span>
+                            <span class="comparison-value">신우</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">운송 관리</span>
+                            <span class="comparison-value">한호 (외주)</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">ERP 활용</span>
+                            <span class="comparison-value">사전 계획 수립</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">실시간 관제</span>
+                            <span class="comparison-value">가능</span>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <h4>체리부로 (통합형 운영)</h4>
+                        <div class="comparison-row">
+                            <span class="comparison-label">조직 구조</span>
+                            <span class="comparison-value">출하+운송 통합</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">출하 관리</span>
+                            <span class="comparison-value">체리부로 (1팀)</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">운송 관리</span>
+                            <span class="comparison-value">체리부로 (1팀)</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">ERP 활용</span>
+                            <span class="comparison-value">사후 기록</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">실시간 관제</span>
+                            <span class="comparison-value">불가능</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dark-box">
+                    <h3>핵심 문제</h3>
+                    <p class="critical-message">"ERP는 기록용으로만 사용, 실제 업무는 엑셀 기반 수기 진행"</p>
+                    <p style="margin-top: 12px;">→ 현재 방식으로는 실시간 관제가 불가능</p>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <span>Copyright © 2025 Paiptree Inc. All rights reserved.</span>
+                <span class="page-number">03</span>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 4: 문제 구조 시각화 -->
+        <div class="slide" data-slide="4">
+            <div class="project-label">
+                <span>Cheriburo TMS Implementation Project</span>
+            </div>
+            
+            <div class="header">
+                <img src="paiptree_B.png" alt="PAIPTREE" class="logo">
+            </div>
+            
+            <div class="main-content">
+                <div class="section-number">03</div>
+                <h2 class="section-title">Problem Structure</h2>
+                
+                <div class="two-column">
+                <div class="content-box">
+                    <h3>현재 체리부로 프로세스</h3>
+                    <div class="vertical-flow warning">
+                        <div class="flow-item">출하 당일</div>
+                        <div class="flow-arrow-down">↓</div>
+                        <div class="flow-item">수기 작업 (엑셀)</div>
+                        <div class="flow-arrow-down">↓</div>
+                        <div class="flow-item">출하 완료</div>
+                        <div class="flow-arrow-down">↓</div>
+                        <div class="flow-item">ERP 사후 입력</div>
+                    </div>
+                    <ul class="result-list warning">
+                        <li>❌ 실시간 관제 불가능</li>
+                        <li>❌ 긴급 대응 불가능</li>
+                    </ul>
+                </div>
+                
+                <div class="content-box">
+                    <h3>TMS 요구 프로세스</h3>
+                    <div class="vertical-flow success">
+                        <div class="flow-item">출하 전날</div>
+                        <div class="flow-arrow-down">↓</div>
+                        <div class="flow-item">ERP/TMS 계획 수립</div>
+                        <div class="flow-arrow-down">↓</div>
+                        <div class="flow-item">당일 실시간 추적</div>
+                        <div class="flow-arrow-down">↓</div>
+                        <div class="flow-item">자동 기록</div>
+                    </div>
+                    <ul class="result-list success">
+                        <li>✅ 실시간 관제 가능</li>
+                        <li>✅ 긴급 상황 즉시 대응</li>
+                    </ul>
+                </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <span>Copyright © 2025 Paiptree Inc. All rights reserved.</span>
+                <span class="page-number">04</span>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 5: 4가지 방안 상세 -->
+        <div class="slide" data-slide="5">
+            <div class="project-label">
+                <span>Cheriburo TMS Implementation Project</span>
+            </div>
+            
+            <div class="header">
+                <img src="paiptree_B.png" alt="PAIPTREE" class="logo">
+            </div>
+            
+            <div class="main-content">
+                <div class="section-number">04</div>
+                <h2 class="section-title">Solution Details</h2>
+                
+                <div class="solution-grid">
+                    <div class="solution-card">
+                        <div class="solution-header">방안 1: 표준 TMS 프로세스 도입 (현재 시스템)</div>
+                        <div class="solution-desc"><span class="solution-highlight">전날 ERP에서 농장·차량·시간 계획을 작성</span>하고 TMS/기사 앱으로 그대로 전달하는 완전 표준형 운영으로, 기존 엑셀 업무를 ERP/TMS 체계로 전환합니다.</div>
+                        <div class="solution-flow flow-plan1">
+                            <div class="flow-step">
+                                <span class="step-number">1</span>
+                                ERP 계획 작성 (전날)
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">2</span>
+                                TMS 차량·기사 배정
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">3</span>
+                                기사 앱 지시
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">4</span>
+                                실시간 모니터링
+                            </div>
+                        </div>
+                        <div class="solution-pros-cons">
+                            <span class="pros">✓ 실시간 관제, 표준 기능 100% 활용, 계획/실적 데이터 정합성 확보</span>
+                            <span class="cons">✗ ERP·TMS 중심으로 업무를 재설계해야 하며 기사/관리자 교육과 2~3개월 정착 기간이 필요</span>
+                        </div>
+                        <div class="solution-burden">고객 부담: <span class="stars">★★★★★</span></div>
+                    </div>
+                    
+                    <div class="solution-card">
+                        <div class="solution-header">방안 2: TMS를 뷰어로만 활용</div>
+                        <div class="solution-desc">고객사는 ERP에만 입력하고, <span class="solution-highlight">ERP가 제공하는 API를 통해 TMS가 데이터를 읽어</span> 관제/모바일 화면에 그대로 시각화하는 뷰어형 연동 구조입니다.</div>
+                        <div class="solution-flow flow-plan2">
+                            <div class="flow-step">
+                                <span class="step-number">1</span>
+                                ERP 계획+차량 관리 (전날)
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">2</span>
+                                ERP-TMS API 연동
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">3</span>
+                                TMS 관제·앱 화면 노출
+                            </div>
+                        </div>
+                        <div class="solution-pros-cons">
+                            <span class="pros">✓ ERP 하나만 사용하면서 실시간 관제를 구현, 중복 입력 없음</span>
+                            <span class="cons">✗ ERP-TMS 연동 개발과 ERP 내 차량 관리 기능 정비가 필요하며 ERP 장애 시 관제도 영향을 받음</span>
+                        </div>
+                        <div class="solution-burden">고객 부담: <span class="stars">★★★☆☆</span></div>
+                    </div>
+                    
+                    <div class="solution-card">
+                        <div class="solution-header">방안 3: 후행 관제 (ERP 연동)</div>
+                        <div class="solution-desc">당일에는 엑셀/수기로 운영하고 <span class="solution-highlight">종료 후 ERP에 결과를 입력하면, TMS가 해당 데이터를 불러와</span> 운행 경로·타임라인·통계를 복기해 주는 방식입니다.</div>
+                        <div class="solution-flow flow-plan3">
+                            <div class="flow-step">
+                                <span class="step-number">1</span>
+                                당일 수기 작업
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">2</span>
+                                종료 후 ERP 입력
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">3</span>
+                                TMS 지도/타임라인 복기
+                            </div>
+                        </div>
+                        <div class="solution-pros-cons">
+                            <span class="pros">✓ 업무 방식 변경 없이 ERP 데이터 자산으로 운행 기록을 체계적으로 시각화</span>
+                            <span class="cons">✗ 실시간 관제와 긴급 대응은 불가능하며 ERP 연동 개발 부담이 존재</span>
+                        </div>
+                        <div class="solution-burden">고객 부담: <span class="stars">★☆☆☆☆</span></div>
+                    </div>
+                    
+                    <div class="solution-card">
+                        <div class="solution-header">방안 4: 독립형 후행 관제</div>
+                        <div class="solution-desc">ERP 연동 없이 전날에 미리 <span class="solution-highlight">TMS에 차량·농장·출발/도착 시간만 최소 입력하여 독립적으로</span> 운행 복기와 리포트를 제공하는 가장 심플한 방식입니다.</div>
+                        <div class="solution-flow flow-plan4">
+                            <div class="flow-step">
+                                <span class="step-number">1</span>
+                                당일 수기 작업
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">2</span>
+                                종료 후 TMS에 핵심 정보 입력
+                            </div>
+                            <div class="flow-step">
+                                <span class="step-number">3</span>
+                                지도/타임라인 리포트 생성
+                            </div>
+                        </div>
+                        <div class="solution-pros-cons">
+                            <span class="pros">✓ 개발 없이 빠르게 도입하고 고객 저항을 최소화하며 시각화 가치를 즉시 제시</span>
+                            <span class="cons">✗ 실시간 관제는 불가하고 최소 입력과 농장/차량 마스터 관리를 TMS에서 수행해야 함</span>
+                        </div>
+                        <div class="solution-burden">고객 부담: <span class="stars">★★☆☆☆</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <span>Copyright © 2025 Paiptree Inc. All rights reserved.</span>
+                <span class="page-number">05</span>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 6: 비교표 & 액션플랜 -->
+        <div class="slide" data-slide="6">
+            <div class="project-label">
+                <span>Cheriburo TMS Implementation Project</span>
+            </div>
+            
+            <div class="header">
+                <img src="paiptree_B.png" alt="PAIPTREE" class="logo">
+            </div>
+            
+            <div class="main-content">
+                <div class="section-number">05</div>
+                <h2 class="section-title">Comparison & Next Steps</h2>
+                
+                <div class="content-box">
+                    <h3>방안별 비교</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>구분</th>
+                                <th>방안 1</th>
+                                <th>방안 2</th>
+                                <th>방안 3</th>
+                                <th>방안 4</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>실시간 관제</strong></td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td>❌</td>
+                                <td>❌</td>
+                            </tr>
+                            <tr>
+                                <td><strong>업무 변경</strong></td>
+                                <td>대폭</td>
+                                <td>중간</td>
+                                <td>없음</td>
+                                <td>최소</td>
+                            </tr>
+                            <tr>
+                                <td><strong>개발 난이도</strong></td>
+                                <td>낮음</td>
+                                <td>높음</td>
+                                <td>높음</td>
+                                <td>낮음</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ERP 연동</strong></td>
+                                <td>필요</td>
+                                <td>필요</td>
+                                <td>필요</td>
+                                <td>불필요</td>
+                            </tr>
+                            <tr>
+                                <td><strong>도입 속도</strong></td>
+                                <td>중간</td>
+                                <td>느림</td>
+                                <td>느림</td>
+                                <td>빠름</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="content-box">
+                    <h3>Next Steps (12월 3째 주)</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #000000; margin-bottom: 10px;">1</div>
+                            <div style="font-size: 14px; font-weight: 600; margin-bottom: 5px;">팀장 미팅 (12.15)</div>
+                            <div style="font-size: 12px; color: #666666;">방향 결정</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #000000; margin-bottom: 10px;">2</div>
+                            <div style="font-size: 14px; font-weight: 600; margin-bottom: 5px;">고객사 재미팅 (15~17)</div>
+                            <div style="font-size: 12px; color: #666666;">현황 재확인 + 제안</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #000000; margin-bottom: 10px;">3</div>
+                            <div style="font-size: 14px; font-weight: 600; margin-bottom: 5px;">파일럿 시작 (ASAP)</div>
+                            <div style="font-size: 12px; color: #666666;">선택 방안과 상관없이 현 시스템으로 파일럿 테스트</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <span>Copyright © 2025 Paiptree Inc. All rights reserved.</span>
+                <span class="page-number">06</span>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- 페이지 인디케이터 -->
+    <div class="page-indicator">
+        <div class="indicator-dot active" data-page="1"></div>
+        <div class="indicator-dot" data-page="2"></div>
+        <div class="indicator-dot" data-page="3"></div>
+        <div class="indicator-dot" data-page="4"></div>
+        <div class="indicator-dot" data-page="5"></div>
+        <div class="indicator-dot" data-page="6"></div>
+    </div>
+    
+    <!-- 네비게이션 힌트 -->
+    <div class="nav-hint">← → 키로 페이지 이동</div>
+    
+    <script>
+        // 슬라이드 네비게이션
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            const dots = document.querySelectorAll('.indicator-dot');
+            
+            if (n > totalSlides) currentSlide = totalSlides;
+            if (n < 1) currentSlide = 1;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            slides[currentSlide - 1].classList.add('active');
+            dots[currentSlide - 1].classList.add('active');
+        }
+        
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+        
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+        
+        // 키보드 네비게이션
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+        
+        // 인디케이터 클릭
+        document.querySelectorAll('.indicator-dot').forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentSlide = index + 1;
+                showSlide(currentSlide);
+            });
+        });
+        
+        // 초기화
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
