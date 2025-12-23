@@ -10,7 +10,12 @@ export default function TmsPage() {
   const { t } = useTranslation();
   const { language, toggleLanguage } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isDataInsightsOpen, setIsDataInsightsOpen] = useState(false);
+
+  const openDataInsights = () => {
+    if (typeof window !== 'undefined') {
+      window.open('/tms/tms-schedule-final.html', '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const footerLinks = {
     product: language === 'ko' 
@@ -178,13 +183,13 @@ export default function TmsPage() {
                   className={`rounded-xl shadow-[1px_1px_18px_0px_rgba(97,121,148,0.12)] bg-white overflow-hidden hover:shadow-[1px_1px_24px_0px_rgba(97,121,148,0.18)] transition-shadow ${
                     isDataInsightsCard ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black' : ''
                   }`}
-                  onClick={isDataInsightsCard ? () => setIsDataInsightsOpen(true) : undefined}
+                  onClick={isDataInsightsCard ? openDataInsights : undefined}
                   onKeyDown={
                     isDataInsightsCard
                       ? (event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            setIsDataInsightsOpen(true);
+                            openDataInsights();
                           }
                         }
                       : undefined
@@ -417,41 +422,6 @@ export default function TmsPage() {
         </div>
       </footer>
 
-      {/* Data insights modal */}
-      {isDataInsightsOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center px-4 py-8">
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setIsDataInsightsOpen(false)}
-          />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[1200px] max-h-full overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <div>
-                <p className="text-sm font-semibold text-gray-500">{t('tms.enterprise.cards.5.title')}</p>
-                <p className="text-base font-bold text-gray-900">
-                  {t('tms.enterprise.cards.5.description')}
-                </p>
-              </div>
-              <button
-                onClick={() => setIsDataInsightsOpen(false)}
-                className="p-2 text-gray-500 hover:text-gray-900 transition-colors"
-                aria-label="Close data insights preview"
-              >
-                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 6l12 12M6 18L18 6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 bg-gray-100 min-h-[60vh]">
-              <iframe
-                src="/tms/tms-schedule-final.html"
-                title="TMS 데이터 기반 인사이트"
-                className="w-full h-full border-0"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
