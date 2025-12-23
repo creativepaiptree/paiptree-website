@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMS - 차량 스케줄 관리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-selector input[type="date"] {
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sort-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .sort-btn {
+            padding: 6px 14px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sort-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #4A90E2;
+        }
+
+        .sort-btn.active {
+            background-color: #4A90E2;
+            color: white;
+            border-color: #4A90E2;
+        }
+
+        .vehicle-select-wrapper {
+            position: relative;
+        }
+
+        .vehicle-select {
+            padding: 6px 30px 6px 14px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            appearance: none;
+            min-width: 180px;
+        }
+
+        .vehicle-select:hover {
+            border-color: #4A90E2;
+        }
+
+        .vehicle-select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .date-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4A90E2;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .project-card {
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .project-header {
+            padding: 16px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+
+        .project-header:hover {
+            background-color: #f8f9fa;
+        }
+
+        .project-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .project-name-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .project-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .project-time {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+            background-color: #f1f3f5;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .view-toggle-btn {
+            padding: 6px 14px;
+            border: none;
+            background-color: transparent;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 400;
+        }
+
+        .view-toggle-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .view-toggle-btn.active {
+            background-color: white;
+            color: #333;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .vehicle-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+            margin-left: 16px;
+        }
+
+        .count-badge {
+            background-color: #4A90E2;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+            color: #666;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .vehicle-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .vehicle-list.open {
+            max-height: 2000px;
+        }
+
+        .vehicle-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #dee2e6;
+        }
+
+        .vehicle-table th {
+            background-color: #f1f3f5;
+            padding: 10px 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+
+        .vehicle-table th:first-child {
+            width: 160px;
+        }
+
+        .vehicle-table td {
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            background-color: white;
+        }
+
+        .vehicle-table td:first-child {
+            text-align: left;
+            width: 160px;
+        }
+
+        .vehicle-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .vehicle-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .vehicle-number {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .driver-name {
+            color: #666;
+            font-size: 13px;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+
+        .vehicle-time-range {
+            color: #999;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .time-cell {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .time-cell.completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .time-cell.current {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            font-weight: 600;
+        }
+
+        .time-cell.pending {
+            color: #757575;
+        }
+
+        .status-text {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-text.active {
+            color: #1565c0;
+        }
+
+        .status-text.pending {
+            color: #757575;
+        }
+
+        /* 지도 보기 스타일 */
+        .map-container {
+            padding: 0;
+            background-color: white;
+            display: none;
+        }
+
+        .map-container.active {
+            display: block;
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <h1>TMS (Ver 1.0.0) - 차량 스케줄 관리</h1>
+            <div class="header-info">
+                <span class="date-info">2025. 12. 24. (화)</span>
+                <span class="user-info">
+                    <span>👤</span>
+                    <span>파이프트리</span>
+                </span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="date-selector">
+                <label class="sort-label">날짜 선택:</label>
+                <input type="date" id="dateSelect" value="2025-12-24">
+            </div>
+            <div class="sort-controls">
+                <span class="sort-label">필터:</span>
+                <div class="vehicle-select-wrapper">
+                    <select class="vehicle-select" id="vehicleSelect">
+                        <option value="">차량별 조회</option>
+                        <option value="123가4567">123가4567 (홍길동)</option>
+                        <option value="456나7890">456나7890 (김철수)</option>
+                        <option value="789다1234">789다1234 (이영희)</option>
+                        <option value="234라5678">234라5678 (박민수)</option>
+                        <option value="567마8901">567마8901 (정수진)</option>
+                    </select>
+                </div>
+                <button class="sort-btn active" onclick="sortBy('farm')">농장별</button>
+                <button class="sort-btn" onclick="sortBy('time')">시간순</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 프로젝트 1: 체리부로 - 진천 농장 -->
+        <div class="project-card">
+            <div class="project-header" onclick="toggleProject(1)">
+                <div class="project-info">
+                    <div class="project-name-wrapper">
+                        <div class="project-name">체리부로 - 진천 농장 A</div>
+                        <div class="project-time">운행 시작: 06:00 | 예상 완료: 14:30</div>
+                    </div>
+                    <div class="view-toggle" onclick="event.stopPropagation()">
+                        <button class="view-toggle-btn active" onclick="toggleView(1, 'table')">표보기</button>
+                        <button class="view-toggle-btn" onclick="toggleView(1, 'map')">지도보기</button>
+                    </div>
+                </div>
+                <div class="vehicle-count">
+                    <span>총 차량</span>
+                    <span class="count-badge">10대</span>
+                    <span class="toggle-icon" id="icon-1">▼</span>
+                </div>
+            </div>
+            
+            <!-- 표 보기 -->
+            <div class="vehicle-list" id="project-1">
+                <table class="vehicle-table">
+                    <thead>
+                        <tr>
+                            <th>차량</th>
+                            <th>농장</th>
+                            <th>계근소</th>
+                            <th>소독소</th>
+                            <th>계근소</th>
+                            <th>도축장</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        123가4567 <span class="driver-name">(홍길동)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">06:00 ~ 09:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell completed">06:00</td>
+                            <td class="time-cell completed">06:35</td>
+                            <td class="time-cell completed">06:50</td>
+                            <td class="time-cell current">07:05</td>
+                            <td class="time-cell pending">09:20</td>
+                            <td><span class="status-text active">운행중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        456나7890 <span class="driver-name">(김철수)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">06:15 ~ 09:35</div>
+                                </div>
+                            </td>
+                            <td class="time-cell completed">06:15</td>
+                            <td class="time-cell completed">06:50</td>
+                            <td class="time-cell current">07:05</td>
+                            <td class="time-cell pending">07:20</td>
+                            <td class="time-cell pending">09:35</td>
+                            <td><span class="status-text active">운행중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        789다1234 <span class="driver-name">(이영희)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">06:30 ~ 09:50</div>
+                                </div>
+                            </td>
+                            <td class="time-cell completed">06:30</td>
+                            <td class="time-cell current">07:05</td>
+                            <td class="time-cell pending">07:20</td>
+                            <td class="time-cell pending">07:35</td>
+                            <td class="time-cell pending">09:50</td>
+                            <td><span class="status-text active">운행중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        234라5678 <span class="driver-name">(박민수)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">07:00 ~ 10:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell completed">07:00</td>
+                            <td class="time-cell pending">07:35</td>
+                            <td class="time-cell pending">07:50</td>
+                            <td class="time-cell pending">08:05</td>
+                            <td class="time-cell pending">10:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        567마8901 <span class="driver-name">(정수진)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">07:30 ~ 10:50</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">07:30</td>
+                            <td class="time-cell pending">08:05</td>
+                            <td class="time-cell pending">08:20</td>
+                            <td class="time-cell pending">08:35</td>
+                            <td class="time-cell pending">10:50</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 지도 보기 -->
+            <div class="map-container" id="map-1">
+                <img src="tms-map-image.png" alt="TMS 지도" class="map-image">
+            </div>
+        </div>
+
+        <!-- 프로젝트 2: 체리부로 - 음성 농장 -->
+        <div class="project-card">
+            <div class="project-header" onclick="toggleProject(2)">
+                <div class="project-info">
+                    <div class="project-name-wrapper">
+                        <div class="project-name">체리부로 - 음성 농장 B</div>
+                        <div class="project-time">운행 시작: 07:00 | 예상 완료: 15:00</div>
+                    </div>
+                    <div class="view-toggle" onclick="event.stopPropagation()">
+                        <button class="view-toggle-btn active" onclick="toggleView(2, 'table')">표보기</button>
+                        <button class="view-toggle-btn" onclick="toggleView(2, 'map')">지도보기</button>
+                    </div>
+                </div>
+                <div class="vehicle-count">
+                    <span>총 차량</span>
+                    <span class="count-badge">10대</span>
+                    <span class="toggle-icon" id="icon-2">▼</span>
+                </div>
+            </div>
+            
+            <!-- 표 보기 -->
+            <div class="vehicle-list" id="project-2">
+                <table class="vehicle-table">
+                    <thead>
+                        <tr>
+                            <th>차량</th>
+                            <th>농장</th>
+                            <th>계근소</th>
+                            <th>소독소</th>
+                            <th>계근소</th>
+                            <th>도축장</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        567카8901 <span class="driver-name">(한지우)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">07:00 ~ 10:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">07:00</td>
+                            <td class="time-cell pending">07:35</td>
+                            <td class="time-cell pending">07:50</td>
+                            <td class="time-cell pending">08:05</td>
+                            <td class="time-cell pending">10:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        890타2345 <span class="driver-name">(오세훈)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">07:30 ~ 10:50</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">07:30</td>
+                            <td class="time-cell pending">08:05</td>
+                            <td class="time-cell pending">08:20</td>
+                            <td class="time-cell pending">08:35</td>
+                            <td class="time-cell pending">10:50</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        123파4567 <span class="driver-name">(서현주)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">08:00 ~ 11:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">08:00</td>
+                            <td class="time-cell pending">08:35</td>
+                            <td class="time-cell pending">08:50</td>
+                            <td class="time-cell pending">09:05</td>
+                            <td class="time-cell pending">11:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        456하7890 <span class="driver-name">(권도윤)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">08:30 ~ 11:50</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">08:30</td>
+                            <td class="time-cell pending">09:05</td>
+                            <td class="time-cell pending">09:20</td>
+                            <td class="time-cell pending">09:35</td>
+                            <td class="time-cell pending">11:50</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        789거1234 <span class="driver-name">(안소영)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">09:00 ~ 12:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">09:00</td>
+                            <td class="time-cell pending">09:35</td>
+                            <td class="time-cell pending">09:50</td>
+                            <td class="time-cell pending">10:05</td>
+                            <td class="time-cell pending">12:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 지도 보기 -->
+            <div class="map-container" id="map-2">
+                <img src="tms-map-image.png" alt="TMS 지도" class="map-image">
+            </div>
+        </div>
+
+        <!-- 프로젝트 3: 체리부로 - 청주 농장 -->
+        <div class="project-card">
+            <div class="project-header" onclick="toggleProject(3)">
+                <div class="project-info">
+                    <div class="project-name-wrapper">
+                        <div class="project-name">체리부로 - 청주 농장 C</div>
+                        <div class="project-time">운행 시작: 13:00 | 예상 완료: 18:30</div>
+                    </div>
+                    <div class="view-toggle" onclick="event.stopPropagation()">
+                        <button class="view-toggle-btn active" onclick="toggleView(3, 'table')">표보기</button>
+                        <button class="view-toggle-btn" onclick="toggleView(3, 'map')">지도보기</button>
+                    </div>
+                </div>
+                <div class="vehicle-count">
+                    <span>총 차량</span>
+                    <span class="count-badge">10대</span>
+                    <span class="toggle-icon" id="icon-3">▼</span>
+                </div>
+            </div>
+            
+            <!-- 표 보기 -->
+            <div class="vehicle-list" id="project-3">
+                <table class="vehicle-table">
+                    <thead>
+                        <tr>
+                            <th>차량</th>
+                            <th>농장</th>
+                            <th>계근소</th>
+                            <th>소독소</th>
+                            <th>계근소</th>
+                            <th>도축장</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        789서1234 <span class="driver-name">(곽태양)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">13:00 ~ 16:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">13:00</td>
+                            <td class="time-cell pending">13:35</td>
+                            <td class="time-cell pending">13:50</td>
+                            <td class="time-cell pending">14:05</td>
+                            <td class="time-cell pending">16:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        234어5678 <span class="driver-name">(류지은)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">13:30 ~ 16:50</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">13:30</td>
+                            <td class="time-cell pending">14:05</td>
+                            <td class="time-cell pending">14:20</td>
+                            <td class="time-cell pending">14:35</td>
+                            <td class="time-cell pending">16:50</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        567저8901 <span class="driver-name">(문상훈)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">14:00 ~ 17:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">14:00</td>
+                            <td class="time-cell pending">14:35</td>
+                            <td class="time-cell pending">14:50</td>
+                            <td class="time-cell pending">15:05</td>
+                            <td class="time-cell pending">17:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        890처2345 <span class="driver-name">(탁재민)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">14:30 ~ 17:50</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">14:30</td>
+                            <td class="time-cell pending">15:05</td>
+                            <td class="time-cell pending">15:20</td>
+                            <td class="time-cell pending">15:35</td>
+                            <td class="time-cell pending">17:50</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                        <tr class="vehicle-row">
+                            <td>
+                                <div class="vehicle-info">
+                                    <div class="vehicle-number">
+                                        123커4567 <span class="driver-name">(하윤아)</span>
+                                    </div>
+                                    <div class="vehicle-time-range">15:00 ~ 18:20</div>
+                                </div>
+                            </td>
+                            <td class="time-cell pending">15:00</td>
+                            <td class="time-cell pending">15:35</td>
+                            <td class="time-cell pending">15:50</td>
+                            <td class="time-cell pending">16:05</td>
+                            <td class="time-cell pending">18:20</td>
+                            <td><span class="status-text pending">대기중</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 지도 보기 -->
+            <div class="map-container" id="map-3">
+                <img src="tms-map-image.png" alt="TMS 지도" class="map-image">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleProject(projectId) {
+            const vehicleList = document.getElementById(`project-${projectId}`);
+            const icon = document.getElementById(`icon-${projectId}`);
+            
+            vehicleList.classList.toggle('open');
+            icon.classList.toggle('open');
+        }
+
+        function toggleView(projectId, viewType) {
+            const tableView = document.getElementById(`project-${projectId}`);
+            const mapView = document.getElementById(`map-${projectId}`);
+            const btns = event.currentTarget.parentElement.querySelectorAll('.view-toggle-btn');
+            
+            // 버튼 active 상태 변경
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            // 뷰 전환
+            if (viewType === 'table') {
+                tableView.style.display = 'block';
+                if (mapView) mapView.classList.remove('active');
+            } else {
+                tableView.style.display = 'none';
+                if (mapView) mapView.classList.add('active');
+            }
+        }
+
+        function sortBy(type) {
+            // 정렬 버튼 active 상태 변경
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            console.log(`Sorting by: ${type}`);
+            
+            if (type === 'farm') {
+                alert('농장별 정렬: 농장명 기준으로 정렬됩니다.');
+            } else if (type === 'time') {
+                alert('시간순 정렬: 출발 시간 기준으로 정렬됩니다.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 첫 번째 프로젝트는 기본으로 열려있게
+            toggleProject(1);
+
+            // 날짜 선택 이벤트
+            document.getElementById('dateSelect').addEventListener('change', function(e) {
+                console.log('Selected date:', e.target.value);
+                alert(`${e.target.value} 날짜의 스케줄을 불러옵니다.`);
+            });
+
+            // 차량 선택 이벤트
+            document.getElementById('vehicleSelect').addEventListener('change', function(e) {
+                if (e.target.value) {
+                    const vehicleNumber = e.target.value;
+                    console.log('Selected vehicle:', vehicleNumber);
+                    
+                    // 실제로는 서버에서 해당 차량의 운행 기록을 가져와야 함
+                    alert(`${vehicleNumber} 차량의 최근 운행 기록:\n\n` +
+                          `📅 12/24 (화) - 진천 농장 A\n   06:00 ~ 09:20 (3시간 20분)\n\n` +
+                          `📅 12/23 (월) - 음성 농장 B\n   07:30 ~ 10:50 (3시간 20분)\n\n` +
+                          `📅 12/22 (일) - 청주 농장 C\n   14:00 ~ 17:20 (3시간 20분)\n\n` +
+                          `📅 12/21 (토) - 진천 농장 A\n   06:15 ~ 09:35 (3시간 20분)`
+                    );
+                    
+                    // 선택 초기화
+                    this.value = '';
+                }
+            });
+        });
+
+        // 실시간 업데이트 시뮬레이션
+        setInterval(() => {
+            // 실제로는 서버에서 실시간 위치 데이터를 받아와야 함
+        }, 5000);
+    </script>
+</body>
+</html>
