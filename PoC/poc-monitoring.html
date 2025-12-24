@@ -945,6 +945,7 @@
         const actionModalTitle = document.getElementById('actionModalTitle');
         const actionModalDesc = document.getElementById('actionModalDescription');
         const actionDateTime = document.getElementById('actionDateTime');
+        const actionWeightLabel = document.querySelector('label[for="actionWeight"]');
         const actionWeight = document.getElementById('actionWeight');
         const actionMemo = document.getElementById('actionMemo');
         const actionCancelBtn = document.getElementById('actionCancelBtn');
@@ -959,6 +960,9 @@
             actionModalDesc.textContent = `${house}의 ${action} 작업 정보를 입력하세요.`;
             actionDateTime.value = new Date().toISOString().slice(0, 16);
             actionWeight.value = '2150';
+            const isWeightNeeded = action.includes('출하');
+            actionWeightLabel.style.display = isWeightNeeded ? 'block' : 'none';
+            actionWeight.style.display = isWeightNeeded ? 'block' : 'none';
             actionMemo.value = '';
             actionModalBackdrop.classList.add('active');
         };
@@ -975,15 +979,16 @@
         });
 
         actionSubmitBtn.addEventListener('click', () => {
+            const weightValue = actionWeight.style.display === 'none' ? '' : actionWeight.value;
             const data = {
                 house: currentHouse,
                 action: currentAction,
                 dateTime: actionDateTime.value,
-                weight: actionWeight.value,
+                weight: weightValue,
                 memo: actionMemo.value
             };
             console.log('작업 기록', data);
-            alert(`${data.house}\n${data.action} 기록 완료\n일시: ${data.dateTime}\n출하 중량: ${data.weight || '미입력'}g\n메모: ${data.memo || '없음'}`);
+            alert(`${data.house}\n${data.action} 기록 완료\n일시: ${data.dateTime}${weightValue ? `\n출하 중량: ${weightValue}g` : ''}\n메모: ${data.memo || '없음'}`);
             closeActionModal();
         });
 
