@@ -215,6 +215,66 @@
             background: rgba(59, 130, 246, 0.18);
         }
 
+        .stream-nav {
+            pointer-events: none;
+        }
+
+        .stream-nav button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 999px;
+            border: none;
+            background: rgba(15, 23, 42, 0.15);
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            pointer-events: auto;
+        }
+
+        .stream-nav button:hover {
+            background: rgba(15, 23, 42, 0.35);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .stream-nav .prev {
+            left: 12px;
+        }
+
+        .stream-nav .next {
+            right: 12px;
+        }
+
+        .stream-camera-tabs {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 6px;
+            z-index: 5;
+        }
+
+        .stream-camera-tab {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stream-camera-tab.active {
+            background: rgba(0, 0, 0, 0.7);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
         .live-stream.offline .stream-video {
             filter: grayscale(0.8) brightness(0.6);
         }
@@ -246,15 +306,12 @@
         .sensor-status {
             background: #fdfefe;
             border-radius: 8px;
-            padding: 20px;
             border: 1px solid #e5eaf0;
+            overflow: hidden;
         }
 
-        .sensor-header {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #475569;
+        .sensor-content {
+            padding: 20px;
         }
 
         .sensor-list {
@@ -305,21 +362,30 @@
         .alert-log {
             background: #ffffff;
             border-radius: 8px;
-            padding: 20px;
             border: 1px solid #e5e7eb;
             max-height: 420px;
-            overflow-y: auto;
             box-shadow: inset 0 0 0 rgba(0,0,0,0);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        .alert-header {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #475569;
+        .alert-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            background: #e5e7eb;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+            border-bottom: 1px solid #d9dfe8;
         }
 
         .alert-count {
@@ -370,22 +436,106 @@
         }
 
         /* 스크롤바 스타일 */
-        .alert-log::-webkit-scrollbar {
+        .alert-content::-webkit-scrollbar {
             width: 6px;
         }
 
-        .alert-log::-webkit-scrollbar-track {
+        .alert-content::-webkit-scrollbar-track {
             background: #f8fafc;
             border-radius: 3px;
         }
 
-        .alert-log::-webkit-scrollbar-thumb {
+        .alert-content::-webkit-scrollbar-thumb {
             background: #cbd5f5;
             border-radius: 3px;
         }
 
-        .alert-log::-webkit-scrollbar-thumb:hover {
+        .alert-content::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
+        }
+
+        .action-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .action-modal-backdrop.active {
+            display: flex;
+        }
+
+        .action-modal {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 45px rgba(15, 23, 42, 0.25);
+        }
+
+        .action-modal h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+
+        .action-modal p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #4b5563;
+        }
+
+        .action-modal label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .action-modal input,
+        .action-modal textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .action-modal textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .action-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .action-modal-actions button {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .action-modal-actions .cancel-btn {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .action-modal-actions .submit-btn {
+            background: #111827;
+            color: #fff;
         }
 
         /* 반응형: 태블릿 */
@@ -467,11 +617,11 @@
             </div>
             <div class="monitoring-grid">
                 <!-- 라이브 스트리밍 -->
-                <div class="live-stream">
+                <div class="live-stream" data-cameras="./1.png,./2.png,./3.png" data-camera-labels="1-1,1-2,1-3">
                     <div class="stream-header">
                         <div class="stream-title">
                             <span class="live-badge">LIVE</span>
-                            CCTV 1-1
+                            CCTV
                         </div>
                     </div>
                     <img src="./1.png" alt="1동 CCTV" class="stream-video">
@@ -479,11 +629,16 @@
                         <button class="control-btn btn-入추">입추</button>
                         <button class="control-btn btn-出하">출하</button>
                     </div>
+                    <div class="stream-nav">
+                        <button class="prev" type="button" aria-label="이전 카메라">&#9664;</button>
+                        <button class="next" type="button" aria-label="다음 카메라">&#9654;</button>
+                    </div>
                 </div>
 
                 <!-- 센서 상태 -->
                 <div class="sensor-status">
-                    <div class="sensor-header">센서 상태</div>
+                    <div class="panel-header">센서 상태</div>
+                    <div class="sensor-content">
                     <div class="sensor-list">
                         <div class="sensor-item">
                             <div class="sensor-indicator active"></div>
@@ -502,18 +657,19 @@
                             <span class="sensor-name">CCTV</span>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <!-- 알림 로그 -->
                 <div class="alert-log">
-                    <div class="alert-header">
-                        알림 로그
-                    </div>
+                    <div class="panel-header">알림 로그</div>
+                    <div class="alert-content">
                     <div class="alert-empty">
                         <svg fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
                         <div>정상 운영 중</div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -529,11 +685,11 @@
                 <div class="house-status status-warning">확인 필요</div>
             </div>
             <div class="monitoring-grid">
-                <div class="live-stream">
+                <div class="live-stream" data-cameras="./2.png,./3.png,./4.png" data-camera-labels="2-1,2-2,2-3">
                     <div class="stream-header">
                         <div class="stream-title">
                             <span class="live-badge">LIVE</span>
-                            CCTV 2-1
+                            CCTV
                         </div>
                     </div>
                     <img src="./2.png" alt="1동 CCTV" class="stream-video">
@@ -541,10 +697,15 @@
                         <button class="control-btn btn-入추">입추</button>
                         <button class="control-btn btn-出하">출하</button>
                     </div>
+                    <div class="stream-nav">
+                        <button class="prev" type="button" aria-label="이전 카메라">&#9664;</button>
+                        <button class="next" type="button" aria-label="다음 카메라">&#9654;</button>
+                    </div>
                 </div>
 
                 <div class="sensor-status">
-                    <div class="sensor-header">센서 상태</div>
+                    <div class="panel-header">센서 상태</div>
+                    <div class="sensor-content">
                     <div class="sensor-list">
                         <div class="sensor-item">
                             <div class="sensor-indicator active"></div>
@@ -563,13 +724,15 @@
                             <span class="sensor-name">CCTV</span>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="alert-log">
-                    <div class="alert-header">
-                        알림 로그
+                    <div class="panel-header">
+                        <span>알림 로그</span>
                         <span class="alert-count">2</span>
                     </div>
+                    <div class="alert-content">
                     <div class="alert-list">
                         <div class="alert-item">
                             <div class="alert-time">2025-12-24 09:23</div>
@@ -579,6 +742,7 @@
                             <div class="alert-time">2025-12-24 09:13</div>
                             <div class="alert-message">온습도 센서 통신 지연 감지</div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -594,11 +758,11 @@
                 <div class="house-status status-warning">확인 필요</div>
             </div>
             <div class="monitoring-grid">
-                <div class="live-stream">
+                <div class="live-stream" data-cameras="./3.png,./1.png,./2.png" data-camera-labels="3-1,3-2,3-3">
                     <div class="stream-header">
                         <div class="stream-title">
                             <span class="live-badge">LIVE</span>
-                            CCTV 3-1
+                            CCTV
                         </div>
                     </div>
                     <img src="./3.png" alt="1동 CCTV" class="stream-video">
@@ -606,10 +770,15 @@
                         <button class="control-btn btn-入추">입추</button>
                         <button class="control-btn btn-出하">출하</button>
                     </div>
+                    <div class="stream-nav">
+                        <button class="prev" type="button" aria-label="이전 카메라">&#9664;</button>
+                        <button class="next" type="button" aria-label="다음 카메라">&#9654;</button>
+                    </div>
                 </div>
 
                 <div class="sensor-status">
-                    <div class="sensor-header">센서 상태</div>
+                    <div class="panel-header">센서 상태</div>
+                    <div class="sensor-content">
                     <div class="sensor-list">
                         <div class="sensor-item">
                             <div class="sensor-indicator inactive"></div>
@@ -628,13 +797,15 @@
                             <span class="sensor-name">CCTV</span>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="alert-log">
-                    <div class="alert-header">
-                        알림 로그
+                    <div class="panel-header">
+                        <span>알림 로그</span>
                         <span class="alert-count">3</span>
                     </div>
+                    <div class="alert-content">
                     <div class="alert-list">
                         <div class="alert-item">
                             <div class="alert-time">2025-12-24 09:15</div>
@@ -648,6 +819,7 @@
                             <div class="alert-time">2025-12-24 08:44</div>
                             <div class="alert-message">사료빈 센서 배터리 저전압 경고</div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -663,11 +835,11 @@
                 <div class="house-status status-warning">확인 필요</div>
             </div>
             <div class="monitoring-grid">
-                <div class="live-stream offline">
+                <div class="live-stream offline" data-cameras="./4.png,./2.png,./3.png" data-camera-labels="4-1,4-2,4-3">
                     <div class="stream-header">
                         <div class="stream-title">
                             <span class="live-badge" style="background: #6b7280;">OFFLINE</span>
-                            CCTV 4-1
+                            CCTV
                         </div>
                     </div>
                     <div class="offline-video-wrapper">
@@ -680,10 +852,15 @@
                         <button class="control-btn btn-入추" disabled style="opacity: 0.5;">입추</button>
                         <button class="control-btn btn-出하" disabled style="opacity: 0.5;">출하</button>
                     </div>
+                    <div class="stream-nav">
+                        <button class="prev" type="button" aria-label="이전 카메라">&#9664;</button>
+                        <button class="next" type="button" aria-label="다음 카메라">&#9654;</button>
+                    </div>
                 </div>
 
                 <div class="sensor-status">
-                    <div class="sensor-header">센서 상태</div>
+                    <div class="panel-header">센서 상태</div>
+                    <div class="sensor-content">
                     <div class="sensor-list">
                         <div class="sensor-item">
                             <div class="sensor-indicator active"></div>
@@ -702,13 +879,15 @@
                             <span class="sensor-name">CCTV</span>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="alert-log">
-                    <div class="alert-header">
-                        알림 로그
+                    <div class="panel-header">
+                        <span>알림 로그</span>
                         <span class="alert-count">2</span>
                     </div>
+                    <div class="alert-content">
                     <div class="alert-list">
                         <div class="alert-item">
                             <div class="alert-time">2025-12-24 08:47</div>
@@ -719,10 +898,25 @@
                             <div class="alert-message">CCTV 네트워크 연결 불안정</div>
                         </div>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
 
+        </div>
+        <div id="actionModalBackdrop" class="action-modal-backdrop">
+            <div class="action-modal">
+                <h3 id="actionModalTitle">작업 기록</h3>
+                <p id="actionModalDescription">작업 정보를 입력하세요.</p>
+                <label for="actionDateTime">일시</label>
+                <input type="datetime-local" id="actionDateTime">
+                <label for="actionMemo">비고</label>
+                <textarea id="actionMemo" placeholder="비고 및 특이사항"></textarea>
+                <div class="action-modal-actions">
+                    <button type="button" class="cancel-btn" id="actionCancelBtn">취소</button>
+                    <button type="button" class="submit-btn" id="actionSubmitBtn">기록</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -745,14 +939,116 @@
         setInterval(updateTime, 1000);
 
         // 버튼 클릭 이벤트 (추후 기능 연결)
+        const actionModalBackdrop = document.getElementById('actionModalBackdrop');
+        const actionModalTitle = document.getElementById('actionModalTitle');
+        const actionModalDesc = document.getElementById('actionModalDescription');
+        const actionDateTime = document.getElementById('actionDateTime');
+        const actionMemo = document.getElementById('actionMemo');
+        const actionCancelBtn = document.getElementById('actionCancelBtn');
+        const actionSubmitBtn = document.getElementById('actionSubmitBtn');
+        let currentAction = null;
+        let currentHouse = null;
+
+        const openActionModal = (house, action) => {
+            currentAction = action;
+            currentHouse = house;
+            actionModalTitle.textContent = `${action} 기록`;
+            actionModalDesc.textContent = `${house}의 ${action} 작업 정보를 입력하세요.`;
+            actionDateTime.value = new Date().toISOString().slice(0, 16);
+            actionMemo.value = '';
+            actionModalBackdrop.classList.add('active');
+        };
+
+        const closeActionModal = () => {
+            actionModalBackdrop.classList.remove('active');
+        };
+
+        actionCancelBtn.addEventListener('click', closeActionModal);
+        actionModalBackdrop.addEventListener('click', (event) => {
+            if (event.target === actionModalBackdrop) {
+                closeActionModal();
+            }
+        });
+
+        actionSubmitBtn.addEventListener('click', () => {
+            const data = {
+                house: currentHouse,
+                action: currentAction,
+                dateTime: actionDateTime.value,
+                memo: actionMemo.value
+            };
+            console.log('작업 기록', data);
+            alert(`${data.house}\n${data.action} 기록 완료\n일시: ${data.dateTime}\n메모: ${data.memo || '없음'}`);
+            closeActionModal();
+        });
+
         document.querySelectorAll('.control-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 if (!this.disabled) {
-                    const action = this.textContent;
+                    const action = this.textContent.trim();
                     const house = this.closest('.house-section').querySelector('.house-title').textContent;
-                    alert(`${house}\n${action} 작업을 실행하시겠습니까?`);
+                    openActionModal(house, action);
                 }
             });
+        });
+
+        document.querySelectorAll('.live-stream').forEach(stream => {
+            const videoEl = stream.querySelector('.stream-video');
+            const nav = stream.querySelector('.stream-nav');
+            if (!videoEl || !nav) return;
+
+            const cameras = (stream.dataset.cameras || '')
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+            const labelList = (stream.dataset.cameraLabels || '')
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+            if (cameras.length <= 1) {
+                nav.style.display = 'none';
+                return;
+            }
+
+            let currentIndex = 0;
+
+            const tabsContainer = document.createElement('div');
+            tabsContainer.className = 'stream-camera-tabs';
+            const tabs = cameras.map((_, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'stream-camera-tab';
+                button.textContent = labelList[index] || `CAM-${index + 1}`;
+                button.addEventListener('click', () => {
+                    currentIndex = index;
+                    updateCamera();
+                });
+                tabsContainer.appendChild(button);
+                return button;
+            });
+            stream.appendChild(tabsContainer);
+
+            const updateCamera = () => {
+                videoEl.src = cameras[currentIndex];
+                stream.dataset.cameraIndex = String(currentIndex);
+                tabs.forEach((tab, idx) => {
+                    tab.classList.toggle('active', idx === currentIndex);
+                });
+            };
+
+            nav.querySelector('.prev')?.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + cameras.length) % cameras.length;
+                updateCamera();
+            });
+
+            nav.querySelector('.next')?.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % cameras.length;
+                updateCamera();
+            });
+
+            updateCamera();
         });
     </script>
 </body>
