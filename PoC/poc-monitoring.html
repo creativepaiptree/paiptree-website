@@ -910,6 +910,8 @@
                 <p id="actionModalDescription">작업 정보를 입력하세요.</p>
                 <label for="actionDateTime">일시</label>
                 <input type="datetime-local" id="actionDateTime">
+                <label for="actionWeight">출하 중량 (g)</label>
+                <input type="number" id="actionWeight" min="0" step="10" placeholder="예: 2150" value="2150">
                 <label for="actionMemo">비고</label>
                 <textarea id="actionMemo" placeholder="비고 및 특이사항"></textarea>
                 <div class="action-modal-actions">
@@ -943,6 +945,7 @@
         const actionModalTitle = document.getElementById('actionModalTitle');
         const actionModalDesc = document.getElementById('actionModalDescription');
         const actionDateTime = document.getElementById('actionDateTime');
+        const actionWeight = document.getElementById('actionWeight');
         const actionMemo = document.getElementById('actionMemo');
         const actionCancelBtn = document.getElementById('actionCancelBtn');
         const actionSubmitBtn = document.getElementById('actionSubmitBtn');
@@ -955,6 +958,7 @@
             actionModalTitle.textContent = `${action} 기록`;
             actionModalDesc.textContent = `${house}의 ${action} 작업 정보를 입력하세요.`;
             actionDateTime.value = new Date().toISOString().slice(0, 16);
+            actionWeight.value = '2150';
             actionMemo.value = '';
             actionModalBackdrop.classList.add('active');
         };
@@ -975,10 +979,11 @@
                 house: currentHouse,
                 action: currentAction,
                 dateTime: actionDateTime.value,
+                weight: actionWeight.value,
                 memo: actionMemo.value
             };
             console.log('작업 기록', data);
-            alert(`${data.house}\n${data.action} 기록 완료\n일시: ${data.dateTime}\n메모: ${data.memo || '없음'}`);
+            alert(`${data.house}\n${data.action} 기록 완료\n일시: ${data.dateTime}\n출하 중량: ${data.weight || '미입력'}g\n메모: ${data.memo || '없음'}`);
             closeActionModal();
         });
 
