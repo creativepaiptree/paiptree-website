@@ -350,35 +350,14 @@
         .time-cell {
             font-family: 'Courier New', monospace;
             font-weight: 500;
-            color: #333;
-        }
-
-        .time-cell.completed {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .time-cell.current {
-            background-color: #e3f2fd;
-            color: #1565c0;
-            font-weight: 600;
-        }
-
-        .time-cell.pending {
-            color: #757575;
+            color: #495057;
+            background-color: #f8f9fa;
         }
 
         .status-text {
             font-size: 12px;
-            font-weight: 500;
-        }
-
-        .status-text.active {
-            color: #1565c0;
-        }
-
-        .status-text.pending {
-            color: #757575;
+            font-weight: 600;
+            color: #1f2933;
         }
 
         /* 지도 보기 스타일 */
@@ -440,7 +419,7 @@
             <div class="project-header" onclick="toggleProject(1)">
                 <div class="project-info">
                     <div class="project-name-wrapper">
-                        <div class="project-name">체리부로 - 진천 농장 A</div>
+                        <div class="project-name">체리부로 - 진천 농장 A - 진천 도축장</div>
                         <div class="project-time">운행 시작: 06:00 | 예상 완료: 14:30</div>
                     </div>
                     <div class="project-controls" onclick="event.stopPropagation()">
@@ -469,7 +448,6 @@
                             <th>농장</th>
                             <th>계근소</th>
                             <th>소독소</th>
-                            <th>계근소</th>
                             <th>도축장</th>
                             <th>상태</th>
                         </tr>
@@ -487,9 +465,8 @@
                             <td class="time-cell completed">06:00</td>
                             <td class="time-cell completed">06:35</td>
                             <td class="time-cell completed">06:50</td>
-                            <td class="time-cell current">07:05</td>
-                            <td class="time-cell pending">09:20</td>
-                            <td><span class="status-text active">운행중</span></td>
+                            <td class="time-cell completed">09:20</td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -503,9 +480,8 @@
                             <td class="time-cell completed">06:15</td>
                             <td class="time-cell completed">06:50</td>
                             <td class="time-cell current">07:05</td>
-                            <td class="time-cell pending">07:20</td>
                             <td class="time-cell pending">09:35</td>
-                            <td><span class="status-text active">운행중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -519,9 +495,8 @@
                             <td class="time-cell completed">06:30</td>
                             <td class="time-cell current">07:05</td>
                             <td class="time-cell pending">07:20</td>
-                            <td class="time-cell pending">07:35</td>
                             <td class="time-cell pending">09:50</td>
-                            <td><span class="status-text active">운행중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -535,9 +510,8 @@
                             <td class="time-cell completed">07:00</td>
                             <td class="time-cell pending">07:35</td>
                             <td class="time-cell pending">07:50</td>
-                            <td class="time-cell pending">08:05</td>
                             <td class="time-cell pending">10:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -551,9 +525,8 @@
                             <td class="time-cell pending">07:30</td>
                             <td class="time-cell pending">08:05</td>
                             <td class="time-cell pending">08:20</td>
-                            <td class="time-cell pending">08:35</td>
                             <td class="time-cell pending">10:50</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -570,7 +543,7 @@
             <div class="project-header" onclick="toggleProject(2)">
                 <div class="project-info">
                     <div class="project-name-wrapper">
-                        <div class="project-name">체리부로 - 음성 농장 B</div>
+                        <div class="project-name">체리부로 - 음성 농장 B - 음성 도축장</div>
                         <div class="project-time">운행 시작: 07:00 | 예상 완료: 15:00</div>
                     </div>
                     <div class="project-controls" onclick="event.stopPropagation()">
@@ -599,7 +572,6 @@
                             <th>농장</th>
                             <th>계근소</th>
                             <th>소독소</th>
-                            <th>계근소</th>
                             <th>도축장</th>
                             <th>상태</th>
                         </tr>
@@ -617,9 +589,8 @@
                             <td class="time-cell pending">07:00</td>
                             <td class="time-cell pending">07:35</td>
                             <td class="time-cell pending">07:50</td>
-                            <td class="time-cell pending">08:05</td>
                             <td class="time-cell pending">10:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -633,9 +604,8 @@
                             <td class="time-cell pending">07:30</td>
                             <td class="time-cell pending">08:05</td>
                             <td class="time-cell pending">08:20</td>
-                            <td class="time-cell pending">08:35</td>
                             <td class="time-cell pending">10:50</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -649,9 +619,8 @@
                             <td class="time-cell pending">08:00</td>
                             <td class="time-cell pending">08:35</td>
                             <td class="time-cell pending">08:50</td>
-                            <td class="time-cell pending">09:05</td>
                             <td class="time-cell pending">11:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -665,9 +634,8 @@
                             <td class="time-cell pending">08:30</td>
                             <td class="time-cell pending">09:05</td>
                             <td class="time-cell pending">09:20</td>
-                            <td class="time-cell pending">09:35</td>
                             <td class="time-cell pending">11:50</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -681,9 +649,8 @@
                             <td class="time-cell pending">09:00</td>
                             <td class="time-cell pending">09:35</td>
                             <td class="time-cell pending">09:50</td>
-                            <td class="time-cell pending">10:05</td>
                             <td class="time-cell pending">12:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -700,7 +667,7 @@
             <div class="project-header" onclick="toggleProject(3)">
                 <div class="project-info">
                     <div class="project-name-wrapper">
-                        <div class="project-name">체리부로 - 청주 농장 C</div>
+                        <div class="project-name">체리부로 - 청주 농장 C - 청주 도축장</div>
                         <div class="project-time">운행 시작: 13:00 | 예상 완료: 18:30</div>
                     </div>
                     <div class="project-controls" onclick="event.stopPropagation()">
@@ -729,7 +696,6 @@
                             <th>농장</th>
                             <th>계근소</th>
                             <th>소독소</th>
-                            <th>계근소</th>
                             <th>도축장</th>
                             <th>상태</th>
                         </tr>
@@ -747,9 +713,8 @@
                             <td class="time-cell pending">13:00</td>
                             <td class="time-cell pending">13:35</td>
                             <td class="time-cell pending">13:50</td>
-                            <td class="time-cell pending">14:05</td>
                             <td class="time-cell pending">16:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -763,9 +728,8 @@
                             <td class="time-cell pending">13:30</td>
                             <td class="time-cell pending">14:05</td>
                             <td class="time-cell pending">14:20</td>
-                            <td class="time-cell pending">14:35</td>
                             <td class="time-cell pending">16:50</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -779,9 +743,8 @@
                             <td class="time-cell pending">14:00</td>
                             <td class="time-cell pending">14:35</td>
                             <td class="time-cell pending">14:50</td>
-                            <td class="time-cell pending">15:05</td>
                             <td class="time-cell pending">17:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -795,9 +758,8 @@
                             <td class="time-cell pending">14:30</td>
                             <td class="time-cell pending">15:05</td>
                             <td class="time-cell pending">15:20</td>
-                            <td class="time-cell pending">15:35</td>
                             <td class="time-cell pending">17:50</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                         <tr class="vehicle-row">
                             <td>
@@ -811,9 +773,8 @@
                             <td class="time-cell pending">15:00</td>
                             <td class="time-cell pending">15:35</td>
                             <td class="time-cell pending">15:50</td>
-                            <td class="time-cell pending">16:05</td>
                             <td class="time-cell pending">18:20</td>
-                            <td><span class="status-text pending">대기중</span></td>
+                            <td><span class="status-text">완료</span></td>
                         </tr>
                     </tbody>
                 </table>
