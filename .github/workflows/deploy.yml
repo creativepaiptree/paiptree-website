@@ -1,49 +1,49 @@
-name: Deploy to Server
+ name: Deploy to Server
 
-on:
-  push:
-    branches: [ main ]
+  on:
+    push:
+      branches: [ main ]
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm install
-    
-    - name: Build and Export
-      run: |
-        npm run build
-        touch out/.nojekyll
-    
-    - name: Deploy to server
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: 3.35.59.119
-        username: centos
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "out/*"
-        target: "/tmp/paiptree-deploy/"
-        strip_components: 1
-        
-    - name: Move files to nginx directory
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: 3.35.59.119
-        username: centos
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo rm -rf /usr/share/nginx/html/*
-          sudo cp -r /tmp/paiptree-deploy/* /usr/share/nginx/html/
-          sudo chown -R nginx:nginx /usr/share/nginx/html/
-          sudo chmod -R 755 /usr/share/nginx/html/
-          rm -rf /tmp/paiptree-deploy/
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+
+      steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and Export
+        run: |
+          npm run build
+          touch out/.nojekyll
+
+      - name: Deploy to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: 52.79.116.76
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "out/*"
+          target: "/tmp/paiptree-deploy/"
+          strip_components: 1
+
+      - name: Move files to nginx directory
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 52.79.116.76
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf /usr/share/nginx/html/*
+            sudo cp -r /tmp/paiptree-deploy/* /usr/share/nginx/html/
+            sudo chown -R nginx:nginx /usr/share/nginx/html/
+            sudo chmod -R 755 /usr/share/nginx/html/
+            rm -rf /tmp/paiptree-deploy/
