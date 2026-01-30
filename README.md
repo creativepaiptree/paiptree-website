@@ -29,13 +29,13 @@ npm run build
 ### Deployment
 - Push to `main` branch triggers automatic deployment
 - GitHub Actions builds and deploys to server
-- Static files deployed to `http://3.35.59.119`
+- Static files deployed to `http://52.79.116.76`
 
 ## 🛠️ Tech Stack
 - **Framework**: Next.js 14
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Deployment**: GitHub Actions → CentOS Server
+- **Deployment**: GitHub Actions → EC2 Server
 
 ## 📁 Project Structure
 ```
