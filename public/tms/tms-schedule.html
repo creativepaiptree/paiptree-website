@@ -109,9 +109,6 @@
                     <button class="flex items-center justify-center px-4 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-xs font-medium rounded-md shadow-sm transition-colors">
                         <span class="material-icons-round text-sm mr-1">search</span> 검색
                     </button>
-                    <button class="flex items-center justify-center px-4 py-1.5 bg-primary hover:bg-blue-700 text-white text-xs font-medium rounded-md shadow-sm transition-colors">
-                        <span class="material-icons-round text-sm mr-1">file_download</span> 엑셀 내보내기
-                    </button>
                 </div>
             </div>
         </section>
@@ -192,8 +189,8 @@
                     </div>
                     <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
                         <div class="flex">
-                            <button id="listViewBtn" onclick="toggleView('list')" class="px-3 py-1.5 text-slate-500 rounded-md text-xs font-medium hover:bg-slate-200 transition-colors">목록보기</button>
-                            <button id="tableViewBtn" onclick="toggleView('table')" class="px-3 py-1.5 bg-white text-slate-700 rounded-md text-xs font-medium shadow-sm transition-colors">표보기</button>
+                            <button id="listViewBtn" onclick="toggleView('list')" class="px-3 py-1.5 bg-white text-slate-700 rounded-md text-xs font-medium shadow-sm transition-colors">목록보기</button>
+                            <button id="tableViewBtn" onclick="toggleView('table')" class="px-3 py-1.5 text-slate-500 rounded-md text-xs font-medium hover:bg-slate-200 transition-colors">표보기</button>
                             <button id="mapViewBtn" onclick="toggleView('map')" class="px-3 py-1.5 text-slate-500 rounded-md text-xs font-medium hover:bg-slate-200 transition-colors">지도보기</button>
                         </div>
                         <button class="px-3 py-1.5 text-slate-500 text-xs font-medium hover:text-slate-700 transition-colors">
@@ -202,22 +199,21 @@
                     </div>
                 </div>
 
-                <!-- List View (Hidden by default) -->
-                <div id="listContainer" class="flex-grow overflow-y-auto p-6 custom-scrollbar hidden">
+                <!-- List View (Default) -->
+                <div id="listContainer" class="flex-grow overflow-y-auto p-6 custom-scrollbar">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">상세 배차 내역 (드라이버 할당)</h4>
                         <button class="text-xs flex items-center gap-1 text-slate-600 hover:text-primary font-medium transition-colors border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50 bg-white shadow-sm">
                             <span class="material-icons-round text-sm">map</span> 이동경로 확인
                         </button>
                     </div>
-                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden">
-                        <!-- 도착지 헤더 -->
+                    <!-- 도착지 1: 진천 도축장 -->
+                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden mb-4">
                         <div class="p-4 border-b border-border-light flex items-center gap-3 bg-slate-50/50">
                             <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">1</div>
                             <h5 class="text-base font-bold text-slate-800">진천 도축장</h5>
                             <span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">배차: 5대 (25t:1, 5t:4)</span>
                         </div>
-                        <!-- 차량 리스트 (버튼형태 가로 배열) -->
                         <div class="p-4 flex flex-wrap gap-2">
                             <button class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full border border-slate-200 transition-colors">
                                 <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
@@ -246,14 +242,68 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- 도착지 2: 음성 도축장 -->
+                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden mb-4">
+                        <div class="p-4 border-b border-border-light flex items-center gap-3 bg-slate-50/50">
+                            <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">2</div>
+                            <h5 class="text-base font-bold text-slate-800">음성 도축장</h5>
+                            <span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">배차: 3대 (5t:3)</span>
+                        </div>
+                        <div class="p-4 flex flex-wrap gap-2">
+                            <button class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full border border-slate-200 transition-colors">
+                                <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                <span class="font-medium text-sm text-slate-700">890바2345 최준혁</span>
+                                <span class="text-xs text-slate-400">(08:00, 11:20)</span>
+                            </button>
+                            <button class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full border border-slate-200 transition-colors">
+                                <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                <span class="font-medium text-sm text-slate-700">345사6789 강민정</span>
+                                <span class="text-xs text-slate-400">(08:30, 11:50)</span>
+                            </button>
+                            <button class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full border border-slate-200 transition-colors">
+                                <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                <span class="font-medium text-sm text-slate-700">678아9012 윤서연</span>
+                                <span class="text-xs text-slate-400">(09:00, 12:20)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 도착지 3: 청주 도축장 -->
+                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-border-light flex items-center gap-3 bg-slate-50/50">
+                            <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">3</div>
+                            <h5 class="text-base font-bold text-slate-800">청주 도축장</h5>
+                            <span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">배차: 2대 (25t:1, 5t:1)</span>
+                        </div>
+                        <div class="p-4 flex flex-wrap gap-2">
+                            <button class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full border border-slate-200 transition-colors">
+                                <span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">25T</span>
+                                <span class="font-medium text-sm text-slate-700">901자3456 임태호</span>
+                                <span class="text-xs text-slate-400">(10:00, 13:30)</span>
+                            </button>
+                            <button class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full border border-slate-200 transition-colors">
+                                <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                <span class="font-medium text-sm text-slate-700">234차7890 한소희</span>
+                                <span class="text-xs text-slate-400">(10:30, 14:00)</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Vehicle Table -->
-                <div id="tableContainer" class="flex-grow overflow-y-auto p-6 custom-scrollbar">
+                <div id="tableContainer" class="flex-grow overflow-y-auto p-6 custom-scrollbar hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">배차 차량 목록 (5대)</h4>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">배차 차량 목록 (10대)</h4>
                     </div>
-                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden">
+
+                    <!-- 진천 도축장 테이블 -->
+                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden mb-4">
+                        <div class="p-4 border-b border-border-light flex items-center gap-3 bg-slate-50/50">
+                            <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">1</div>
+                            <h5 class="text-base font-bold text-slate-800">진천 도축장</h5>
+                            <span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">배차: 5대 (25t:1, 5t:4)</span>
+                        </div>
                         <table class="w-full">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-border-light">
@@ -276,21 +326,11 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:00</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:35</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:50</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">09:20</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">완료</span>
-                                    </td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:00</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:35</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">09:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">완료</span></td>
                                 </tr>
                                 <tr class="border-b border-border-light hover:bg-slate-50 transition-colors">
                                     <td class="px-4 py-3">
@@ -302,21 +342,11 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:15</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:50</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-mono animate-pulse">07:05</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:35</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">운행중</span>
-                                    </td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:15</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-mono animate-pulse">07:05</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:35</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">운행중</span></td>
                                 </tr>
                                 <tr class="border-b border-border-light hover:bg-slate-50 transition-colors">
                                     <td class="px-4 py-3">
@@ -328,21 +358,11 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:30</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-mono animate-pulse">07:05</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:20</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:50</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">운행중</span>
-                                    </td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">06:30</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-mono animate-pulse">07:05</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">운행중</span></td>
                                 </tr>
                                 <tr class="border-b border-border-light hover:bg-slate-50 transition-colors">
                                     <td class="px-4 py-3">
@@ -354,21 +374,11 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">07:00</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:35</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:50</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:20</span>
-                                    </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">대기</span>
-                                    </td>
+                                    <td class="text-center px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-mono">07:00</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:35</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">대기</span></td>
                                 </tr>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="px-4 py-3">
@@ -380,21 +390,137 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:30</span>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">07:30</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:05</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 음성 도축장 테이블 -->
+                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden mb-4">
+                        <div class="p-4 border-b border-border-light flex items-center gap-3 bg-slate-50/50">
+                            <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">2</div>
+                            <h5 class="text-base font-bold text-slate-800">음성 도축장</h5>
+                            <span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">배차: 3대 (5t:3)</span>
+                        </div>
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-border-light">
+                                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-600 w-48">차량 / 기사</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">농장 출발</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">계근소</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">소독소</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">도축장 도착</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600 w-24">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-border-light hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                            <div>
+                                                <div class="font-medium text-sm text-slate-700">890바2345</div>
+                                                <div class="text-xs text-slate-400">최준혁</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:05</span>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:00</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:35</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">11:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span></td>
+                                </tr>
+                                <tr class="border-b border-border-light hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                            <div>
+                                                <div class="font-medium text-sm text-slate-700">345사6789</div>
+                                                <div class="text-xs text-slate-400">강민정</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:20</span>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">08:30</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:05</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">11:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                            <div>
+                                                <div class="font-medium text-sm text-slate-700">678아9012</div>
+                                                <div class="text-xs text-slate-400">윤서연</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:50</span>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:00</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:35</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">09:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">12:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 청주 도축장 테이블 -->
+                    <div class="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-border-light flex items-center gap-3 bg-slate-50/50">
+                            <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">3</div>
+                            <h5 class="text-base font-bold text-slate-800">청주 도축장</h5>
+                            <span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium border border-slate-200">배차: 2대 (25t:1, 5t:1)</span>
+                        </div>
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-border-light">
+                                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-600 w-48">차량 / 기사</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">농장 출발</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">계근소</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">소독소</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600">도축장 도착</th>
+                                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-600 w-24">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-border-light hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">25T</span>
+                                            <div>
+                                                <div class="font-medium text-sm text-slate-700">901자3456</div>
+                                                <div class="text-xs text-slate-400">임태호</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="text-center px-4 py-3">
-                                        <span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:00</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:35</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:50</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">13:30</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-primary text-white text-[10px] px-2 py-0.5 rounded font-bold">5T</span>
+                                            <div>
+                                                <div class="font-medium text-sm text-slate-700">234차7890</div>
+                                                <div class="text-xs text-slate-400">한소희</div>
+                                            </div>
+                                        </div>
                                     </td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">10:30</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">11:05</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">11:20</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono">14:00</span></td>
+                                    <td class="text-center px-4 py-3"><span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full font-medium">예정</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -402,8 +528,131 @@
                 </div>
 
                 <!-- Map View (Hidden by default) -->
-                <div id="mapContainer" class="flex-grow overflow-hidden hidden">
-                    <img src="tms-map-image.png" alt="TMS 지도" class="w-full h-full object-cover">
+                <div id="mapContainer" class="flex-grow overflow-hidden hidden relative">
+                    <!-- 지도 배경 -->
+                    <div class="absolute inset-0 bg-slate-200" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); background-size: 20px 20px, 40px 40px, 40px 40px;">
+
+                        <!-- 경로 SVG -->
+                        <svg id="routeSvg" class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 진천 도축장 경로 (5대) - 파란색 계열 -->
+                            <g id="routeJincheon" class="">
+                                <path d="M 150 200 Q 300 150 450 180" fill="none" stroke="#2563eb" stroke-dasharray="8 4" stroke-width="3" opacity="0.8"/>
+                                <path d="M 150 200 Q 280 180 450 180" fill="none" stroke="#3b82f6" stroke-dasharray="8 4" stroke-width="2" opacity="0.6"/>
+                                <path d="M 150 200 Q 320 120 450 180" fill="none" stroke="#60a5fa" stroke-dasharray="8 4" stroke-width="2" opacity="0.6"/>
+                                <path d="M 150 200 Q 260 200 450 180" fill="none" stroke="#93c5fd" stroke-dasharray="8 4" stroke-width="2" opacity="0.5"/>
+                                <path d="M 150 200 Q 340 160 450 180" fill="none" stroke="#bfdbfe" stroke-dasharray="8 4" stroke-width="2" opacity="0.5"/>
+                            </g>
+                            <!-- 음성 도축장 경로 (3대) - 초록색 계열 -->
+                            <g id="routeEumseong" class="hidden">
+                                <path d="M 150 200 Q 350 280 550 320" fill="none" stroke="#10b981" stroke-dasharray="8 4" stroke-width="3" opacity="0.8"/>
+                                <path d="M 150 200 Q 320 300 550 320" fill="none" stroke="#34d399" stroke-dasharray="8 4" stroke-width="2" opacity="0.6"/>
+                                <path d="M 150 200 Q 380 260 550 320" fill="none" stroke="#6ee7b7" stroke-dasharray="8 4" stroke-width="2" opacity="0.5"/>
+                            </g>
+                            <!-- 청주 도축장 경로 (2대) - 보라색 계열 -->
+                            <g id="routeCheongju" class="hidden">
+                                <path d="M 150 200 Q 400 350 650 250" fill="none" stroke="#8b5cf6" stroke-dasharray="8 4" stroke-width="3" opacity="0.8"/>
+                                <path d="M 150 200 Q 450 320 650 250" fill="none" stroke="#a78bfa" stroke-dasharray="8 4" stroke-width="2" opacity="0.6"/>
+                            </g>
+                        </svg>
+
+                        <!-- 출발지 마커 (진천 농장 A) -->
+                        <div class="absolute flex flex-col items-center" style="left: 130px; top: 180px;">
+                            <span class="material-icons-round text-primary text-4xl drop-shadow-md">location_on</span>
+                            <span class="bg-white px-2 py-1 rounded text-xs font-bold shadow-md border border-slate-200 -mt-2 whitespace-nowrap">진천 농장 A</span>
+                        </div>
+
+                        <!-- 진천 도축장 마커 -->
+                        <div id="markerJincheon" class="absolute flex flex-col items-center" style="left: 430px; top: 160px;">
+                            <span class="material-icons-round text-blue-500 text-4xl drop-shadow-md">location_on</span>
+                            <span class="bg-white px-2 py-1 rounded text-xs font-bold shadow-md border border-blue-200 -mt-2 whitespace-nowrap">진천 도축장</span>
+                        </div>
+
+                        <!-- 음성 도축장 마커 -->
+                        <div id="markerEumseong" class="absolute flex flex-col items-center hidden" style="left: 530px; top: 300px;">
+                            <span class="material-icons-round text-green-500 text-4xl drop-shadow-md">location_on</span>
+                            <span class="bg-white px-2 py-1 rounded text-xs font-bold shadow-md border border-green-200 -mt-2 whitespace-nowrap">음성 도축장</span>
+                        </div>
+
+                        <!-- 청주 도축장 마커 -->
+                        <div id="markerCheongju" class="absolute flex flex-col items-center hidden" style="left: 630px; top: 230px;">
+                            <span class="material-icons-round text-purple-500 text-4xl drop-shadow-md">location_on</span>
+                            <span class="bg-white px-2 py-1 rounded text-xs font-bold shadow-md border border-purple-200 -mt-2 whitespace-nowrap">청주 도축장</span>
+                        </div>
+                    </div>
+
+                    <!-- 좌상단 도착지 셀렉터 -->
+                    <div class="absolute left-4 top-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 overflow-hidden w-56">
+                        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                            <h3 class="text-sm font-bold text-slate-800">도착지 선택</h3>
+                        </div>
+                        <div class="p-2 space-y-1">
+                            <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors border-2 border-blue-500 bg-blue-50" id="selectorJincheon">
+                                <input type="radio" name="destination" value="jincheon" checked class="text-blue-500" onchange="selectDestination('jincheon')">
+                                <div class="flex-grow">
+                                    <div class="text-sm font-medium text-slate-700">진천 도축장</div>
+                                    <div class="text-xs text-slate-400">5대 배차</div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                            </label>
+                            <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors border border-slate-200" id="selectorEumseong">
+                                <input type="radio" name="destination" value="eumseong" class="text-green-500" onchange="selectDestination('eumseong')">
+                                <div class="flex-grow">
+                                    <div class="text-sm font-medium text-slate-700">음성 도축장</div>
+                                    <div class="text-xs text-slate-400">3대 배차</div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </label>
+                            <label class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors border border-slate-200" id="selectorCheongju">
+                                <input type="radio" name="destination" value="cheongju" class="text-purple-500" onchange="selectDestination('cheongju')">
+                                <div class="flex-grow">
+                                    <div class="text-sm font-medium text-slate-700">청주 도축장</div>
+                                    <div class="text-xs text-slate-400">2대 배차</div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 우측 상단 지도 컨트롤 -->
+                    <div class="absolute right-4 top-4 flex flex-col gap-2">
+                        <div class="flex flex-col bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+                            <button class="p-2 hover:bg-slate-100 text-slate-600 border-b border-slate-200"><span class="material-icons-round">add</span></button>
+                            <button class="p-2 hover:bg-slate-100 text-slate-600"><span class="material-icons-round">remove</span></button>
+                        </div>
+                        <button class="p-2 bg-white border border-slate-200 rounded-lg shadow-lg text-slate-600 hover:bg-slate-100">
+                            <span class="material-icons-round">my_location</span>
+                        </button>
+                    </div>
+
+                    <!-- 우측 하단 차량 정보 -->
+                    <div class="absolute right-4 bottom-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 w-72 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-slate-800" id="vehicleInfoTitle">진천 도축장 차량</h3>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium" id="vehicleInfoCount">5대</span>
+                        </div>
+                        <div class="p-3 space-y-2 max-h-48 overflow-y-auto" id="vehicleInfoList">
+                            <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded">
+                                <span class="font-medium text-slate-700">123가4567 홍길동</span>
+                                <span class="text-slate-500">06:00 ~ 09:20</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded">
+                                <span class="font-medium text-slate-700">456나7890 김철수</span>
+                                <span class="text-slate-500">06:15 ~ 09:35</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded">
+                                <span class="font-medium text-slate-700">789다1234 이영희</span>
+                                <span class="text-slate-500">06:30 ~ 09:50</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded">
+                                <span class="font-medium text-slate-700">234라5678 박민수</span>
+                                <span class="text-slate-500">07:00 ~ 10:20</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded">
+                                <span class="font-medium text-slate-700">567마8901 정수진</span>
+                                <span class="text-slate-500">07:30 ~ 10:50</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -413,6 +662,99 @@
         function selectProject(projectId) {
             console.log('Selected project:', projectId);
             // 실제로는 프로젝트 데이터를 불러와서 상세 뷰를 업데이트
+        }
+
+        // 도착지별 차량 데이터
+        const vehicleData = {
+            jincheon: {
+                title: '진천 도축장 차량',
+                count: '5대',
+                color: 'blue',
+                vehicles: [
+                    { name: '123가4567 홍길동', time: '06:00 ~ 09:20' },
+                    { name: '456나7890 김철수', time: '06:15 ~ 09:35' },
+                    { name: '789다1234 이영희', time: '06:30 ~ 09:50' },
+                    { name: '234라5678 박민수', time: '07:00 ~ 10:20' },
+                    { name: '567마8901 정수진', time: '07:30 ~ 10:50' }
+                ]
+            },
+            eumseong: {
+                title: '음성 도축장 차량',
+                count: '3대',
+                color: 'green',
+                vehicles: [
+                    { name: '890바2345 최준혁', time: '08:00 ~ 11:20' },
+                    { name: '345사6789 강민정', time: '08:30 ~ 11:50' },
+                    { name: '678아9012 윤서연', time: '09:00 ~ 12:20' }
+                ]
+            },
+            cheongju: {
+                title: '청주 도축장 차량',
+                count: '2대',
+                color: 'purple',
+                vehicles: [
+                    { name: '901자3456 임태호', time: '10:00 ~ 13:30' },
+                    { name: '234차7890 한소희', time: '10:30 ~ 14:00' }
+                ]
+            }
+        };
+
+        function selectDestination(dest) {
+            // 모든 경로 숨기기
+            document.getElementById('routeJincheon').classList.add('hidden');
+            document.getElementById('routeEumseong').classList.add('hidden');
+            document.getElementById('routeCheongju').classList.add('hidden');
+
+            // 모든 마커 숨기기
+            document.getElementById('markerJincheon').classList.add('hidden');
+            document.getElementById('markerEumseong').classList.add('hidden');
+            document.getElementById('markerCheongju').classList.add('hidden');
+
+            // 모든 셀렉터 스타일 초기화
+            document.getElementById('selectorJincheon').classList.remove('border-blue-500', 'bg-blue-50', 'border-2');
+            document.getElementById('selectorJincheon').classList.add('border-slate-200', 'border');
+            document.getElementById('selectorEumseong').classList.remove('border-green-500', 'bg-green-50', 'border-2');
+            document.getElementById('selectorEumseong').classList.add('border-slate-200', 'border');
+            document.getElementById('selectorCheongju').classList.remove('border-purple-500', 'bg-purple-50', 'border-2');
+            document.getElementById('selectorCheongju').classList.add('border-slate-200', 'border');
+
+            // 선택된 경로 및 마커 표시
+            const data = vehicleData[dest];
+            if (dest === 'jincheon') {
+                document.getElementById('routeJincheon').classList.remove('hidden');
+                document.getElementById('markerJincheon').classList.remove('hidden');
+                document.getElementById('selectorJincheon').classList.remove('border-slate-200', 'border');
+                document.getElementById('selectorJincheon').classList.add('border-blue-500', 'bg-blue-50', 'border-2');
+            } else if (dest === 'eumseong') {
+                document.getElementById('routeEumseong').classList.remove('hidden');
+                document.getElementById('markerEumseong').classList.remove('hidden');
+                document.getElementById('selectorEumseong').classList.remove('border-slate-200', 'border');
+                document.getElementById('selectorEumseong').classList.add('border-green-500', 'bg-green-50', 'border-2');
+            } else if (dest === 'cheongju') {
+                document.getElementById('routeCheongju').classList.remove('hidden');
+                document.getElementById('markerCheongju').classList.remove('hidden');
+                document.getElementById('selectorCheongju').classList.remove('border-slate-200', 'border');
+                document.getElementById('selectorCheongju').classList.add('border-purple-500', 'bg-purple-50', 'border-2');
+            }
+
+            // 차량 정보 업데이트
+            document.getElementById('vehicleInfoTitle').textContent = data.title;
+            document.getElementById('vehicleInfoCount').textContent = data.count;
+
+            const colorClasses = {
+                blue: 'bg-blue-100 text-blue-700',
+                green: 'bg-green-100 text-green-700',
+                purple: 'bg-purple-100 text-purple-700'
+            };
+            document.getElementById('vehicleInfoCount').className = `text-xs px-2 py-0.5 rounded font-medium ${colorClasses[data.color]}`;
+
+            const listHtml = data.vehicles.map(v => `
+                <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded">
+                    <span class="font-medium text-slate-700">${v.name}</span>
+                    <span class="text-slate-500">${v.time}</span>
+                </div>
+            `).join('');
+            document.getElementById('vehicleInfoList').innerHTML = listHtml;
         }
 
         function toggleView(viewType) {

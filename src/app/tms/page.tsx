@@ -13,7 +13,7 @@ export default function TmsPage() {
 
   const openDataInsights = () => {
     if (typeof window !== 'undefined') {
-      window.open('/tms/tms-schedule-final.html', '_blank', 'noopener,noreferrer');
+      window.open('/tms/tms-schedule.html', '_blank', 'noopener,noreferrer');
     }
   };
 
