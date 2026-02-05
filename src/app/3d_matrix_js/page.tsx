@@ -1150,7 +1150,7 @@ const weekLabels: Record<number, string> = {
   2: '1/27~2/2',
 };
 
-const rootStyle: CSSProperties = {
+const rootStyle = {
   '--bg-primary': '#0a0a0f',
   '--bg-card': '#1a1a24',
   '--border-color': '#2a2a3a',
@@ -1165,7 +1165,7 @@ const rootStyle: CSSProperties = {
   fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
   padding: 32,
   minHeight: '100vh',
-};
+} as CSSProperties & Record<string, string | number>;
 
 export default function Matrix3DJsPage() {
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
