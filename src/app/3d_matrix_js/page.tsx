@@ -2492,9 +2492,9 @@ export default function Matrix3DJsPage() {
         </div>
 
         <div className="week-nav">
-          <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1))}>←</button>
+          <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>←</button>
           <div className="week-label" id="weekLabel">{weekLabels[week]}</div>
-          <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1))}>→</button>
+          <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1) as 1 | 2 | 3)}>→</button>
         </div>
 
         <div className={`table-wrapper ${fitAll ? 'fit-all' : ''}`}>
