@@ -3,6 +3,14 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 
+type Cell =
+  | { type: 'prediction'; value: string; error: string; errorClass: string; isToday: boolean }
+  | { type: 'actual'; value: string; check: string; isToday: boolean }
+  | { type: 'future'; value: string; label: string; isToday: boolean }
+  | { type: 'empty'; value: string; isToday: boolean };
+
+type Row = { age: string; cells: Cell[] };
+
 const columns = [
   {
     "dateMain": {
@@ -1143,7 +1151,7 @@ const rows = [
       }
     ]
   }
-] as const;
+] as Row[];
 
 const weekLabels: Record<number, string> = {
   1: '1/20~1/26',
