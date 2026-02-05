@@ -340,6 +340,38 @@
         .result-row {
             background: transparent;
         }
+
+        /* 주간 페이지 전환 */
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .week-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+
+        .week-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .week-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -365,6 +397,12 @@
                     <span onclick="setLang('en')">EN</span>
                 </div>
             </div>
+        </div>
+
+        <div class="week-nav">
+            <button class="week-btn" onclick="prevWeek()">←</button>
+            <div class="week-label" id="weekLabel">지난 주 lastWeek(1/20~1/26)</div>
+            <button class="week-btn" onclick="nextWeek()">→</button>
         </div>
 
         <div class="table-wrapper">
@@ -861,6 +899,74 @@
     </div>
 
     <script>
+        function reverseTableBody() {
+            const tbody = document.querySelector('.scrollable-body');
+            if (!tbody) return;
+            const rows = Array.from(tbody.querySelectorAll('tr')).reverse();
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        const weekLabels = {
+            1: '지난 주 lastWeek(1/20~1/26)',
+            2: '이번 주 thisWeek(1/27~2/2)'
+        };
+        let currentWeek = 2;
+
+        function assignWeekColumns() {
+            const headerRow = document.querySelector('.matrix-table thead tr');
+            if (!headerRow) return;
+            const headerCells = Array.from(headerRow.children);
+            headerCells.forEach((cell, idx) => {
+                if (idx === 0) return;
+                const week = idx <= 7 ? 1 : 2;
+                cell.setAttribute('data-week', String(week));
+            });
+
+            document.querySelectorAll('.matrix-table tbody tr').forEach(row => {
+                const cells = Array.from(row.children);
+                cells.forEach((cell, idx) => {
+                    if (idx === 0) return;
+                    const week = idx <= 7 ? 1 : 2;
+                    cell.setAttribute('data-week', String(week));
+                });
+            });
+        }
+
+        function assignWeekRows() {
+            document.querySelectorAll('.matrix-table tbody tr').forEach(row => {
+                const ageEl = row.querySelector('.row-header .age');
+                if (!ageEl) return;
+                const match = ageEl.textContent.match(/\\d+/);
+                if (!match) return;
+                const age = Number(match[0]);
+                let weeks = '1,2';
+                if (age <= 28) weeks = '1';
+                if (age >= 32) weeks = '2';
+                row.setAttribute('data-row-week', weeks);
+            });
+        }
+
+        function showWeek(week) {
+            currentWeek = week;
+            const label = document.getElementById('weekLabel');
+            if (label) label.textContent = weekLabels[week] || '';
+            document.querySelectorAll('[data-week]').forEach(el => {
+                el.style.display = el.getAttribute('data-week') === String(week) ? '' : 'none';
+            });
+            document.querySelectorAll('[data-row-week]').forEach(row => {
+                const weeks = row.getAttribute('data-row-week') || '';
+                row.style.display = weeks.split(',').includes(String(week)) ? '' : 'none';
+            });
+        }
+
+        function prevWeek() {
+            showWeek(currentWeek === 1 ? 2 : 1);
+        }
+
+        function nextWeek() {
+            showWeek(currentWeek === 2 ? 1 : 2);
+        }
+
         function setLang(lang) {
             // 스위치 버튼 active 상태 변경
             document.querySelectorAll('.lang-switch span').forEach(btn => {
@@ -881,7 +987,24 @@
             const btn = document.querySelector('.fit-switch');
             wrapper.classList.toggle('fit-all');
             btn.classList.toggle('active');
+            const isFitAll = wrapper.classList.contains('fit-all');
+            if (isFitAll) {
+                // 전체 보기: 주간 필터 해제
+                document.querySelectorAll('[data-week]').forEach(el => {
+                    el.style.display = '';
+                });
+            } else {
+                // 주간 보기로 복귀
+                showWeek(currentWeek);
+            }
         }
+
+        // 최신값이 아래로 오도록 정렬
+        reverseTableBody();
+        // 주간 컬럼 분류 및 초기 표시
+        assignWeekColumns();
+        assignWeekRows();
+        showWeek(currentWeek);
     </script>
 </body>
 
