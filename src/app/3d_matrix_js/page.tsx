@@ -1522,7 +1522,11 @@ export default function Matrix3DJsPage() {
               {visibleRows.map((row, rowIdx) => (
                 <tr className="result-row" key={`${row.age}-${rowIdx}`}>
                   <td className="row-header">
-                    <span className="age">{row.age}</span>
+                    <span className="age">
+                      {lang === 'ko'
+                        ? row.age
+                        : `Day ${String(row.age).replace(/\D/g, '')}`}
+                    </span>
                   </td>
                   {visibleColumns.map(({ idx, col }, colIdx) => {
                     const cell = row.cells[idx];
@@ -1539,10 +1543,14 @@ export default function Matrix3DJsPage() {
                     }
 
                     if (cell.type === 'actual') {
+                      const checkText =
+                        lang === 'ko'
+                          ? cell.check
+                          : cell.check.replace('실측', 'Actual');
                       return (
                         <td key={colIdx} className={`actual-cell${todayClass}`}>
                           <span className="value">{cell.value}</span>
-                          <span className="check">{cell.check}</span>
+                          <span className="check">{checkText}</span>
                         </td>
                       );
                     }
