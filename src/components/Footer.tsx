@@ -15,7 +15,8 @@ const Footer = () => {
       'Platform',
       'Features',
       'Pricing',
-      'API'
+      'API',
+      '3d matrix'
     ],
     'RESOURCES': [
       'Blog',
@@ -53,7 +54,11 @@ const Footer = () => {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link}>
-                    <Link href="#" className="body-sm hover:text-white transition-colors duration-300" style={{ color: 'var(--text-secondary)' }}>
+                    <Link
+                      href={link === '3d matrix' ? '/3d_matrix/' : '#'}
+                      className="body-sm hover:text-white transition-colors duration-300"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
                       {link}
                     </Link>
                   </li>
