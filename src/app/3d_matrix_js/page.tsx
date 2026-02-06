@@ -1,5 +1,6 @@
 'use client';
 
+// Demo/experimental page; not used by /dashboard. Do not apply dashboard fixes here.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Script from 'next/script';
@@ -1513,8 +1514,8 @@ const rootStyle = {
 
 export default function Matrix3DJsPage() {
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
-  const [fitAll, setFitAll] = useState(true);
-  const [week, setWeek] = useState<1 | 2 | 3>(1);
+  const [fitAll, setFitAll] = useState(false);
+  const [week, setWeek] = useState<1 | 2 | 3>(3);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const maxDay = 47;
 
@@ -1996,10 +1997,11 @@ export default function Matrix3DJsPage() {
                   const value = context.tick?.value;
                   return value === 37 ? '#00d4aa' : '#8888a0'; // 2/2(오늘)만 초록색
                 },
-                stepSize: 1,
+                stepSize: 2,
                 callback: (value: any) => {
                   const day = Number(value);
                   if (!Number.isFinite(day)) return '';
+                  if (day % 2 !== 0) return ''; // 2일마다 표시
                   const date = dateMap.get(day);
                   return date || '';
                 },
@@ -2062,7 +2064,7 @@ export default function Matrix3DJsPage() {
             font-family: 'Noto Sans KR', -apple-system, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
-            padding: 32px;
+            padding: 16px;
             min-height: 100vh;}
 .matrix-page .card {
             background: var(--bg-card);
@@ -2075,7 +2077,9 @@ export default function Matrix3DJsPage() {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;}
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;}
 .matrix-page .card-title {
             display: flex;
             align-items: center;
@@ -2107,14 +2111,15 @@ export default function Matrix3DJsPage() {
             color: var(--text-secondary);
             cursor: pointer;
             background: transparent;
-            border: none;
+            border: 1px solid var(--border-color);
             font: inherit;
             padding: 4px 8px;
             border-radius: 2px;
             transition: all 0.2s;}
 .matrix-page .fit-switch:hover {
             background: rgba(255, 255, 255, 0.05);
-            color: var(--text-primary);}
+            color: var(--text-primary);
+            border-color: var(--text-muted);}
 .matrix-page .fit-switch.active {
             background: rgba(0, 212, 170, 0.15);
             color: var(--accent-primary);}
@@ -2140,8 +2145,8 @@ export default function Matrix3DJsPage() {
             background: rgba(255, 255, 255, 0.05);}
 .matrix-page /* 테이블 스타일 */
         .table-wrapper {
-            max-height: none;
-            overflow-y: visible;
+            max-height: 175px;
+            overflow-y: auto;
             overflow-x: auto;
             transition: max-height 0.3s ease;}
 .matrix-page .table-wrapper.fit-all {
@@ -2151,36 +2156,36 @@ export default function Matrix3DJsPage() {
 .matrix-page .matrix-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;}
+            font-size: 10px;}
 .matrix-page .matrix-table thead {
             position: sticky;
             top: 0;
             background: var(--bg-card);
             z-index: 1;}
 .matrix-page .matrix-table th, .matrix-page .matrix-table td {
-            padding: 6px 8px;
+            padding: 2px 4px;
             text-align: center;
             border-bottom: 1px solid var(--border-color);
-            height: 45px;
-            min-width: 110px;}
+            height: 24px;
+            min-width: 70px;}
 .matrix-page /* Left "예측 대상" column: narrower after removing labels */
         .matrix-table th:first-child, .matrix-page .matrix-table td.row-header {
-            min-width: 80px;
-            padding-left: 6px;
-            padding-right: 6px;}
+            min-width: 60px;
+            padding-left: 4px;
+            padding-right: 4px;}
 .matrix-page .matrix-table thead th {
             font-weight: 500;
             color: var(--text-secondary);
-            font-size: 11px;
-            padding-bottom: 8px;}
+            font-size: 10px;
+            padding-bottom: 4px;}
 .matrix-page .matrix-table thead th .date-main {
             display: block;
-            font-size: 13px;
+            font-size: 10px;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 2px;}
+            margin-bottom: 1px;}
 .matrix-page .matrix-table thead th .date-sub {
-            font-size: 10px;
+            font-size: 8px;
             color: var(--text-muted);}
 .matrix-page .matrix-table thead th.today-col {
             background: rgba(0, 212, 170, 0.1);}
@@ -2191,11 +2196,11 @@ export default function Matrix3DJsPage() {
             color: var(--text-secondary);
             white-space: nowrap;}
 .matrix-page .row-header .age {
-            font-size: 14px;
+            font-size: 10px;
             font-weight: 600;
             color: var(--text-primary);}
 .matrix-page .row-header .label {
-            font-size: 10px;
+            font-size: 8px;
             color: var(--text-muted);}
 .matrix-page /* 예측 셀 */
         .prediction-cell {
@@ -2204,11 +2209,11 @@ export default function Matrix3DJsPage() {
             font-variant-numeric: tabular-nums;}
 .matrix-page .prediction-cell .value {
             display: block;
-            font-size: 14px;}
+            font-size: 10px;}
 .matrix-page .prediction-cell .error {
             display: block;
-            font-size: 10px;
-            margin-top: 2px;}
+            font-size: 8px;
+            margin-top: 1px;}
 .matrix-page .prediction-cell .error.good,
 .matrix-page .prediction-cell .error.medium,
 .matrix-page .prediction-cell .error.bad {
@@ -2216,7 +2221,7 @@ export default function Matrix3DJsPage() {
 .matrix-page /* 화살표 */
         .arrow {
             color: var(--text-muted);
-            font-size: 12px;}
+            font-size: 10px;}
 .matrix-page /* 실측(오늘) 컬럼 */
         .today-col {
             background: rgba(0, 212, 170, 0.08);}
@@ -2227,19 +2232,20 @@ export default function Matrix3DJsPage() {
             background: rgba(0, 212, 170, 0.15);}
 .matrix-page .actual-cell .value {
             color: var(--accent-primary);
-            font-weight: 700;}
+            font-weight: 700;
+            display: block;}
 .matrix-page .actual-cell .check {
-            font-size: 10px;
+            font-size: 8px;
             color: var(--accent-primary);
             display: block;
-            margin-top: 2px;}
+            margin-top: 1px;}
 .matrix-page /* 미래 예측 (아직 실측 없음) */
         .future-cell {
             background: rgba(255, 193, 7, 0.08);}
 .matrix-page .future-cell .value {
             color: var(--warning);}
 .matrix-page .future-cell .label {
-            font-size: 9px;
+            font-size: 8px;
             color: var(--text-muted);}
 .matrix-page /* 빈 셀 */
         .empty-cell {
@@ -2291,35 +2297,36 @@ export default function Matrix3DJsPage() {
             margin-bottom: 24px;}
 .matrix-page .accuracy-indicators {
             display: flex;
-            gap: 12px;}
+            gap: 8px;}
 .matrix-page .accuracy-item {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 10px;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 12px 16px;
-            min-width: 200px;}
+            padding: 8px 12px;
+            width: 180px;
+            flex: 0 0 auto;}
 .matrix-page .accuracy-label {
             display: flex;
             flex-direction: column;
             gap: 2px;
             min-width: 36px;}
 .matrix-page .accuracy-label .day {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             color: var(--text-primary);}
 .matrix-page .accuracy-label .sub {
-            font-size: 10px;
+            font-size: 9px;
             color: var(--text-muted);}
 .matrix-page .accuracy-bar {
             flex: 1;
-            height: 8px;
+            height: 6px;
             background: rgba(255, 255, 255, 0.08);
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
-            min-width: 80px;}
+            min-width: 50px;}
 .matrix-page .accuracy-bar-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--warning), #ffe066);
@@ -2327,17 +2334,19 @@ export default function Matrix3DJsPage() {
             transition: width 0.5s ease;
             box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);}
 .matrix-page .accuracy-value {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--warning);
-            min-width: 50px;
+            min-width: 40px;
             text-align: right;}
 .matrix-page .chart-subtitle {
             font-size: 11px;
             color: var(--text-muted);}
+.matrix-page .chart-subtitle:empty {
+            display: none;}
 .matrix-page .chart-container {
             position: relative;
-            height: 350px;
+            height: 175px;
             margin-bottom: 16px;}
 .matrix-page .chart-legend {
             display: flex;
@@ -2365,15 +2374,15 @@ export default function Matrix3DJsPage() {
         .week-nav {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 12px;
             color: var(--text-secondary);
-            font-size: 12px;}
+            font-size: 10px;}
 .matrix-page .week-btn {
             background: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
-            padding: 4px 8px;
+            padding: 2px 6px;
             cursor: pointer;
             border-radius: 2px;
             transition: all 0.2s;}
@@ -2385,47 +2394,135 @@ export default function Matrix3DJsPage() {
             align-items: center;
             gap: 6px;
             white-space: nowrap;}\n`}</style>
-      <div className="card chart-card">
-        <div className="card-header">
+
+      {/* Dashboard Layout - Center only (sidebars hidden) */}
+      <div className="min-h-[calc(100vh-32px)]">
+        {/* Left Sidebar - Hidden */}
+        <div className="hidden flex-col gap-3">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4">
+            <div className="bg-black/30 border border-[var(--border-color)] rounded px-3 py-2 text-[var(--text-secondary)] text-xs cursor-pointer flex items-center justify-between mb-3">
+              <span>Previous Cycles</span>
+              <span className="text-[8px]">▼</span>
+            </div>
+            <div className="text-base font-semibold text-[var(--accent-primary)] mb-1">FarmersMind_PoC(Ver. 1.0.0)</div>
+            <div className="text-xs text-[var(--text-muted)]">ChampaHomFarm_C.P.Group</div>
+          </div>
+
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4">
+            <div className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+              <span>ALERT</span>
+              <span className="text-[var(--warning)]">⚠</span>
+            </div>
+            <div className="text-sm text-[var(--text-muted)] text-center py-4">No Alerts</div>
+          </div>
+
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4">
+            <div className="text-sm font-semibold text-[var(--text-primary)] mb-4">DATA COLLECTION STATUS</div>
+            <div className="mb-4">
+              <div className="text-xs font-semibold text-[var(--text-secondary)] mb-2">IMAGES</div>
+              <div className="text-xs text-[var(--text-muted)] space-y-1">
+                <div className="flex justify-between"><span>Collected:</span><span>31,818 images</span></div>
+                <div className="flex justify-between"><span>Analyzed:</span><span>30,771 images</span></div>
+              </div>
+            </div>
+            <div className="mb-4">
+              <div className="text-xs font-semibold text-[var(--text-secondary)] mb-2">SENSOR</div>
+              <div className="text-xs text-[var(--text-muted)] space-y-1">
+                <div className="flex justify-between"><span>Feedbin:</span><span>16,344 records</span></div>
+                <div className="flex justify-between"><span>Thermometer:</span><span>4,475 records</span></div>
+                <div className="flex justify-between"><span>Hygrometer:</span><span>4,472 records</span></div>
+              </div>
+            </div>
+            <button className="w-full bg-[#27ae60] hover:bg-[#2ecc71] border-none rounded px-4 py-3 text-white text-xs font-semibold cursor-pointer transition-colors flex items-center justify-center gap-2">
+              <span>↓</span>
+              <span>EXCEL DOWNLOAD</span>
+            </button>
+          </div>
+
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4">
+            <div className="text-sm font-semibold text-[var(--text-primary)] mb-4">INPUT MANAGEMENT</div>
+            <button className="w-full bg-black/30 border border-[var(--border-color)] hover:border-[var(--text-muted)] rounded px-4 py-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium cursor-pointer mb-2 transition-all flex items-center justify-between">
+              <span>CULLING & MORTALITY</span>
+              <span>&gt;</span>
+            </button>
+            <button className="w-full bg-black/30 border border-[var(--border-color)] hover:border-[var(--text-muted)] rounded px-4 py-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium cursor-pointer transition-all flex items-center justify-between">
+              <span>MEASURED WEIGHTS</span>
+              <span>&gt;</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Center Content */}
+        <div className="flex flex-col gap-4">
+          {/* Top Cards - Hidden */}
+          <div className="hidden grid-cols-[1fr_2fr] gap-4">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-5 flex items-center justify-center">
+              <div className="text-sm text-[var(--text-muted)]">No Weather Data Available</div>
+            </div>
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-5 text-center">
+              <div className="text-2xl font-bold text-[var(--text-primary)] mb-1">CYCLE COMPLETED</div>
+              <div className="text-sm text-[var(--text-muted)] mb-2">AWAITING PLACEMENT</div>
+              <div className="text-sm text-[var(--text-muted)]">2025-12-20 ~ 2026-01-28</div>
+            </div>
+          </div>
+
+          {/* Chart Card */}
+          <div className="card chart-card">
+          <div className="flex justify-between items-center mb-4">
+          {/* 왼쪽: 타이틀 */}
           <div>
             <div className="card-title">
               <span className="icon">📊</span>
               <span>CCTV WEIGHT + 3일 예측</span>
             </div>
-            <div className="chart-subtitle">
-              {lang === 'ko' ? '25일령 이후 3일 예측 서비스 활성화' : '3-day forecasting enabled after Day 25'}
-            </div>
           </div>
-          <div className="accuracy-indicators">
-            <div className="accuracy-item">
-              <div className="accuracy-label">
-                <span className="day">D-1</span>
-                <span className="sub">{lang === 'ko' ? '1일 전' : '1 day'}</span>
+          {/* 오른쪽: D-1,2,3 + 한영 */}
+          <div className="flex items-center gap-3">
+            <div className="accuracy-indicators">
+              <div className="accuracy-item">
+                <div className="accuracy-label">
+                  <span className="day">D-1</span>
+                  <span className="sub">{lang === 'ko' ? '1일 전' : '1 day'}</span>
+                </div>
+                <div className="accuracy-bar">
+                  <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d1}%` }}></div>
+                </div>
+                <span className="accuracy-value">{avgAccuracy.d1}%</span>
               </div>
-              <div className="accuracy-bar">
-                <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d1}%` }}></div>
+              <div className="accuracy-item">
+                <div className="accuracy-label">
+                  <span className="day">D-2</span>
+                  <span className="sub">{lang === 'ko' ? '2일 전' : '2 days'}</span>
+                </div>
+                <div className="accuracy-bar">
+                  <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d2}%` }}></div>
+                </div>
+                <span className="accuracy-value">{avgAccuracy.d2}%</span>
               </div>
-              <span className="accuracy-value">{avgAccuracy.d1}%</span>
+              <div className="accuracy-item">
+                <div className="accuracy-label">
+                  <span className="day">D-3</span>
+                  <span className="sub">{lang === 'ko' ? '3일 전' : '3 days'}</span>
+                </div>
+                <div className="accuracy-bar">
+                  <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d3}%` }}></div>
+                </div>
+                <span className="accuracy-value">{avgAccuracy.d3}%</span>
+              </div>
             </div>
-            <div className="accuracy-item">
-              <div className="accuracy-label">
-                <span className="day">D-2</span>
-                <span className="sub">{lang === 'ko' ? '2일 전' : '2 days'}</span>
-              </div>
-              <div className="accuracy-bar">
-                <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d2}%` }}></div>
-              </div>
-              <span className="accuracy-value">{avgAccuracy.d2}%</span>
-            </div>
-            <div className="accuracy-item">
-              <div className="accuracy-label">
-                <span className="day">D-3</span>
-                <span className="sub">{lang === 'ko' ? '3일 전' : '3 days'}</span>
-              </div>
-              <div className="accuracy-bar">
-                <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d3}%` }}></div>
-              </div>
-              <span className="accuracy-value">{avgAccuracy.d3}%</span>
+            <div className="lang-switch">
+              <span
+                className={lang === 'ko' ? 'active' : ''}
+                onClick={() => setLang('ko')}
+              >
+                KO
+              </span>
+              <span
+                className={lang === 'en' ? 'active' : ''}
+                onClick={() => setLang('en')}
+              >
+                EN
+              </span>
             </div>
           </div>
         </div>
@@ -2450,51 +2547,24 @@ export default function Matrix3DJsPage() {
             <span>{lang === 'ko' ? '예측 영역' : 'Forecast Area'}</span>
           </div>
         </div>
-      </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">
-              <span>📊</span>
-              <span>Rolling Forecast Matrix</span>
-            </div>
-            <div className="card-subtitle">
-              {lang === 'ko'
-                ? '예측값이 실측에 수렴하는 과정 추적'
-                : 'Tracking prediction convergence to actual values'}
-            </div>
+        {/* 구분선 */}
+        <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '48px', marginBottom: '48px' }}></div>
+
+        <div className="flex justify-between items-center mb-4">
+          <div className="week-nav" style={{ margin: 0 }}>
+            <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>←</button>
+            <div className="week-label" id="weekLabel">{weekLabels[week]}</div>
+            <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1) as 1 | 2 | 3)}>→</button>
           </div>
-          <div className="header-controls">
-            <button
+          <button
               type="button"
-              className={`fit-switch ${fitAll ? 'active' : ''}`}
+              className={`fit-switch ${!fitAll ? 'active' : ''}`}
               onClick={() => setFitAll(v => !v)}
             >
               <span className="icon">↕</span>
-              <span>{lang === 'ko' ? '전체 보기' : 'Fit All'}</span>
+              <span>{lang === 'ko' ? '주간보기' : 'Weekly'}</span>
             </button>
-            <div className="lang-switch">
-              <span
-                className={lang === 'ko' ? 'active' : ''}
-                onClick={() => setLang('ko')}
-              >
-                KO
-              </span>
-              <span
-                className={lang === 'en' ? 'active' : ''}
-                onClick={() => setLang('en')}
-              >
-                EN
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="week-nav">
-          <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>←</button>
-          <div className="week-label" id="weekLabel">{weekLabels[week]}</div>
-          <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1) as 1 | 2 | 3)}>→</button>
         </div>
 
         <div className={`table-wrapper ${fitAll ? 'fit-all' : ''}`}>
@@ -2537,13 +2607,23 @@ export default function Matrix3DJsPage() {
                     }
 
                     if (cell.type === 'actual') {
-                      const checkText =
+                      const checkTextRaw =
                         lang === 'ko'
                           ? cell.check
                           : cell.check.replace('실측', 'Actual');
+                      const hasCheckMark = checkTextRaw.trim().startsWith('✓');
+                      const checkMark = hasCheckMark ? '✓' : '';
+                      const checkTextBase = hasCheckMark
+                        ? checkTextRaw.replace(/^✓\s*/, '')
+                        : checkTextRaw;
+                      const checkText = checkTextBase
+                        .replace(/실측/g, '')
+                        .replace(/Actual/g, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
                       return (
                         <td key={colIdx} className={`actual-cell${todayClass}${hoverClass}`}>
-                          <span className="value">{cell.value}</span>
+                          <span className="value">{cell.value}{checkMark ? ` ${checkMark}` : ''}</span>
                           <span className="check">{checkText}</span>
                         </td>
                       );
@@ -2593,6 +2673,44 @@ export default function Matrix3DJsPage() {
           </div>
         </div>
       </div>
+        </div>{/* End center-content */}
+
+        {/* Right Sidebar - Hidden */}
+        <div className="hidden flex-col gap-3">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4 flex-1">
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">SURVIVAL RATE & CULLING</div>
+            </div>
+            <div className="h-[140px] bg-black/20 rounded flex items-center justify-center text-[var(--text-muted)] text-xs">
+              📈 Survival Rate Chart (녹색 라인)
+            </div>
+          </div>
+
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4 flex-1">
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">FEEDBIN FULLNESS</div>
+              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                <button className="hover:text-[var(--text-primary)] cursor-pointer">&lt;</button>
+                <span>H01B1</span>
+                <button className="hover:text-[var(--text-primary)] cursor-pointer">&gt;</button>
+              </div>
+            </div>
+            <div className="h-[140px] bg-black/20 rounded flex items-center justify-center text-[var(--text-muted)] text-xs">
+              📊 Feedbin Level Chart (녹색 라인)
+            </div>
+          </div>
+
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-sm p-4 flex-1">
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">TEMPERATURE</div>
+              <div className="text-xs text-[var(--text-muted)]">H01T1</div>
+            </div>
+            <div className="h-[140px] bg-black/20 rounded flex items-center justify-center text-[var(--text-muted)] text-xs">
+              🌡 Temperature Chart (빨간 라인)
+            </div>
+          </div>
+        </div>
+      </div>{/* End dashboard-layout */}
     </div>
   );
 }

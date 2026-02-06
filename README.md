@@ -105,6 +105,8 @@ export const translations = mergeTranslations(
 - File naming: PascalCase for components, camelCase for utilities
 - Props interfaces: `ComponentNameProps` pattern
 - Custom hooks: Start with `use` prefix
+- Dashboard matrix source of truth: `/Users/zoro/projects/paiptree-website/src/app/dashboard/sections/ForecastMatrix.tsx`
+- Demo/experimental matrix page: `/Users/zoro/projects/paiptree-website/src/app/3d_matrix_js/page.tsx` (not used by `/dashboard`)
 
 ---
 *Built with ❤️ for better design workflows*
