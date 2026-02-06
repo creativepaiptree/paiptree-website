@@ -1,312 +1,173 @@
 'use client';
 
-// Production source for the /dashboard Rolling Forecast Matrix section.
+/**
+ * ForecastMatrix Component
+ *
+ * 닭의 체중 예측 시스템을 시각화하는 대시보드 컴포넌트.
+ *
+ * 구성:
+ * - CCTV WEIGHT: 8~45일령 체중 변화 차트 (Chart.js)
+ * - ROLLING FORECAST MATRIX: D-1/D-2/D-3 예측 정확도 테이블
+ *
+ * @see /docs/components/ForecastMatrix.blueprint.md
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 Chart.register(...registerables);
 
+/**
+ * 테이블 셀의 4가지 타입
+ * @property prediction - D-1/D-2/D-3 예측값 (오차율 포함)
+ * @property actual - 실측값 (전일대비 변화 포함)
+ * @property future - 미래 예측값 (검증 불가)
+ * @property empty - 데이터 없음
+ */
 type Cell =
   | { type: 'prediction'; value: string; error: string; errorClass: string; isToday: boolean }
   | { type: 'actual'; value: string; check: string; isToday: boolean }
   | { type: 'future'; value: string; label: string; isToday: boolean }
   | { type: 'empty'; value: string; isToday: boolean };
 
-type Row = { age: string; cells: Cell[] };
-
-const columns = [
-  { "dateMain": { "ko": "1/20(월)", "en": "1/20(Mon)" }, "dateSub": { "ko": "13일 전", "en": "13 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/21(화)", "en": "1/21(Tue)" }, "dateSub": { "ko": "12일 전", "en": "12 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/22(수)", "en": "1/22(Wed)" }, "dateSub": { "ko": "11일 전", "en": "11 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/23(목)", "en": "1/23(Thu)" }, "dateSub": { "ko": "10일 전", "en": "10 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/24(금)", "en": "1/24(Fri)" }, "dateSub": { "ko": "9일 전", "en": "9 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/25(토)", "en": "1/25(Sat)" }, "dateSub": { "ko": "8일 전", "en": "8 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/26(일)", "en": "1/26(Sun)" }, "dateSub": { "ko": "7일 전", "en": "7 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/27(월)", "en": "1/27(Mon)" }, "dateSub": { "ko": "6일 전", "en": "6 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/28(화)", "en": "1/28(Tue)" }, "dateSub": { "ko": "5일 전", "en": "5 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/29(수)", "en": "1/29(Wed)" }, "dateSub": { "ko": "4일 전", "en": "4 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/30(목)", "en": "1/30(Thu)" }, "dateSub": { "ko": "3일 전", "en": "3 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "1/31(금)", "en": "1/31(Fri)" }, "dateSub": { "ko": "2일 전", "en": "2 days ago" }, "isToday": false },
-  { "dateMain": { "ko": "2/1(토)", "en": "2/1(Sat)" }, "dateSub": { "ko": "1일 전", "en": "1 day ago" }, "isToday": false },
-  { "dateMain": { "ko": "2/2(일)", "en": "2/2(Sun)" }, "dateSub": { "ko": "오늘", "en": "Today" }, "isToday": true },
-  { "dateMain": { "ko": "2/3(월)", "en": "2/3(Mon)" }, "dateSub": { "ko": "내일", "en": "Tomorrow" }, "isToday": false },
-  { "dateMain": { "ko": "2/4(화)", "en": "2/4(Tue)" }, "dateSub": { "ko": "모레", "en": "In 2 days" }, "isToday": false },
-] as const;
-
-const rows: Row[] = [
-  { "age": "25일령", "cells": [
-    { "type": "prediction", "value": "1,360g", "error": "-5.7%", "errorClass": "bad", "isToday": false },
-    { "type": "prediction", "value": "1,375g", "error": "+5.2%", "errorClass": "bad", "isToday": false },
-    { "type": "prediction", "value": "1,390g", "error": "-3.1%", "errorClass": "medium", "isToday": false },
-    { "type": "actual", "value": "1,405g", "check": "✓ 실측(+1.1% 15g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "26일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,405g", "error": "-3.0%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,420g", "error": "-2.8%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,435g", "error": "-1.5%", "errorClass": "medium", "isToday": false },
-    { "type": "actual", "value": "1,450g", "check": "✓ 실측(+1.0% 15g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "27일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,462g", "error": "-2.8%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,478g", "error": "-1.7%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,490g", "error": "-0.9%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "1,504g", "check": "✓ 실측(+0.9% 14g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "28일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,520g", "error": "-6.1%", "errorClass": "bad", "isToday": false },
-    { "type": "prediction", "value": "1,538g", "error": "-2.5%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,558g", "error": "-1.3%", "errorClass": "medium", "isToday": false },
-    { "type": "actual", "value": "1,578g", "check": "✓ 실측(+1.3% 20g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "29일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,592g", "error": "-3.5%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,612g", "error": "+5.6%", "errorClass": "bad", "isToday": false },
-    { "type": "prediction", "value": "1,628g", "error": "-1.3%", "errorClass": "medium", "isToday": false },
-    { "type": "actual", "value": "1,650g", "check": "✓ 실측(+1.4% 22g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "30일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,658g", "error": "-5.4%", "errorClass": "bad", "isToday": false },
-    { "type": "prediction", "value": "1,670g", "error": "-1.5%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,680g", "error": "-0.9%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "1,695g", "check": "✓ 실측(+0.9% 15g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "31일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,748g", "error": "-2.2%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,762g", "error": "-1.5%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,778g", "error": "-0.6%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "1,788g", "check": "✓ 실측(+0.6% 10g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "32일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,842g", "error": "-2.1%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,858g", "error": "-1.3%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,872g", "error": "-0.5%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "1,882g", "check": "✓ 실측(+0.5% 10g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "33일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "1,935g", "error": "-1.9%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "1,952g", "error": "-1.0%", "errorClass": "good", "isToday": false },
-    { "type": "prediction", "value": "1,965g", "error": "-0.4%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "1,972g", "check": "✓ 실측(+0.4% 7g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "34일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "2,032g", "error": "-1.9%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "2,045g", "error": "-1.0%", "errorClass": "good", "isToday": false },
-    { "type": "prediction", "value": "2,060g", "error": "-0.4%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "2,075g", "check": "✓ 실측(+0.7% 15g)", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "35일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "2,135g", "error": "-1.9%", "errorClass": "medium", "isToday": false },
-    { "type": "prediction", "value": "2,150g", "error": "-1.0%", "errorClass": "good", "isToday": false },
-    { "type": "prediction", "value": "2,165g", "error": "-0.4%", "errorClass": "good", "isToday": false },
-    { "type": "actual", "value": "2,180g", "check": "✓ 실측(+0.7% 15g)", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "36일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "2,250g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "prediction", "value": "2,265g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "prediction", "value": "2,280g", "error": "", "errorClass": "", "isToday": true },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "37일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "2,320g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "prediction", "value": "2,340g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "prediction", "value": "2,360g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-  ]},
-  { "age": "38일령", "cells": [
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "empty", "value": "-", "isToday": false },
-    { "type": "prediction", "value": "2,385g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "prediction", "value": "2,405g", "error": "", "errorClass": "", "isToday": false },
-    { "type": "prediction", "value": "2,425g", "error": "", "errorClass": "", "isToday": false },
-  ]},
-];
-
-const weekLabels: Record<number, string> = {
-  1: '1/20~1/21',
-  2: '1/22~1/28',
-  3: '1/29~2/4',
+/**
+ * 전치 테이블의 열(X축) 정보
+ * @description 전치 테이블에서 X축은 일령(age)을 나타냄
+ * @property age - 일령 (25~45)
+ * @property xIndex - 날짜 인덱스 (age + AGE_OFFSET)
+ * @property isTodayAge - 오늘 일령 여부 (하이라이트용)
+ */
+type TransposedColumn = {
+  age: number;
+  xIndex: number;
+  isTodayAge: boolean;
 };
 
+/**
+ * 전치 테이블의 행(Y축) 정보
+ * @description 전치 테이블에서 Y축은 날짜를 나타냄 (최신이 위, Gantt 스타일)
+ * @property date - 날짜 표시 (예: "1/23(월)")
+ * @property dateSub - 날짜 서브 라벨 (예: "오늘", "1일 전")
+ * @property xIndex - 날짜 인덱스 (BASE_DATE 기준)
+ * @property isToday - 오늘 날짜 여부
+ * @property cells - 각 일령별 셀 데이터 배열
+ */
+type TransposedRow = {
+  date: { ko: string; en: string };
+  dateSub: { ko: string; en: string };
+  xIndex: number;
+  isToday: boolean;
+  cells: Cell[];
+};
+
+/**
+ * 테이블 시작 날짜 인덱스
+ * @constant {number}
+ * @description 1/20 (25일령의 D-3 예측일부터)
+ */
+const TABLE_START_X = 24;
+
+/**
+ * 테이블 종료 날짜 인덱스
+ * @constant {number}
+ * @description 2/12 (45일령 실측일까지)
+ */
+const TABLE_END_X = 47;
+
+/**
+ * 테이블 시작 일령
+ * @constant {number}
+ * @description 예측 시스템이 적용되는 첫 일령
+ */
+const TABLE_START_AGE = 25;
+
+/**
+ * 테이블 종료 일령
+ * @constant {number}
+ * @description 출하 직전까지의 마지막 일령
+ */
+const TABLE_END_AGE = 45;
+
+/**
+ * 체중 데이터 포인트
+ * @property x - 날짜 인덱스 (xIndex)
+ * @property y - 체중 (g)
+ */
 type Point = { x: number; y: number };
+
+/**
+ * 정확도 표시 색상 톤
+ * @description good: 97%↑, medium: 95~97%, bad: 95%↓
+ */
 type AccuracyLineTone = 'good' | 'medium' | 'bad';
+
+/**
+ * 정확도 툴팁 라인 정보
+ */
 type AccuracyHoverLine = { text: string; tone: AccuracyLineTone };
+
+/**
+ * 정확도 호버 정보 (툴팁용)
+ */
 type AccuracyHoverInfo = { summary: string; lines: AccuracyHoverLine[] };
 
-const BASE_DATE = new Date(2025, 11, 27); // x=0 -> 12/27
-const FORECAST_START_INDEX = 27; // 1/23 = 25일령
-const TODAY_INDEX = 37; // 2/2 = 35일령
-const AGE_OFFSET = 2; // age = x - 2
-const CHART_MIN_INDEX = 10; // 8일령
-const CHART_MAX_INDEX = 47; // 45일령
+/**
+ * 기준 날짜 (xIndex = 0)
+ * @constant {Date}
+ * @description 모든 날짜 계산의 기준점. 2025년 12월 27일.
+ * @example
+ * // xIndex=37의 실제 날짜 계산
+ * const date = new Date(BASE_DATE);
+ * date.setDate(BASE_DATE.getDate() + 37); // 2025-02-02
+ */
+const BASE_DATE = new Date(2025, 11, 27);
 
+/**
+ * 예측 시스템 시작 인덱스
+ * @constant {number}
+ * @description 1/23 = 25일령. 이 시점부터 D-1/D-2/D-3 예측이 시작됨.
+ */
+const FORECAST_START_INDEX = 27;
+
+/**
+ * 오늘 날짜 인덱스
+ * @constant {number}
+ * @description 2/2 = 35일령. 실제 운영 시 동적 계산 필요.
+ * @example
+ * // 실제 운영 시
+ * const todayIndex = Math.floor((new Date() - BASE_DATE) / (1000 * 60 * 60 * 24));
+ */
+const TODAY_INDEX = 37;
+
+/**
+ * 일령 오프셋 (날짜→일령 변환)
+ * @constant {number}
+ * @description age = xIndex - AGE_OFFSET
+ * @example
+ * const age = 37 - AGE_OFFSET; // 35일령
+ * const xIndex = 35 + AGE_OFFSET; // 37 (2/2)
+ */
+const AGE_OFFSET = 2;
+
+/**
+ * 차트 최소 인덱스
+ * @constant {number}
+ * @description 8일령에 해당. 차트 X축 시작점.
+ */
+const CHART_MIN_INDEX = 10;
+
+/**
+ * 차트 최대 인덱스
+ * @constant {number}
+ * @description 45일령에 해당. 차트 X축 종료점.
+ */
+const CHART_MAX_INDEX = 47;
+
+/**
+ * 과거 체중 기록 (8~24일령)
+ * @description 예측 시스템 시작 전 히스토리 데이터. 차트에서 회색으로 표시.
+ * @todo 실제 운영 시 weight_history 테이블에서 조회
+ */
 const HISTORY_POINTS: Point[] = [
   { x: 10, y: 358 }, { x: 11, y: 412 }, { x: 12, y: 478 },
   { x: 13, y: 535 }, { x: 14, y: 598 }, { x: 15, y: 672 }, { x: 16, y: 738 }, { x: 17, y: 815 },
@@ -314,44 +175,63 @@ const HISTORY_POINTS: Point[] = [
   { x: 23, y: 1248 }, { x: 24, y: 1295 }, { x: 25, y: 1328 }, { x: 26, y: 1362 },
 ];
 
+/**
+ * 모델 예측값 (25일령~)
+ * @description 예측 모델이 생성한 체중 예측. 차트의 기준선 역할.
+ * @todo 실제 운영 시 weight_predictions 테이블에서 조회
+ */
 const MODEL_POINTS: Point[] = [
   { x: 27, y: 1405 }, { x: 28, y: 1450 }, { x: 29, y: 1504 }, { x: 30, y: 1578 },
   { x: 31, y: 1650 }, { x: 32, y: 1695 }, { x: 33, y: 1788 }, { x: 34, y: 1882 },
   { x: 35, y: 1972 }, { x: 36, y: 2075 }, { x: 37, y: 2180 }, { x: 38, y: 2405 }, { x: 39, y: 2425 }, { x: 40, y: 2445 },
 ];
 
-const D1_BASE_POINTS: Point[] = [
-  { x: 27, y: 1390 }, { x: 28, y: 1435 }, { x: 29, y: 1490 }, { x: 30, y: 1558 },
-  { x: 31, y: 1628 }, { x: 32, y: 1680 }, { x: 33, y: 1778 }, { x: 34, y: 1872 },
-  { x: 35, y: 1965 }, { x: 36, y: 2060 }, { x: 37, y: 2165 }, { x: 38, y: 2280 }, { x: 39, y: 2360 }, { x: 40, y: 2425 },
+/**
+ * D-1 예측값 (1일 전 예측)
+ * @description 현재 운영 화면 기준 확정된 예측값
+ */
+const D1_POINTS: Point[] = [
+  { x: 27, y: 1459 }, { x: 28, y: 1613 }, { x: 29, y: 1571 }, { x: 30, y: 1622 },
+  { x: 31, y: 1693 }, { x: 32, y: 1754 }, { x: 33, y: 1856 }, { x: 34, y: 1948 },
+  { x: 35, y: 2198 }, { x: 36, y: 2228 }, { x: 37, y: 2344 }, { x: 38, y: 2419 }, { x: 39, y: 2580 }, { x: 40, y: 2573 },
 ];
 
-const D2_BASE_POINTS: Point[] = [
-  { x: 27, y: 1375 }, { x: 28, y: 1420 }, { x: 29, y: 1478 }, { x: 30, y: 1538 },
-  { x: 31, y: 1612 }, { x: 32, y: 1670 }, { x: 33, y: 1762 }, { x: 34, y: 1858 },
-  { x: 35, y: 1952 }, { x: 36, y: 2045 }, { x: 37, y: 2150 }, { x: 38, y: 2265 }, { x: 39, y: 2340 }, { x: 40, y: 2405 },
+/**
+ * D-2 예측값 (2일 전 예측)
+ * @description 현재 운영 화면 기준 확정된 예측값
+ */
+const D2_POINTS: Point[] = [
+  { x: 27, y: 1564 }, { x: 28, y: 1615 }, { x: 29, y: 1581 }, { x: 30, y: 1646 },
+  { x: 31, y: 1773 }, { x: 32, y: 1787 }, { x: 33, y: 1885 }, { x: 34, y: 2044 },
+  { x: 35, y: 2089 }, { x: 36, y: 2146 }, { x: 37, y: 2365 }, { x: 38, y: 2378 }, { x: 39, y: 2456 }, { x: 40, y: 2573 },
 ];
 
-const D3_BASE_POINTS: Point[] = [
+/**
+ * D-3 예측값 (3일 전 예측)
+ * @description 현재 운영 화면 기준 확정된 예측값
+ */
+const D3_POINTS: Point[] = [
   { x: 27, y: 1360 }, { x: 28, y: 1405 }, { x: 29, y: 1462 }, { x: 30, y: 1520 },
   { x: 31, y: 1592 }, { x: 32, y: 1658 }, { x: 33, y: 1748 }, { x: 34, y: 1842 },
   { x: 35, y: 1935 }, { x: 36, y: 2032 }, { x: 37, y: 2135 }, { x: 38, y: 2250 }, { x: 39, y: 2320 }, { x: 40, y: 2385 },
 ];
 
-const applyPredictionShift = (points: Point[], factor: number): Point[] =>
-  points.map((point) => ({ x: point.x, y: Math.round(point.y * factor) }));
-
-// Stress-test profile requested by user: 1/3 (+2%), 1/3 (+7%), 1/3 (base).
-const D1_POINTS: Point[] = applyPredictionShift(D1_BASE_POINTS, 1.02);
-const D2_POINTS: Point[] = applyPredictionShift(D2_BASE_POINTS, 1.07);
-const D3_POINTS: Point[] = applyPredictionShift(D3_BASE_POINTS, 1.0);
-
+/**
+ * 실측 체중 데이터
+ * @description CCTV로 실제 측정된 체중값. 오늘(TODAY_INDEX)까지만 존재.
+ * @todo 실제 운영 시 weight_actuals 테이블에서 조회
+ */
 const OBSERVED_ACTUAL_POINTS: Point[] = [
   { x: 27, y: 1405 }, { x: 28, y: 1450 }, { x: 29, y: 1504 }, { x: 30, y: 1578 },
   { x: 31, y: 1650 }, { x: 32, y: 1695 }, { x: 33, y: 1788 }, { x: 34, y: 1882 },
   { x: 35, y: 1972 }, { x: 36, y: 2075 }, { x: 37, y: 2180 },
 ];
 
+/**
+ * 품종별 표준 체중 곡선
+ * @description 비교 기준선으로 사용. 차트에서 파란색 점선으로 표시.
+ * @todo 실제 운영 시 standard_weight 테이블에서 조회
+ */
 const STANDARD_WEIGHT_POINTS: Point[] = [
   { x: 9, y: 156 }, { x: 10, y: 185 }, { x: 11, y: 216 }, { x: 12, y: 251 }, { x: 13, y: 289 },
   { x: 14, y: 330 }, { x: 15, y: 375 }, { x: 16, y: 423 }, { x: 17, y: 474 }, { x: 18, y: 529 },
@@ -363,24 +243,286 @@ const STANDARD_WEIGHT_POINTS: Point[] = [
   { x: 44, y: 2700 }, { x: 45, y: 2794 }, { x: 46, y: 2888 }, { x: 47, y: 2982 },
 ];
 
+/**
+ * Point 배열을 Map으로 변환 (x → y 조회용)
+ * @param points - Point 배열
+ * @returns Map<xIndex, weight>
+ * @example
+ * const map = pointMap(OBSERVED_ACTUAL_POINTS);
+ * const weight = map.get(37); // 2180 (35일령 체중)
+ */
 const pointMap = (points: Point[]) => new Map(points.map((point) => [point.x, point.y]));
+
+/**
+ * 부호 포함 숫자 포맷팅
+ * @param value - 숫자값
+ * @param unit - 단위 (예: 'g', '%')
+ * @returns 부호 포함 문자열 (예: "+3.5%", "-12.0g")
+ */
 const formatSigned = (value: number, unit: string) => `${value >= 0 ? '+' : ''}${value.toFixed(1)}${unit}`;
+
+/**
+ * 절댓값 기준 소수 1자리 올림 (부호 유지)
+ * @param value - 원본 값
+ * @returns 올림 적용 값 (예: 3.01 -> 3.1, -3.01 -> -3.1)
+ */
+const ceilSignedOneDecimal = (value: number): number => {
+  if (!Number.isFinite(value) || value === 0) return 0;
+  const absCeil = Math.ceil(Math.abs(value) * 10) / 10;
+  return value > 0 ? absCeil : -absCeil;
+};
+
+/**
+ * 부호 포함 퍼센트 포맷팅 (절댓값 기준 소수 1자리 올림)
+ * @param value - 퍼센트 값
+ * @returns 문자열 (예: "+3.1%", "-5.2%")
+ */
+const formatSignedPercentCeil = (value: number) => {
+  const rounded = ceilSignedOneDecimal(value);
+  return `${rounded >= 0 ? '+' : ''}${rounded.toFixed(1)}%`;
+};
+
+/**
+ * 정확도에 따른 색상 톤 결정
+ * @param accuracy - 정확도 (0~100%)
+ * @returns 'good' (97%↑), 'medium' (95~97%), 'bad' (95%↓)
+ */
 const getAccuracyTone = (accuracy: number): 'good' | 'medium' | 'bad' => {
   if (accuracy >= 97) return 'good';
   if (accuracy >= 95) return 'medium';
   return 'bad';
 };
 
+/**
+ * 체중 포맷팅 (천 단위 구분자 + g)
+ * @param g - 체중 (그램)
+ * @returns 포맷된 문자열 (예: "1,405g")
+ */
+const formatWeight = (g: number): string => `${g.toLocaleString()}g`;
+
+/**
+ * 오차율에 따른 셀 색상 클래스 결정
+ * @param pct - 오차율 (%)
+ * @returns 'good' (±3%↓), 'medium' (±5%↓), 'bad' (>±5%)
+ */
+const calcErrorClass = (pct: number): 'good' | 'medium' | 'bad' => {
+  const abs = Math.abs(ceilSignedOneDecimal(pct));
+  if (abs <= 3) return 'good';
+  if (abs <= 5) return 'medium';
+  return 'bad';
+};
+
+/**
+ * 날짜 차이에 따른 서브 라벨 생성
+ * @param dayDiff - 오늘 기준 날짜 차이 (양수=미래, 음수=과거)
+ * @param langParam - 언어 ('ko' | 'en')
+ * @returns 라벨 문자열 (예: "오늘", "1일 전", "Tomorrow")
+ */
+const getDateSubLabel = (dayDiff: number, langParam: 'ko' | 'en') => {
+  if (dayDiff === 0) return langParam === 'ko' ? '오늘' : 'Today';
+  if (dayDiff === 1) return langParam === 'ko' ? '내일' : 'Tomorrow';
+  if (dayDiff === 2) return langParam === 'ko' ? '모레' : 'In 2 days';
+  if (dayDiff > 2) return langParam === 'ko' ? `${dayDiff}일 후` : `In ${dayDiff} days`;
+  if (dayDiff === -1) return langParam === 'ko' ? '1일 전' : '1 day ago';
+  return langParam === 'ko' ? `${Math.abs(dayDiff)}일 전` : `${Math.abs(dayDiff)} days ago`;
+};
+
+/**
+ * 주어진 일령 범위에 대한 유효 날짜 범위 계산
+ * @description 주간보기에서 해당 페이지에 표시할 날짜(행)를 필터링하는 데 사용
+ * @param startAge - 시작 일령 (예: 25)
+ * @param endAge - 종료 일령 (예: 31)
+ * @returns 유효 날짜 xIndex 범위
+ * @example
+ * getRelevantDateRange(25, 31) // { minDateX: 27, maxDateX: 33 }
+ * // 25일령 실측일(1/23=x27) ~ 31일령 실측일(1/29=x33)
+ */
+const getRelevantDateRange = (startAge: number, endAge: number) => {
+  const minDateX = startAge + AGE_OFFSET;     // Measurement date for startAge
+  const maxDateX = endAge + AGE_OFFSET;       // Actual measurement date for endAge
+  return { minDateX, maxDateX };
+};
+
+/**
+ * 전치 테이블 열(X축) 데이터 생성
+ * @description X축에 일령(25~45d)을 배치하는 Gantt 스타일 구조
+ * @returns TransposedColumn 배열 (21개 열)
+ * @example
+ * // 반환값 예시
+ * [
+ *   { age: 25, xIndex: 27, isTodayAge: false },
+ *   ...
+ *   { age: 35, xIndex: 37, isTodayAge: true },  // 오늘
+ *   ...
+ * ]
+ */
+const generateTransposedColumns = (): TransposedColumn[] => {
+  const todayAge = TODAY_INDEX - AGE_OFFSET; // 35
+
+  return Array.from({ length: TABLE_END_AGE - TABLE_START_AGE + 1 }, (_, i) => {
+    const age = TABLE_START_AGE + i;
+    return {
+      age,
+      xIndex: age + AGE_OFFSET,
+      isTodayAge: age === todayAge,
+    };
+  });
+};
+
+/**
+ * 전치 테이블 행(Y축) 데이터 생성
+ * @description Y축에 날짜를 배치. 각 셀의 타입(actual/prediction/future/empty)을 계산.
+ *
+ * 셀 타입 결정 로직:
+ * - horizon = ageX - dateX (일령의 xIndex - 날짜의 xIndex)
+ * - horizon < 0: empty (아직 예측 불가)
+ * - horizon = 0: actual (실측일) 또는 future (미래)
+ * - horizon = 1~3: D-1/D-2/D-3 prediction
+ * - horizon > 3: empty (예측 범위 초과)
+ *
+ * @param transposedCols - 열 정보 배열
+ * @returns TransposedRow 배열 (날짜별 행)
+ */
+const generateTransposedRows = (transposedCols: TransposedColumn[]): TransposedRow[] => {
+  const d1Map = pointMap(D1_POINTS);
+  const d2Map = pointMap(D2_POINTS);
+  const d3Map = pointMap(D3_POINTS);
+  const obsMap = pointMap(OBSERVED_ACTUAL_POINTS);
+
+  const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return Array.from({ length: TABLE_END_X - TABLE_START_X + 1 }, (_, i) => {
+    const dateX = TABLE_START_X + i;
+    const date = new Date(BASE_DATE);
+    date.setDate(BASE_DATE.getDate() + dateX);
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    const dayDiff = dateX - TODAY_INDEX;
+
+    const cells: Cell[] = transposedCols.map(col => {
+      const ageX = col.xIndex;
+      const horizon = ageX - dateX; // Distance from prediction date to measurement date
+      const isToday = dateX === TODAY_INDEX;
+
+      // horizon < 0: Not yet predicted (date is after measurement day)
+      if (horizon < 0) return { type: 'empty', value: '-', isToday };
+
+      // horizon = 0: Measurement day
+      if (horizon === 0) {
+        const actual = obsMap.get(ageX);
+        if (actual === undefined || dateX > TODAY_INDEX) {
+          const pred = d1Map.get(ageX);
+          if (pred === undefined) return { type: 'empty', value: '-', isToday };
+          const daysFromToday = dateX - TODAY_INDEX;
+          const dLabel = daysFromToday >= 1 && daysFromToday <= 3 ? `D-${daysFromToday}` : 'D-1';
+          return { type: 'future', value: formatWeight(pred), label: dLabel, isToday };
+        }
+        const prev = obsMap.get(ageX - 1);
+        const diff = prev ? actual - prev : 0;
+        const pct = prev ? ((diff / prev) * 100) : 0;
+        return {
+          type: 'actual',
+          value: formatWeight(actual),
+          check: `✓ 실측(${formatSignedPercentCeil(pct)} ${diff}g)`,
+          isToday,
+        };
+      }
+
+      // horizon > 3: Outside prediction range
+      if (horizon > 3) return { type: 'empty', value: '-', isToday };
+
+      // D-1/D-2/D-3 predictions
+      const predMap = horizon === 1 ? d1Map : horizon === 2 ? d2Map : d3Map;
+      const pred = predMap.get(ageX);
+      if (pred === undefined) return { type: 'empty', value: '-', isToday };
+
+      const actual = obsMap.get(ageX);
+      if (actual === undefined || ageX > TODAY_INDEX) {
+        return { type: 'prediction', value: formatWeight(pred), error: '', errorClass: '', isToday };
+      }
+
+      const errPct = ((pred - actual) / actual) * 100;
+      return {
+        type: 'prediction',
+        value: formatWeight(pred),
+        error: formatSignedPercentCeil(errPct),
+        errorClass: calcErrorClass(errPct),
+        isToday,
+      };
+    });
+
+    return {
+      date: {
+        ko: `${m}/${d}(${weekdaysKo[date.getDay()]})`,
+        en: `${m}/${d}(${weekdaysEn[date.getDay()]})`,
+      },
+      dateSub: { ko: getDateSubLabel(dayDiff, 'ko'), en: getDateSubLabel(dayDiff, 'en') },
+      xIndex: dateX,
+      isToday: dateX === TODAY_INDEX,
+      cells,
+    };
+  });
+};
+
+/**
+ * 페이지 네비게이션용 일령 범위 라벨 생성
+ * @description 3페이지 구성: 1=25~31d, 2=32~38d, 3=39~45d (각 7일령)
+ * @returns 페이지별 라벨 객체
+ */
+const generateAgeRangeLabels = (): Record<number, { ko: string; en: string }> => ({
+  1: { ko: '25~31일령', en: '25-31d' },
+  2: { ko: '32~38일령', en: '32-38d' },
+  3: { ko: '39~45일령', en: '39-45d' },
+});
+
+/**
+ * 사전 생성된 테이블 데이터
+ * @description 렌더링 성능을 위해 컴포넌트 외부에서 1회만 생성
+ */
+const transposedColumns = generateTransposedColumns();
+const transposedRows = generateTransposedRows(transposedColumns);
+const ageRangeLabels = generateAgeRangeLabels();
+
+/**
+ * ForecastMatrix 컴포넌트 Props
+ */
 interface ForecastMatrixProps {
+  /** 표시 언어 */
   lang: 'ko' | 'en';
 }
 
+/**
+ * ForecastMatrix 메인 컴포넌트
+ *
+ * @description 닭 체중 예측 시스템 시각화 대시보드
+ *
+ * 구성:
+ * 1. CCTV WEIGHT 차트 - 8~45일령 체중 변화 (Chart.js)
+ * 2. ROLLING FORECAST MATRIX 테이블 - D-1/D-2/D-3 예측 정확도
+ *
+ * 상태:
+ * - fitAll: 전체보기(true) vs 주간보기(false)
+ * - week: 현재 페이지 (1=25~31d, 2=32~38d, 3=39~45d)
+ * - hoveredDay: 차트에서 호버 중인 xIndex (테이블 열 하이라이트용)
+ *
+ * @see /docs/components/ForecastMatrix.blueprint.md
+ */
 const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
+  /** 전체보기(true) vs 주간보기(false) */
   const [fitAll, setFitAll] = useState(false);
-  const [week, setWeek] = useState<1 | 2 | 3>(3);
+  /** 현재 페이지: 1=25~31d, 2=32~38d, 3=39~45d */
+  const [week, setWeek] = useState<1 | 2 | 3>(2);
+  /** 차트 호버 시 xIndex (테이블 열 하이라이트 연동) */
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+  /** 차트 모드: 메인 차트 vs 예측 정확도 차트 */
+  const [chartMode, setChartMode] = useState<'main' | 'accuracy'>('main');
   const maxDay = CHART_MAX_INDEX;
 
+  /**
+   * D-1/D-2/D-3 평균 정확도 계산
+   * @description 각 예측 호라이즌별 평균 정확도 (100 - 평균오차율)
+   */
   const avgAccuracy = useMemo(() => {
     const observedMap = pointMap(OBSERVED_ACTUAL_POINTS);
     const calcAvgAccuracy = (predictions: Point[]) => {
@@ -395,7 +537,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         }
       });
       const avgError = count > 0 ? totalAbsErrorPct / count : 0;
-      return Math.max(0, 100 - avgError).toFixed(1);
+      return (Math.ceil(Math.max(0, 100 - avgError) * 10) / 10).toFixed(1);
     };
 
     return {
@@ -405,11 +547,16 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
     };
   }, []);
 
+  /**
+   * 정확도 인디케이터 호버 정보 생성
+   * @description 각 일령별 예측 오차 상세 정보 (툴팁용)
+   */
   const accuracyHoverInfo = useMemo(() => {
     const observedMap = pointMap(OBSERVED_ACTUAL_POINTS);
     const getLineTone = (absPct: number): AccuracyLineTone => {
-      if (absPct <= 3) return 'good';
-      if (absPct <= 5) return 'medium';
+      const roundedAbs = Math.ceil(absPct * 10) / 10;
+      if (roundedAbs <= 3) return 'good';
+      if (roundedAbs <= 5) return 'medium';
       return 'bad';
     };
     const build = (predictions: Point[], horizonKo: string, horizonEn: string): AccuracyHoverInfo => {
@@ -428,8 +575,8 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           {
             text:
               lang === 'ko'
-                ? `${age}일령 ${horizonKo}: ${formatSigned(Number(diff.toFixed(1)), 'g')} (${formatSigned(Number(pct.toFixed(1)), '%')})`
-                : `${age}d ${horizonEn}: ${formatSigned(Number(diff.toFixed(1)), 'g')} (${formatSigned(Number(pct.toFixed(1)), '%')})`,
+                ? `${age}일령 ${horizonKo}: ${formatSigned(Number(diff.toFixed(1)), 'g')} (${formatSignedPercentCeil(pct)})`
+                : `${age}d ${horizonEn}: ${formatSigned(Number(diff.toFixed(1)), 'g')} (${formatSignedPercentCeil(pct)})`,
             tone: getLineTone(Math.abs(pct)),
           }
         );
@@ -444,8 +591,8 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
       return {
         summary:
           lang === 'ko'
-            ? `총 ${count}일: ${formatSigned(Number(avgDiff.toFixed(1)), 'g')} (${formatSigned(Number(meanPct.toFixed(1)), '%')})`
-            : `Total ${count}d: ${formatSigned(Number(avgDiff.toFixed(1)), 'g')} (${formatSigned(Number(meanPct.toFixed(1)), '%')})`,
+            ? `총 ${count}일: ${formatSigned(Number(avgDiff.toFixed(1)), 'g')} (${formatSignedPercentCeil(meanPct)})`
+            : `Total ${count}d: ${formatSigned(Number(avgDiff.toFixed(1)), 'g')} (${formatSignedPercentCeil(meanPct)})`,
         lines: terms,
       };
     };
@@ -457,6 +604,10 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
     };
   }, [lang]);
 
+  /**
+   * 날짜 인덱스 → 표시 문자열 매핑
+   * @description 차트/테이블에서 날짜 표시용
+   */
   const dateMaps = useMemo(() => {
     const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
     const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -478,35 +629,66 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
   const dateMap = lang === 'ko' ? dateMaps.ko : dateMaps.en;
   const plainDateMap = dateMaps.plain;
 
-  const visibleColumns = useMemo(() => {
-    if (fitAll) return columns.map((col, idx) => ({ col, idx, week: idx < 2 ? 1 : idx < 9 ? 2 : 3 }));
-    return columns
-      .map((col, idx) => ({ col, idx, week: idx < 2 ? 1 : idx < 9 ? 2 : 3 }))
-      .filter(item => item.week === week);
+  /**
+   * 현재 페이지에 표시할 일령 열 (X축)
+   * @description 전체보기: 25~45d 전체, 주간보기: 해당 페이지 7개만
+   */
+  const visibleAgeColumns = useMemo(() => {
+    if (fitAll) return transposedColumns;
+    const startAge = week === 1 ? 25 : week === 2 ? 32 : 39;
+    const endAge = week === 1 ? 31 : week === 2 ? 38 : 45;
+    return transposedColumns.filter(col => col.age >= startAge && col.age <= endAge);
   }, [fitAll, week]);
 
+  /**
+   * 현재 페이지에 표시할 날짜 행 (Y축)
+   * @description
+   * - 전체보기: 오늘까지의 모든 날짜 (역순, 최신이 위)
+   * - 주간보기: 해당 일령 범위의 실측일만 표시
+   *   - Page 1 (25-31d): 1/23~1/29
+   *   - Page 2 (32-38d): 1/30~2/5
+   *   - Page 3 (39-45d): 2/6~2/12 (미래)
+   */
   const visibleRows = useMemo(() => {
-    return rows
-      .filter(row => {
-        const ageNum = Number(String(row.age).replace(/\D/g, ''));
-        if (Number.isNaN(ageNum)) return true;
-        if (fitAll) return true;
-        if (week === 1) return ageNum >= 25 && ageNum <= 31;
-        if (week === 2) return ageNum >= 25 && ageNum <= 31;
-        return ageNum >= 32 && ageNum <= 38;
-      })
-      .slice()
-      .sort((a, b) => {
-        const aNum = Number(String(a.age).replace(/\D/g, ''));
-        const bNum = Number(String(b.age).replace(/\D/g, ''));
-        if (Number.isNaN(aNum) || Number.isNaN(bNum)) return 0;
-        return bNum - aNum;
-      });
+    if (fitAll) {
+      // 전체보기: 오늘까지만 표시
+      return [...transposedRows].filter(row => row.xIndex <= TODAY_INDEX).reverse();
+    }
+
+    // 주간보기: 해당 일령 범위의 실측일만 필터링
+    const startAge = week === 1 ? 25 : week === 2 ? 32 : 39;
+    const endAge = week === 1 ? 31 : week === 2 ? 38 : 45;
+    const { minDateX, maxDateX } = getRelevantDateRange(startAge, endAge);
+
+    return [...transposedRows]
+      .filter(row => row.xIndex >= minDateX && row.xIndex <= maxDateX)
+      .reverse();
   }, [fitAll, week]);
 
-  const chartRef = useRef<HTMLCanvasElement | null>(null);
-  const chartInstanceRef = useRef<any>(null);
+  /**
+   * 차트-테이블 연동: 호버된 일령 계산
+   * @description 차트에서 특정 xIndex에 호버하면 해당 일령의 테이블 열을 하이라이트
+   */
+  const hoveredAge = hoveredDay != null ? hoveredDay - AGE_OFFSET : null;
+  const hoveredColumnAge = transposedColumns.find(c => c.age === hoveredAge)?.age ?? null;
 
+  /** 차트 캔버스 ref */
+  const chartRef = useRef<HTMLCanvasElement | null>(null);
+  /** Chart.js 인스턴스 ref (cleanup용) */
+  const chartInstanceRef = useRef<any>(null);
+  /** 예측 정확도 차트 캔버스 ref */
+  const accuracyChartRef = useRef<HTMLCanvasElement | null>(null);
+  /** 예측 정확도 Chart.js 인스턴스 ref */
+  const accuracyChartInstanceRef = useRef<any>(null);
+
+  /**
+   * Chart.js 초기화 및 설정
+   * @description
+   * - 8개 데이터셋: 예측영역, 표준체중, 과거막대, 실측막대, 예측막대, 과거선, 실측선, 예측선
+   * - todayForwardLabelsPlugin: 오늘+3일 예측값 라벨 표시
+   * - onHover: hoveredDay 상태 업데이트 (테이블 연동)
+   * - custom tooltip: 상세 예측 정보 표시
+   */
   useEffect(() => {
     const historyMap = pointMap(HISTORY_POINTS);
     const modelMap = pointMap(MODEL_POINTS);
@@ -532,14 +714,15 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
       return {
         diff,
         pct,
-        pctText: formatSigned(Number(pct.toFixed(1)), '%'),
+        pctText: formatSignedPercentCeil(pct),
         diffText: formatSigned(Number(diff.toFixed(1)), 'g'),
       };
     };
 
     const getErrorColor = (pctAbs: number) => {
-      if (pctAbs <= 3) return '#3fb950';
-      if (pctAbs <= 5) return '#ffc107';
+      const roundedAbs = Math.ceil(pctAbs * 10) / 10;
+      if (roundedAbs <= 3) return '#3fb950';
+      if (roundedAbs <= 5) return '#ffc107';
       return '#f85149';
     };
 
@@ -828,10 +1011,195 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
     };
   }, [lang, dateMap, plainDateMap]);
 
-  const hoveredDate = hoveredDay != null ? dateMap.get(hoveredDay) : null;
-  const hoveredColumnIndex = hoveredDate
-    ? columns.findIndex(col => col.dateMain[lang] === hoveredDate)
-    : null;
+  /**
+   * 예측 정확도 차트 초기화 (D-1, D-2, D-3 vs 실측값)
+   */
+  useEffect(() => {
+    if (chartMode !== 'accuracy') return;
+    if (!accuracyChartRef.current) return;
+    const ctx = accuracyChartRef.current.getContext('2d');
+    if (!ctx) return;
+
+    if (accuracyChartInstanceRef.current) {
+      accuracyChartInstanceRef.current.destroy();
+    }
+
+    const standardWeightFiltered = STANDARD_WEIGHT_POINTS.filter(
+      (point) => point.x >= 26 && point.x <= 47
+    );
+
+    accuracyChartInstanceRef.current = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: lang === 'ko' ? '표준 체중' : 'Standard Weight',
+            data: standardWeightFiltered,
+            borderColor: '#4da3ff',
+            backgroundColor: '#4da3ff',
+            pointRadius: 0,
+            borderWidth: 3,
+            tension: 0.3,
+            spanGaps: true,
+            order: 0,
+          },
+          {
+            label: lang === 'ko' ? '실측값' : 'Actual',
+            data: OBSERVED_ACTUAL_POINTS,
+            borderColor: '#c9d1d9',
+            backgroundColor: 'rgba(201, 209, 217, 0.15)',
+            pointBackgroundColor: '#c9d1d9',
+            pointRadius: 3,
+            borderWidth: 2,
+            tension: 0.35,
+            fill: true,
+          },
+          {
+            label: 'D-1',
+            data: D1_POINTS,
+            borderColor: '#3fb950',
+            backgroundColor: 'transparent',
+            pointBackgroundColor: '#3fb950',
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2,
+            tension: 0.35,
+          },
+          {
+            label: 'D-2',
+            data: D2_POINTS,
+            borderColor: '#ff7700',
+            backgroundColor: 'transparent',
+            pointBackgroundColor: '#ff7700',
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2,
+            tension: 0.35,
+          },
+          {
+            label: 'D-3',
+            data: D3_POINTS,
+            borderColor: '#f85149',
+            backgroundColor: 'transparent',
+            pointBackgroundColor: '#f85149',
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2,
+            tension: 0.35,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: false,
+            external: (context: any) => {
+              const { chart, tooltip } = context;
+              let tooltipEl = document.getElementById('accuracy-tooltip');
+
+              if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.id = 'accuracy-tooltip';
+                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 4px; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                document.body.appendChild(tooltipEl);
+              }
+
+              if (tooltip.opacity === 0) {
+                tooltipEl.style.opacity = '0';
+                return;
+              }
+
+              const dayIndex = tooltip.dataPoints?.[0]?.parsed?.x;
+              if (typeof dayIndex !== 'number') return;
+
+              const dayAge = dayIndex - AGE_OFFSET;
+              const observedMap = new Map(OBSERVED_ACTUAL_POINTS.map(p => [p.x, p.y]));
+              const d1Map = new Map(D1_POINTS.map(p => [p.x, p.y]));
+              const d2Map = new Map(D2_POINTS.map(p => [p.x, p.y]));
+              const d3Map = new Map(D3_POINTS.map(p => [p.x, p.y]));
+
+              const actual = observedMap.get(dayIndex);
+
+              // 실측값이 없는 날짜(36일령 이후)는 툴팁 숨김
+              if (typeof actual !== 'number') {
+                tooltipEl.style.opacity = '0';
+                return;
+              }
+
+              const d1 = d1Map.get(dayIndex);
+              const d2 = d2Map.get(dayIndex);
+              const d3 = d3Map.get(dayIndex);
+
+              const headerText = `${dayAge}${lang === 'ko' ? '일령' : 'd'}`;
+              let html = `<div style="font-weight:600; margin-bottom:8px;">${headerText}</div>`;
+
+              const formatValue = (val: number | undefined, color: string, label: string) => {
+                if (typeof val !== 'number') return `<div style="color:#6e7681;">${label}: -</div>`;
+                let errorText = '';
+                if (typeof actual === 'number' && label !== (lang === 'ko' ? '실측값' : 'Actual')) {
+                  const diff = val - actual;
+                  const pct = (diff / actual) * 100;
+                  errorText = ` <span style="color:${color};">(${formatSignedPercentCeil(pct)})</span>`;
+                }
+                return `<div style="margin-bottom:4px;"><span style="color:${color};">${label}</span>: ${val.toLocaleString()}g${errorText}</div>`;
+              };
+
+              html += formatValue(actual, '#c9d1d9', lang === 'ko' ? '실측값' : 'Actual');
+              html += formatValue(d1, '#3fb950', 'D-1');
+              html += formatValue(d2, '#ff7700', 'D-2');
+              html += formatValue(d3, '#f85149', 'D-3');
+
+              tooltipEl.innerHTML = html;
+              tooltipEl.style.opacity = '1';
+
+              const pos = chart.canvas.getBoundingClientRect();
+              tooltipEl.style.left = pos.left + window.scrollX + tooltip.caretX + 10 + 'px';
+              tooltipEl.style.top = pos.top + window.scrollY + tooltip.caretY - 10 + 'px';
+            },
+          },
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            min: 26,  // 24일령 (여백용)
+            max: 47,  // 45일령
+            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            ticks: {
+              color: '#8888a0',
+              stepSize: 1,
+              callback: (value: any) => {
+                const day = Number(value);
+                if (!Number.isFinite(day)) return '';
+                const age = day - AGE_OFFSET;
+                if (age < 25) return '';
+                return `${age}`;
+              },
+            },
+          },
+          y: {
+            min: 1200,
+            max: 3000,
+            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            ticks: {
+              color: '#8888a0',
+              stepSize: 500,
+              callback: (value: any) => `${value}g`,
+            },
+          },
+        },
+      },
+    });
+
+    return () => {
+      if (accuracyChartInstanceRef.current) {
+        accuracyChartInstanceRef.current.destroy();
+        accuracyChartInstanceRef.current = null;
+      }
+    };
+  }, [lang, chartMode]);
 
   return (
     <>
@@ -845,9 +1213,77 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .chart-container {
           height: 300px;
           margin-bottom: 12px;
+          position: relative;
+        }
+        .chart-legend-overlay {
+          position: absolute;
+          top: 10px;
+          left: 50px;
+          display: flex;
+          flex-direction: row;
+          gap: 10px;
+          background: rgba(22, 27, 34, 0.85);
+          padding: 6px 10px;
+          border-radius: 4px;
+          border: 1px solid transparent;
+          z-index: 10;
+        }
+        .legend-row {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 9px;
+          color: #8b949e;
+        }
+        .chart-error-legend {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          display: flex;
+          flex-direction: row;
+          gap: 10px;
+          background: #161b22;
+          padding: 6px 10px;
+          border-radius: 4px;
+          z-index: 10;
+        }
+        .chart-mode-switch {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: transparent;
+          border: 1px solid #30363d;
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 10px;
+          color: #8b949e;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .chart-mode-switch:hover {
+          border-color: #8b949e;
+          color: #c9d1d9;
+        }
+        .chart-mode-switch.active {
+          background: rgba(63, 185, 80, 0.15);
+          color: #3fb950;
+          border-color: #3fb950;
         }
         .table-wrapper {
           overflow-x: auto;
+          position: relative;
+        }
+        .table-legend-overlay {
+          position: absolute;
+          top: 32px;
+          left: 58px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          background: #161b22;
+          padding: 6px 8px;
+          border-radius: 4px;
+          z-index: 10;
         }
         .matrix-table {
           width: 100%;
@@ -884,8 +1320,19 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           font-size: 8px;
           color: #6e7681;
         }
+        .age-main {
+          display: block;
+          color: #c9d1d9;
+          font-weight: 600;
+        }
         .today-col {
-          background: rgba(63, 185, 80, 0.1);
+          background: transparent;
+        }
+        .today-row {
+          background: rgba(63, 185, 80, 0.08);
+        }
+        .today-row td:first-child {
+          border-left: 2px solid #3fb950;
         }
         .hovered-col {
           background: rgba(139, 92, 246, 0.15);
@@ -906,7 +1353,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           margin-top: 2px;
         }
         .prediction-cell .error.good { color: #3fb950; }
-        .prediction-cell .error.medium { color: #ffc107; }
+        .prediction-cell .error.medium { color: #ff7700; }
         .prediction-cell .error.bad { color: #f85149; }
         .actual-cell {
           background: rgba(63, 185, 80, 0.15);
@@ -928,10 +1375,12 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         }
         .future-cell .value {
           color: #ffc107;
+          display: block;
         }
         .future-cell .label {
           font-size: 9px;
           color: #6e7681;
+          display: block;
         }
         .empty-cell {
           color: #484f58;
@@ -952,14 +1401,14 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           color: #8b949e;
         }
         .legend-dot {
-          width: 8px;
+          width: 16px;
           height: 8px;
-          border-radius: 50%;
+          border-radius: 1px;
         }
         .legend-dot.actual { background: #3fb950; }
         .legend-dot.future { background: #ffc107; }
         .legend-dot.good { background: #3fb950; }
-        .legend-dot.medium { background: #ffc107; }
+        .legend-dot.medium { background: #ff7700; }
         .legend-dot.bad { background: #f85149; }
         .accuracy-indicators {
           display: flex;
@@ -969,12 +1418,12 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .accuracy-item {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 5px;
           background: rgba(0, 0, 0, 0.3);
           border: 1px solid #30363d;
-          border-radius: 4px;
-          padding: 3px 8px;
-          min-width: 102px;
+          border-radius: 5px;
+          padding: 4px 10px;
+          min-width: 110px;
           position: relative;
         }
         .accuracy-tooltip {
@@ -1008,49 +1457,44 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           overflow-wrap: anywhere;
         }
         .accuracy-tooltip-line.good { color: rgba(63, 185, 80, 0.6); }
-        .accuracy-tooltip-line.medium { color: rgba(255, 193, 7, 0.6); }
+        .accuracy-tooltip-line.medium { color: rgba(255, 119, 0, 0.6); }
         .accuracy-tooltip-line.bad { color: rgba(248, 81, 73, 0.6); }
         .accuracy-label {
           display: flex;
           flex-direction: column;
-          min-width: 24px;
+          min-width: 30px;
           line-height: 1.1;
         }
         .accuracy-label .day {
-          font-size: 9px;
+          font-size: 12px;
           font-weight: 700;
           color: #c9d1d9;
         }
-        .accuracy-label .sub {
-          font-size: 6px;
-          color: #6e7681;
+        .accuracy-segments {
+          display: flex;
+          gap: 3px;
+          width: 80px;
         }
-        .accuracy-bar {
-          flex: 0 0 78px;
-          width: 78px;
-          height: 6px;
+        .accuracy-segment {
+          flex: 1;
+          height: 8px;
+          border-radius: 1px;
           background: #21262d;
-          border-radius: 4px;
-          overflow: hidden;
         }
-        .accuracy-bar-fill {
-          height: 100%;
-          border-radius: 4px;
-        }
+        .accuracy-segment.good { background: #3fb950; }
+        .accuracy-segment.medium { background: #ff7700; }
+        .accuracy-segment.bad { background: #f85149; }
         .accuracy-value {
-          font-size: 9px;
+          font-size: 12px;
           font-weight: 600;
-          min-width: 28px;
+          min-width: 36px;
           text-align: right;
         }
-        .accuracy-item.good .accuracy-bar-fill { background: linear-gradient(90deg, #3fb950, #2ea043); }
-        .accuracy-item.medium .accuracy-bar-fill { background: linear-gradient(90deg, #ffc107, #e6ac00); }
-        .accuracy-item.bad .accuracy-bar-fill { background: linear-gradient(90deg, #f85149, #da3633); }
         .accuracy-item.good .accuracy-value { color: #3fb950; }
-        .accuracy-item.medium .accuracy-value { color: #ffc107; }
+        .accuracy-item.medium .accuracy-value { color: #ff7700; }
         .accuracy-item.bad .accuracy-value { color: #f85149; }
         .accuracy-item.good .accuracy-tooltip-summary { color: #3fb950; }
-        .accuracy-item.medium .accuracy-tooltip-summary { color: #ffc107; }
+        .accuracy-item.medium .accuracy-tooltip-summary { color: #ff7700; }
         .accuracy-item.bad .accuracy-tooltip-summary { color: #f85149; }
         .week-nav {
           display: flex;
@@ -1100,36 +1544,31 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-gray-400 font-medium">CCTV WEIGHT</h3>
-            {/* Chart Legend */}
-            <div className="flex gap-2 text-[9px] text-gray-500 ml-2">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-[#3fb950] rounded-sm" />
-                <span>{lang === 'ko' ? '3일 예측 구간' : '3-day Forecast Area'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-[#4da3ff] rounded-sm" />
-                <span>{lang === 'ko' ? '표준 체중' : 'Standard Weight'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-[#808080] rounded-sm" />
-                <span>{lang === 'ko' ? '예측무게' : 'Predicted Weight'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-[#ffc107] rounded-sm" />
-                <span>{lang === 'ko' ? '3일예측' : '3-day Forecast'}</span>
-              </div>
-            </div>
+            <button
+              className={`chart-mode-switch ${chartMode === 'accuracy' ? 'active' : ''}`}
+              onClick={() => setChartMode(m => m === 'main' ? 'accuracy' : 'main')}
+            >
+              <span>⇄</span>
+              <span>{chartMode === 'main' ? (lang === 'ko' ? '정확도 보기' : 'Accuracy') : (lang === 'ko' ? '차트 보기' : 'Chart')}</span>
+            </button>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="accuracy-indicators">
               <div className={`accuracy-item ${getAccuracyTone(Number(avgAccuracy.d1))}`}>
                 <div className="accuracy-label">
                   <span className="day">D-1</span>
-                  <span className="sub">{lang === 'ko' ? '1일 전' : '1 day'}</span>
                 </div>
-                <div className="accuracy-bar">
-                  <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d1}%` }}></div>
-                </div>
+                {(() => {
+                  const tone = getAccuracyTone(Number(avgAccuracy.d1));
+                  const count = tone === 'good' ? 3 : tone === 'medium' ? 2 : 1;
+                  return (
+                    <div className="accuracy-segments">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className={`accuracy-segment ${i < count ? tone : ''}`} />
+                      ))}
+                    </div>
+                  );
+                })()}
                 <span className="accuracy-value">{avgAccuracy.d1}%</span>
                 <div className="accuracy-tooltip">
                   <div className="accuracy-tooltip-summary">{accuracyHoverInfo.d1.summary}</div>
@@ -1143,11 +1582,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               <div className={`accuracy-item ${getAccuracyTone(Number(avgAccuracy.d2))}`}>
                 <div className="accuracy-label">
                   <span className="day">D-2</span>
-                  <span className="sub">{lang === 'ko' ? '2일 전' : '2 days'}</span>
                 </div>
-                <div className="accuracy-bar">
-                  <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d2}%` }}></div>
-                </div>
+                {(() => {
+                  const tone = getAccuracyTone(Number(avgAccuracy.d2));
+                  const count = tone === 'good' ? 3 : tone === 'medium' ? 2 : 1;
+                  return (
+                    <div className="accuracy-segments">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className={`accuracy-segment ${i < count ? tone : ''}`} />
+                      ))}
+                    </div>
+                  );
+                })()}
                 <span className="accuracy-value">{avgAccuracy.d2}%</span>
                 <div className="accuracy-tooltip">
                   <div className="accuracy-tooltip-summary">{accuracyHoverInfo.d2.summary}</div>
@@ -1161,11 +1607,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               <div className={`accuracy-item ${getAccuracyTone(Number(avgAccuracy.d3))}`}>
                 <div className="accuracy-label">
                   <span className="day">D-3</span>
-                  <span className="sub">{lang === 'ko' ? '3일 전' : '3 days'}</span>
                 </div>
-                <div className="accuracy-bar">
-                  <div className="accuracy-bar-fill" style={{ width: `${avgAccuracy.d3}%` }}></div>
-                </div>
+                {(() => {
+                  const tone = getAccuracyTone(Number(avgAccuracy.d3));
+                  const count = tone === 'good' ? 3 : tone === 'medium' ? 2 : 1;
+                  return (
+                    <div className="accuracy-segments">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className={`accuracy-segment ${i < count ? tone : ''}`} />
+                      ))}
+                    </div>
+                  );
+                })()}
                 <span className="accuracy-value">{avgAccuracy.d3}%</span>
                 <div className="accuracy-tooltip">
                   <div className="accuracy-tooltip-summary">{accuracyHoverInfo.d3.summary}</div>
@@ -1182,7 +1635,69 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
 
         {/* Chart */}
         <div className="chart-container">
-          <canvas ref={chartRef} />
+          <canvas ref={chartRef} style={{ display: chartMode === 'main' ? 'block' : 'none' }} />
+          <canvas ref={accuracyChartRef} style={{ display: chartMode === 'accuracy' ? 'block' : 'none' }} />
+          {/* Chart Legend Overlay */}
+          <div className="chart-legend-overlay">
+            {chartMode === 'main' ? (
+              <>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#3fb950] rounded-sm" />
+                  <span>{lang === 'ko' ? '3일 예측 구간' : '3-day Forecast'}</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#4da3ff] rounded-sm" />
+                  <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#808080] rounded-sm" />
+                  <span>{lang === 'ko' ? '예측무게' : 'Predicted'}</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#ffc107] rounded-sm" />
+                  <span>{lang === 'ko' ? '3일예측' : 'Forecast'}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#4da3ff] rounded-sm" />
+                  <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#c9d1d9] rounded-sm" />
+                  <span>{lang === 'ko' ? '실측값' : 'Actual'}</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#3fb950] rounded-sm" />
+                  <span>D-1</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#ff7700] rounded-sm" />
+                  <span>D-2</span>
+                </div>
+                <div className="legend-row">
+                  <div className="w-2 h-2 bg-[#f85149] rounded-sm" />
+                  <span>D-3</span>
+                </div>
+              </>
+            )}
+          </div>
+          {/* Error Range Legend - Top Right */}
+          <div className="chart-error-legend">
+            <div className="legend-row">
+              <span className="legend-dot good"></span>
+              <span>±3%</span>
+            </div>
+            <div className="legend-row">
+              <span className="legend-dot medium"></span>
+              <span>±5%</span>
+            </div>
+            <div className="legend-row">
+              <span className="legend-dot bad"></span>
+              <span>{'>'}±5%</span>
+            </div>
+          </div>
         </div>
 
         {/* Divider */}
@@ -1196,7 +1711,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span>{weekLabels[week]}</span>
+              <span>{ageRangeLabels[week][lang]}</span>
               <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1) as 1 | 2 | 3)}>
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -1211,36 +1726,39 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table (Transposed: X-axis=Age, Y-axis=Date) */}
         <div className="table-wrapper">
           <table className="matrix-table">
             <thead>
               <tr>
-                <th style={{ textAlign: 'left' }}>{lang === 'ko' ? '일령' : 'Age'}</th>
-                {visibleColumns.map(({ col, idx }) => (
+                <th style={{ textAlign: 'left' }}>{lang === 'ko' ? '날짜' : 'Date'}</th>
+                {visibleAgeColumns.map(col => (
                   <th
-                    key={idx}
-                    className={`${col.isToday ? 'today-col' : ''} ${hoveredColumnIndex === idx ? 'hovered-col' : ''}`}
+                    key={col.age}
+                    className={`${col.isTodayAge ? 'today-col' : ''} ${hoveredColumnAge === col.age ? 'hovered-col' : ''}`}
                   >
-                    <span className="date-main">{col.dateMain[lang]}</span>
-                    <span className="date-sub">{col.dateSub[lang]}</span>
+                    <span className="age-main">{col.age}{lang === 'ko' ? '일령' : 'd'}</span>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {visibleRows.map((row, rowIdx) => (
-                <tr key={rowIdx}>
-                  <td className="row-header">{lang === 'ko' ? row.age : row.age.replace('일령', 'd')}</td>
-                  {visibleColumns.map(({ idx: colIdx }) => {
-                    const cell = row.cells[colIdx];
-                    const todayClass = columns[colIdx]?.isToday ? ' today-col' : '';
-                    const hoveredClass = hoveredColumnIndex === colIdx ? ' hovered-col' : '';
-                    if (!cell) return <td key={colIdx} className={`empty-cell${todayClass}${hoveredClass}`}>-</td>;
+                <tr key={rowIdx} className={row.isToday ? 'today-row' : ''}>
+                  <td className="row-header">
+                    <span className="date-main">{row.date[lang]}</span>
+                    <span className="date-sub">{row.dateSub[lang]}</span>
+                  </td>
+                  {visibleAgeColumns.map(col => {
+                    const cellIdx = transposedColumns.findIndex(c => c.age === col.age);
+                    const cell = row.cells[cellIdx];
+                    const todayColClass = col.isTodayAge ? ' today-col' : '';
+                    const hoveredClass = hoveredColumnAge === col.age ? ' hovered-col' : '';
+                    if (!cell) return <td key={col.age} className={`empty-cell${todayColClass}${hoveredClass}`}>-</td>;
 
                     if (cell.type === 'prediction') {
                       return (
-                        <td key={colIdx} className={`prediction-cell${todayClass}${hoveredClass}`}>
+                        <td key={col.age} className={`prediction-cell${todayColClass}${hoveredClass}`}>
                           <span className="value">{cell.value}</span>
                           {cell.error && <span className={`error ${cell.errorClass}`}>{cell.error}</span>}
                         </td>
@@ -1261,7 +1779,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                               .replace(/[()]/g, '')
                               .trim();
                       return (
-                        <td key={colIdx} className={`actual-cell${todayClass}${hoveredClass}`}>
+                        <td key={col.age} className={`actual-cell${todayColClass}${hoveredClass}`}>
                           <span className="value">{cell.value}</span>
                           <span className="check">{checkText}</span>
                         </td>
@@ -1269,13 +1787,13 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                     }
                     if (cell.type === 'future') {
                       return (
-                        <td key={colIdx} className={`future-cell${todayClass}${hoveredClass}`}>
+                        <td key={col.age} className={`future-cell${todayColClass}${hoveredClass}`}>
                           <span className="value">{cell.value}</span>
                           <span className="label">{cell.label}</span>
                         </td>
                       );
                     }
-                    return <td key={colIdx} className={`empty-cell${todayClass}${hoveredClass}`}>{cell.value}</td>;
+                    return <td key={col.age} className={`empty-cell${todayColClass}${hoveredClass}`}>{cell.value}</td>;
                   })}
                 </tr>
               ))}
@@ -1283,29 +1801,6 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           </table>
         </div>
 
-        {/* Table Legend */}
-        <div className="legend">
-          <div className="legend-item">
-            <span className="legend-dot actual"></span>
-            <span>{lang === 'ko' ? '실측' : 'Actual'}</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot future"></span>
-            <span>{lang === 'ko' ? '미래 예측' : 'Forecast'}</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot good"></span>
-            <span>{lang === 'ko' ? '오차 ±1%' : '±1%'}</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot medium"></span>
-            <span>{lang === 'ko' ? '오차 ±3%' : '±3%'}</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot bad"></span>
-            <span>{lang === 'ko' ? '오차 >±5%' : '>±5%'}</span>
-          </div>
-        </div>
       </div>
     </>
   );
