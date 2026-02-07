@@ -313,12 +313,12 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
             </div>
 
             {/* Notifications */}
-            <button className="ml-2 w-8 h-8 border border-[#30363d] flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-[#21262d] transition-colors">
+            <button className="ml-2 p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] transition-colors">
               <Bell className="w-5 h-5" />
             </button>
 
             {/* Settings */}
-            <button className="w-8 h-8 border border-[#30363d] flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-[#21262d] transition-colors">
+            <button className="p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] transition-colors">
               <Settings className="w-5 h-5" />
             </button>
 
