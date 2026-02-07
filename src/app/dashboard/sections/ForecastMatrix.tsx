@@ -14,6 +14,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import dashboardDataJson from '@/data/dashboard-data.json';
+import { assertDashboardForecastData, type Point } from '@/contracts/dashboard-data';
+import {
+  calcErrorClass,
+  formatSigned,
+  formatSignedPercentCeil,
+  getAccuracyTone,
+  getErrorColor,
+} from '@/lib/forecast-metrics';
 
 Chart.register(...registerables);
 
@@ -60,40 +69,37 @@ type TransposedRow = {
   cells: Cell[];
 };
 
+const rawDashboardData: unknown = dashboardDataJson;
+assertDashboardForecastData(rawDashboardData);
+const dashboardData = rawDashboardData;
+
 /**
  * 테이블 시작 날짜 인덱스
  * @constant {number}
  * @description 1/20 (25일령의 D-3 예측일부터)
  */
-const TABLE_START_X = 24;
+const TABLE_START_X = dashboardData.tableRange.startX;
 
 /**
  * 테이블 종료 날짜 인덱스
  * @constant {number}
  * @description 2/12 (45일령 실측일까지)
  */
-const TABLE_END_X = 47;
+const TABLE_END_X = dashboardData.tableRange.endX;
 
 /**
  * 테이블 시작 일령
  * @constant {number}
  * @description 예측 시스템이 적용되는 첫 일령
  */
-const TABLE_START_AGE = 25;
+const TABLE_START_AGE = dashboardData.tableRange.startAge;
 
 /**
  * 테이블 종료 일령
  * @constant {number}
  * @description 출하 직전까지의 마지막 일령
  */
-const TABLE_END_AGE = 45;
-
-/**
- * 체중 데이터 포인트
- * @property x - 날짜 인덱스 (xIndex)
- * @property y - 체중 (g)
- */
-type Point = { x: number; y: number };
+const TABLE_END_AGE = dashboardData.tableRange.endAge;
 
 /**
  * 정확도 표시 색상 톤
@@ -120,14 +126,14 @@ type AccuracyHoverInfo = { summary: string; lines: AccuracyHoverLine[] };
  * const date = new Date(BASE_DATE);
  * date.setDate(BASE_DATE.getDate() + 37); // 2025-02-02
  */
-const BASE_DATE = new Date(2025, 11, 27);
+const BASE_DATE = new Date(dashboardData.baseDate);
 
 /**
  * 예측 시스템 시작 인덱스
  * @constant {number}
  * @description 1/23 = 25일령. 이 시점부터 D-1/D-2/D-3 예측이 시작됨.
  */
-const FORECAST_START_INDEX = 27;
+const FORECAST_START_INDEX = dashboardData.forecastStartIndex;
 
 /**
  * 오늘 날짜 인덱스
@@ -137,7 +143,7 @@ const FORECAST_START_INDEX = 27;
  * // 실제 운영 시
  * const todayIndex = Math.floor((new Date() - BASE_DATE) / (1000 * 60 * 60 * 24));
  */
-const TODAY_INDEX = 37;
+const TODAY_INDEX = dashboardData.todayIndex;
 
 /**
  * 일령 오프셋 (날짜→일령 변환)
@@ -147,101 +153,69 @@ const TODAY_INDEX = 37;
  * const age = 37 - AGE_OFFSET; // 35일령
  * const xIndex = 35 + AGE_OFFSET; // 37 (2/2)
  */
-const AGE_OFFSET = 2;
+const AGE_OFFSET = dashboardData.ageOffset;
 
 /**
  * 차트 최소 인덱스
  * @constant {number}
  * @description 8일령에 해당. 차트 X축 시작점.
  */
-const CHART_MIN_INDEX = 10;
+const CHART_MIN_INDEX = dashboardData.chartRange.minIndex;
 
 /**
  * 차트 최대 인덱스
  * @constant {number}
  * @description 45일령에 해당. 차트 X축 종료점.
  */
-const CHART_MAX_INDEX = 47;
+const CHART_MAX_INDEX = dashboardData.chartRange.maxIndex;
 
 /**
  * 과거 체중 기록 (8~24일령)
  * @description 예측 시스템 시작 전 히스토리 데이터. 차트에서 회색으로 표시.
  * @todo 실제 운영 시 weight_history 테이블에서 조회
  */
-const HISTORY_POINTS: Point[] = [
-  { x: 10, y: 358 }, { x: 11, y: 412 }, { x: 12, y: 478 },
-  { x: 13, y: 535 }, { x: 14, y: 598 }, { x: 15, y: 672 }, { x: 16, y: 738 }, { x: 17, y: 815 },
-  { x: 18, y: 885 }, { x: 19, y: 962 }, { x: 20, y: 1035 }, { x: 21, y: 1108 }, { x: 22, y: 1175 },
-  { x: 23, y: 1248 }, { x: 24, y: 1295 }, { x: 25, y: 1328 }, { x: 26, y: 1362 },
-];
+const HISTORY_POINTS: Point[] = dashboardData.series.history;
 
 /**
  * 모델 예측값 (25일령~)
  * @description 예측 모델이 생성한 체중 예측. 차트의 기준선 역할.
  * @todo 실제 운영 시 weight_predictions 테이블에서 조회
  */
-const MODEL_POINTS: Point[] = [
-  { x: 27, y: 1405 }, { x: 28, y: 1450 }, { x: 29, y: 1504 }, { x: 30, y: 1578 },
-  { x: 31, y: 1650 }, { x: 32, y: 1695 }, { x: 33, y: 1788 }, { x: 34, y: 1882 },
-  { x: 35, y: 1972 }, { x: 36, y: 2075 }, { x: 37, y: 2180 }, { x: 38, y: 2405 }, { x: 39, y: 2425 }, { x: 40, y: 2445 },
-];
+const MODEL_POINTS: Point[] = dashboardData.series.model;
 
 /**
  * D-1 예측값 (1일 전 예측)
  * @description 현재 운영 화면 기준 확정된 예측값
  */
-const D1_POINTS: Point[] = [
-  { x: 27, y: 1459 }, { x: 28, y: 1613 }, { x: 29, y: 1571 }, { x: 30, y: 1622 },
-  { x: 31, y: 1693 }, { x: 32, y: 1754 }, { x: 33, y: 1856 }, { x: 34, y: 1948 },
-  { x: 35, y: 2198 }, { x: 36, y: 2228 }, { x: 37, y: 2344 }, { x: 38, y: 2419 }, { x: 39, y: 2580 }, { x: 40, y: 2573 },
-];
+const D1_POINTS: Point[] = dashboardData.series.d1;
 
 /**
  * D-2 예측값 (2일 전 예측)
  * @description 현재 운영 화면 기준 확정된 예측값
  */
-const D2_POINTS: Point[] = [
-  { x: 27, y: 1564 }, { x: 28, y: 1615 }, { x: 29, y: 1581 }, { x: 30, y: 1646 },
-  { x: 31, y: 1773 }, { x: 32, y: 1787 }, { x: 33, y: 1885 }, { x: 34, y: 2044 },
-  { x: 35, y: 2089 }, { x: 36, y: 2146 }, { x: 37, y: 2365 }, { x: 38, y: 2378 }, { x: 39, y: 2456 }, { x: 40, y: 2573 },
-];
+const D2_POINTS: Point[] = dashboardData.series.d2;
 
 /**
  * D-3 예측값 (3일 전 예측)
  * @description 현재 운영 화면 기준 확정된 예측값
  */
-const D3_POINTS: Point[] = [
-  { x: 27, y: 1360 }, { x: 28, y: 1405 }, { x: 29, y: 1462 }, { x: 30, y: 1520 },
-  { x: 31, y: 1592 }, { x: 32, y: 1658 }, { x: 33, y: 1748 }, { x: 34, y: 1842 },
-  { x: 35, y: 1935 }, { x: 36, y: 2032 }, { x: 37, y: 2135 }, { x: 38, y: 2250 }, { x: 39, y: 2320 }, { x: 40, y: 2385 },
-];
+const D3_POINTS: Point[] = dashboardData.series.d3;
 
 /**
  * 실측 체중 데이터
  * @description CCTV로 실제 측정된 체중값. 오늘(TODAY_INDEX)까지만 존재.
  * @todo 실제 운영 시 weight_actuals 테이블에서 조회
  */
-const OBSERVED_ACTUAL_POINTS: Point[] = [
-  { x: 27, y: 1405 }, { x: 28, y: 1450 }, { x: 29, y: 1504 }, { x: 30, y: 1578 },
-  { x: 31, y: 1650 }, { x: 32, y: 1695 }, { x: 33, y: 1788 }, { x: 34, y: 1882 },
-  { x: 35, y: 1972 }, { x: 36, y: 2075 }, { x: 37, y: 2180 },
-];
+const OBSERVED_ACTUAL_POINTS: Point[] = dashboardData.series.observedActual;
 
 /**
  * 품종별 표준 체중 곡선
  * @description 비교 기준선으로 사용. 차트에서 파란색 점선으로 표시.
  * @todo 실제 운영 시 standard_weight 테이블에서 조회
  */
-const STANDARD_WEIGHT_POINTS: Point[] = [
-  { x: 9, y: 156 }, { x: 10, y: 185 }, { x: 11, y: 216 }, { x: 12, y: 251 }, { x: 13, y: 289 },
-  { x: 14, y: 330 }, { x: 15, y: 375 }, { x: 16, y: 423 }, { x: 17, y: 474 }, { x: 18, y: 529 },
-  { x: 19, y: 587 }, { x: 20, y: 648 }, { x: 21, y: 713 }, { x: 22, y: 780 }, { x: 23, y: 850 },
-  { x: 24, y: 923 }, { x: 25, y: 998 }, { x: 26, y: 1076 }, { x: 27, y: 1156 }, { x: 28, y: 1238 },
-  { x: 29, y: 1322 }, { x: 30, y: 1408 }, { x: 31, y: 1495 }, { x: 32, y: 1584 }, { x: 33, y: 1674 },
-  { x: 34, y: 1764 }, { x: 35, y: 1856 }, { x: 36, y: 1949 }, { x: 37, y: 2042 }, { x: 38, y: 2136 },
-  { x: 39, y: 2230 }, { x: 40, y: 2324 }, { x: 41, y: 2418 }, { x: 42, y: 2512 }, { x: 43, y: 2606 },
-  { x: 44, y: 2700 }, { x: 45, y: 2794 }, { x: 46, y: 2888 }, { x: 47, y: 2982 },
-];
+const STANDARD_WEIGHT_POINTS: Point[] = dashboardData.series.standardWeight;
+const ERROR_THRESHOLDS = dashboardData.rules.thresholds;
+const ERROR_COLORS = dashboardData.rules.colors;
 
 /**
  * Point 배열을 Map으로 변환 (x → y 조회용)
@@ -253,45 +227,6 @@ const STANDARD_WEIGHT_POINTS: Point[] = [
  */
 const pointMap = (points: Point[]) => new Map(points.map((point) => [point.x, point.y]));
 
-/**
- * 부호 포함 숫자 포맷팅
- * @param value - 숫자값
- * @param unit - 단위 (예: 'g', '%')
- * @returns 부호 포함 문자열 (예: "+3.5%", "-12.0g")
- */
-const formatSigned = (value: number, unit: string) => `${value >= 0 ? '+' : ''}${value.toFixed(1)}${unit}`;
-
-/**
- * 절댓값 기준 소수 1자리 올림 (부호 유지)
- * @param value - 원본 값
- * @returns 올림 적용 값 (예: 3.01 -> 3.1, -3.01 -> -3.1)
- */
-const ceilSignedOneDecimal = (value: number): number => {
-  if (!Number.isFinite(value) || value === 0) return 0;
-  const absCeil = Math.ceil(Math.abs(value) * 10) / 10;
-  return value > 0 ? absCeil : -absCeil;
-};
-
-/**
- * 부호 포함 퍼센트 포맷팅 (절댓값 기준 소수 1자리 올림)
- * @param value - 퍼센트 값
- * @returns 문자열 (예: "+3.1%", "-5.2%")
- */
-const formatSignedPercentCeil = (value: number) => {
-  const rounded = ceilSignedOneDecimal(value);
-  return `${rounded >= 0 ? '+' : ''}${rounded.toFixed(1)}%`;
-};
-
-/**
- * 정확도에 따른 색상 톤 결정
- * @param accuracy - 정확도 (0~100%)
- * @returns 'good' (97%↑), 'medium' (95~97%), 'bad' (95%↓)
- */
-const getAccuracyTone = (accuracy: number): 'good' | 'medium' | 'bad' => {
-  if (accuracy >= 97) return 'good';
-  if (accuracy >= 95) return 'medium';
-  return 'bad';
-};
 
 /**
  * 체중 포맷팅 (천 단위 구분자 + g)
@@ -300,17 +235,6 @@ const getAccuracyTone = (accuracy: number): 'good' | 'medium' | 'bad' => {
  */
 const formatWeight = (g: number): string => `${g.toLocaleString()}g`;
 
-/**
- * 오차율에 따른 셀 색상 클래스 결정
- * @param pct - 오차율 (%)
- * @returns 'good' (±3%↓), 'medium' (±5%↓), 'bad' (>±5%)
- */
-const calcErrorClass = (pct: number): 'good' | 'medium' | 'bad' => {
-  const abs = Math.abs(ceilSignedOneDecimal(pct));
-  if (abs <= 3) return 'good';
-  if (abs <= 5) return 'medium';
-  return 'bad';
-};
 
 /**
  * 날짜 차이에 따른 서브 라벨 생성
@@ -553,11 +477,8 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
    */
   const accuracyHoverInfo = useMemo(() => {
     const observedMap = pointMap(OBSERVED_ACTUAL_POINTS);
-    const getLineTone = (absPct: number): AccuracyLineTone => {
-      const roundedAbs = Math.ceil(absPct * 10) / 10;
-      if (roundedAbs <= 3) return 'good';
-      if (roundedAbs <= 5) return 'medium';
-      return 'bad';
+    const getLineTone = (pct: number): AccuracyLineTone => {
+      return calcErrorClass(pct, ERROR_THRESHOLDS);
     };
     const build = (predictions: Point[], horizonKo: string, horizonEn: string): AccuracyHoverInfo => {
       const terms: AccuracyHoverLine[] = [];
@@ -577,7 +498,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               lang === 'ko'
                 ? `${age}일령 ${horizonKo}: ${formatSigned(Number(diff.toFixed(1)), 'g')} (${formatSignedPercentCeil(pct)})`
                 : `${age}d ${horizonEn}: ${formatSigned(Number(diff.toFixed(1)), 'g')} (${formatSignedPercentCeil(pct)})`,
-            tone: getLineTone(Math.abs(pct)),
+            tone: getLineTone(pct),
           }
         );
         totalDiff += diff;
@@ -717,13 +638,6 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         pctText: formatSignedPercentCeil(pct),
         diffText: formatSigned(Number(diff.toFixed(1)), 'g'),
       };
-    };
-
-    const getErrorColor = (pctAbs: number) => {
-      const roundedAbs = Math.ceil(pctAbs * 10) / 10;
-      if (roundedAbs <= 3) return '#3fb950';
-      if (roundedAbs <= 5) return '#ffc107';
-      return '#f85149';
     };
 
     const todayForwardLabelsPlugin = {
@@ -943,7 +857,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                   return `<div style="margin-bottom:4px;">${targetAge}${lang === 'ko' ? '일령' : 'd'}(${targetDate}): ${currentPrediction.toLocaleString()}g <span style="color:#8b949e;">(${lang === 'ko' ? '분석중' : 'Analyzing'})</span></div>`;
                 }
                 const delta = calcError(currentPrediction, baselinePrediction);
-                const color = getErrorColor(Math.abs(delta.pct));
+                const color = getErrorColor(Math.abs(delta.pct), ERROR_THRESHOLDS, ERROR_COLORS);
                 return `<div style="margin-bottom:4px; color:${color};">${targetAge}${lang === 'ko' ? '일령' : 'd'}(${targetDate}): ${currentPrediction.toLocaleString()}g (${delta.diffText}, ${delta.pctText})</div>`;
               };
 

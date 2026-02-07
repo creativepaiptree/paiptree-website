@@ -1,140 +1,40 @@
- 실시간 차트/대시보드
-
-### Paiptree 개선 방향
-1. **히어로 섹션** - Parallax + 실시간 농장 데이터
-2. **플랫폼 섹션** - 호버 확장 + 인터랙티브 데모
-3. **네비게이션** - 프로그레스 바 + 사이드 네비
-4. **데이터 시각화** - Recharts 통합
-5. **디자인 시스템** - 토큰 기반 체계화
-
-### 8주 로드맵
-- **Week 1-2**: 기반 구축 (토큰, 애니메이션 유틸)
-- **Week 3**: 히어로 섹션 개선
-- **Week 4**: 플랫폼 섹션 인터랙티브화
-- **Week 5**: 네비게이션 개선
-- **Week 6-7**: 데이터 시각화
-- **Week 8**: 최적화 및 배포
-
+---
+title: 개발 문서 인덱스
+author: ZORO
+last_updated: 26.02.06
 ---
 
-## 상세 문서 링크
+# 개발 문서 인덱스
 
-각 파트별 상세 내용은 다음 파일을 참조하세요:
+## 1. 목적
+- 프로젝트의 설계/운영 문서를 한곳에서 찾기 위한 포털 문서.
+- 문서 작성 기준과 템플릿의 시작점으로 사용.
 
-### Part 1: 분석 및 설계 📊
-`docs/PALANTIR_ANALYSIS_PART1.md`
-- 섹션 1-6: Palantir 분석, 현황 파악, Gap 분석, 로드맵, 구현 가이드, 파일 구조
+## 2. 문서 구조
+- `docs/components/`
+  - 컴포넌트별 설계 문서
+- `docs/guides/`
+  - 문서 작성/운영 가이드
+- `docs/templates/`
+  - 신규 문서 템플릿
 
-### Part 2: 구현 가이드 💻
-`docs/PALANTIR_ANALYSIS_PART2.md`
-- 섹션 7-10: 성능/접근성, 실행 계획, 마이그레이션, 테스트
+## 3. 핵심 문서 (README 포함 5개)
+- 인덱스
+  - `/Users/zoro/projects/paiptree-website/docs/README.md`
+- 컴포넌트 문서
+  - `/Users/zoro/projects/paiptree-website/docs/components/ForecastMatrix.blueprint.md`
+  - `/Users/zoro/projects/paiptree-website/docs/components/versionmodal.md`
+- 작성 가이드
+  - `/Users/zoro/projects/paiptree-website/docs/guides/document-authoring.md`
+- 템플릿
+  - `/Users/zoro/projects/paiptree-website/docs/templates/component-spec.template.md`
 
-### Part 3: 배포 및 운영 🚀
-`docs/PALANTIR_ANALYSIS_PART3.md`
-- 섹션 11-14: 배포, 트러블슈팅, 다음 단계, 결론
+## 4. 작성/갱신 규칙
+1. 코드 변경 시 관련 컴포넌트 문서를 같이 업데이트한다.
+2. 신규 문서는 템플릿 기반으로 생성한다.
+3. 문서 품질 기준은 `document-authoring.md`를 따른다.
 
----
-
-## 빠른 시작 가이드
-
-### 첫 번째 성과물 만들기 (4시간 목표)
-
-```bash
-# 1. 의존성 설치
-npm install framer-motion react-intersection-observer
-
-# 2. 폴더 생성
-mkdir -p src/lib src/hooks
-
-# 3. 애니메이션 유틸리티 작성
-# src/lib/animations.ts 파일 생성 (Part 1, 섹션 5.2 참조)
-
-# 4. 커스텀 훅 작성
-# src/hooks/useScrollAnimation.ts 파일 생성 (Part 1, 섹션 5.3 참조)
-
-# 5. 기존 컴포넌트에 애니메이션 추가
-# src/components/PlatformSection.tsx 수정
-```
-
-### 결과 확인
-```bash
-npm run dev
-# http://localhost:3002 접속
-# 스크롤하며 애니메이션 확인
-```
-
----
-
-## 중요 참고 사항
-
-### ⚠️ 주의사항
-1. **Palantir을 그대로 복사하지 말 것**
-   - 농업 산업의 특성에 맞게 조정
-   - 과도한 복잡성 지양
-   - 브랜드 정체성 유지
-
-2. **성능 우선 원칙**
-   - 애니메이션 < 성능
-   - 모바일 최적화 필수
-   - 번들 크기 관리
-
-3. **접근성 필수**
-   - 키보드 네비게이션
-   - 스크린 리더 호환
-   - 색상 대비 준수
-
-### ✅ 성공 지표
-- Lighthouse 성능 점수 > 90
-- 접근성 점수 > 95
-- 모든 브라우저에서 정상 작동
-- 모바일 성능 저하 없음
-
----
-
-## 문서 활용 팁
-
-### 순차적 학습
-1. 먼저 **Part 1**을 완전히 읽고 전체 그림 파악
-2. **Part 2**로 실제 구현 방법 이해
-3. **Part 3**으로 배포 및 운영 준비
-
-### 필요 시 참조
-- 특정 컴포넌트 구현: Part 1 섹션 5
-- 문제 해결: Part 2 섹션 12
-- 성능 개선: Part 2 섹션 7, 10
-
-### 팀 공유
-- PM에게: 이 README + Part 1 섹션 1, 3, 4
-- 디자이너에게: Part 1 섹션 1.1, 5.1
-- 개발자에게: 전체 문서
-
----
-
-## 다음 액션
-
-### 지금 결정해야 할 것
-1. **언제 시작할 것인가?**
-   - 즉시 시작 / 다음 스프린트 / 계획 후
-
-2. **어디서부터 시작할 것인가?**
-   - A. 히어로 섹션부터
-   - B. 디자인 시스템 전체 구축부터
-   - C. 특정 섹션 개선부터
-
-3. **누가 작업할 것인가?**
-   - 전담 개발자 배정
-   - 팀 전체 참여
-   - 단계별 분산
-
-### 승인 및 시작
-이 문서를 검토하고 다음 단계를 진행하세요:
-- [ ] 문서 내용 검토 완료
-- [ ] 로드맵 승인
-- [ ] 리소스 할당
-- [ ] 개발 시작
-
----
-
-**문의**: 각 Part의 상세 내용을 참조하거나, 구현 중 궁금한 점은 해당 섹션을 확인하세요.
-
-**마지막 업데이트**: 2025-10-21
+## 5. Codex 요청 표준
+- `document-authoring.md 기준으로 개발문서 작성`
+- `component-spec.template.md 템플릿으로 초안 생성`
+- `기존 문서와 코드 차이만 업데이트`

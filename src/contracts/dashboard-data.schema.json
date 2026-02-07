@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dashboard-data.schema.json",
+  "title": "Dashboard Forecast Data",
+  "type": "object",
+  "required": [
+    "baseDate",
+    "todayIndex",
+    "ageOffset",
+    "forecastStartIndex",
+    "chartRange",
+    "tableRange",
+    "series",
+    "rules"
+  ],
+  "properties": {
+    "baseDate": { "type": "string" },
+    "todayIndex": { "type": "number" },
+    "ageOffset": { "type": "number" },
+    "forecastStartIndex": { "type": "number" },
+    "chartRange": {
+      "type": "object",
+      "required": ["minIndex", "maxIndex"],
+      "properties": {
+        "minIndex": { "type": "number" },
+        "maxIndex": { "type": "number" }
+      }
+    },
+    "tableRange": {
+      "type": "object",
+      "required": ["startX", "endX", "startAge", "endAge"],
+      "properties": {
+        "startX": { "type": "number" },
+        "endX": { "type": "number" },
+        "startAge": { "type": "number" },
+        "endAge": { "type": "number" }
+      }
+    },
+    "series": {
+      "type": "object",
+      "required": ["history", "model", "d1", "d2", "d3", "observedActual", "standardWeight"],
+      "properties": {
+        "history": { "$ref": "#/$defs/pointArray" },
+        "model": { "$ref": "#/$defs/pointArray" },
+        "d1": { "$ref": "#/$defs/pointArray" },
+        "d2": { "$ref": "#/$defs/pointArray" },
+        "d3": { "$ref": "#/$defs/pointArray" },
+        "observedActual": { "$ref": "#/$defs/pointArray" },
+        "standardWeight": { "$ref": "#/$defs/pointArray" }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "required": ["thresholds", "rounding", "colors"],
+      "properties": {
+        "thresholds": {
+          "type": "object",
+          "required": ["goodMax", "mediumMax"],
+          "properties": {
+            "goodMax": { "type": "number" },
+            "mediumMax": { "type": "number" }
+          }
+        },
+        "rounding": {
+          "type": "object",
+          "required": ["mode", "percentDecimals"],
+          "properties": {
+            "mode": { "const": "ceil_abs" },
+            "percentDecimals": { "type": "number" }
+          }
+        },
+        "colors": {
+          "type": "object",
+          "required": ["good", "medium", "bad"],
+          "properties": {
+            "good": { "type": "string" },
+            "medium": { "type": "string" },
+            "bad": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "pointArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/point" }
+    }
+  }
+}
