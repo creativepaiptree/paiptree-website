@@ -557,7 +557,7 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4">
         {topKpis.map((kpi) => (
           <div key={kpi.label} className="bg-[#0d1117] border border-[#30363d] px-2 py-2">
-            <p className="text-[12px] text-gray-500">{kpi.label}</p>
+            <p className={`${lang === 'en' && kpi.label === t.expectedShip.en ? 'text-[10px]' : 'text-[12px]'} text-gray-500`}>{kpi.label}</p>
             <p className="text-[10px] text-gray-600">({kpi.desc})</p>
             <p className="text-[17px] font-semibold text-right" style={{ color: TONE_COLORS[kpi.tone] }}>{kpi.value}</p>
             <p className="text-[10px] text-gray-500 text-right">{kpi.sub}</p>
@@ -605,32 +605,39 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
               ))}
             </Bar>
 
-            <ReferenceLine x={model.mean} stroke="#3fb950" strokeDasharray="6 4" />
-            <ReferenceLine x={(model.targetMin + model.targetMax) / 2} stroke="#4da3ff" strokeDasharray="4 4" />
+            <ReferenceLine x={model.mean} stroke="#ffffff" strokeDasharray="6 4" strokeWidth={2} />
+            <ReferenceLine x={(model.targetMin + model.targetMax) / 2} stroke="#4da3ff" strokeDasharray="4 4" strokeWidth={2} />
           </ComposedChart>
         </ResponsiveContainer>
 
-        <div className="absolute top-2 right-2 bg-[#0d1117]/90 border border-[#30363d] px-2 py-1 text-[10px] space-y-1">
-          <div className="flex items-center gap-1 text-gray-400">
-            <span className="inline-block w-2 h-2" style={{ backgroundColor: ZONE_COLORS.under }} />
-            <span>{t.legendUnder[lang]}</span>
+        <div className="absolute top-2 right-2 text-[10px]">
+          <div className="flex flex-col items-start gap-1 text-gray-400">
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2" style={{ backgroundColor: ZONE_COLORS.under }} />
+              <span>{t.legendUnder[lang]}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2" style={{ backgroundColor: ZONE_COLORS.target }} />
+              <span>{t.legendTarget[lang]}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2" style={{ backgroundColor: ZONE_COLORS.over }} />
+              <span>{t.legendOver[lang]}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2" style={{ backgroundColor: '#4da3ff' }} />
+              <span>{t.standardLine[lang]}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2" style={{ backgroundColor: '#ffffff' }} />
+              <span>{t.meanLine[lang]}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-gray-400">
-            <span className="inline-block w-2 h-2" style={{ backgroundColor: ZONE_COLORS.target }} />
-            <span>{t.legendTarget[lang]}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-400">
-            <span className="inline-block w-2 h-2" style={{ backgroundColor: ZONE_COLORS.over }} />
-            <span>{t.legendOver[lang]}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-400">
-            <span className="inline-block w-2 h-2" style={{ backgroundColor: '#4da3ff' }} />
-            <span>{t.standardLine[lang]}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-400">
-            <span className="inline-block w-2 h-2" style={{ backgroundColor: '#3fb950' }} />
-            <span>{t.meanLine[lang]}</span>
-          </div>
+        </div>
+
+        <div className="absolute top-[15px] left-[70px] px-2 py-1 text-[10px] text-gray-500 space-y-0.5">
+          <p>{lang === 'ko' ? '*평균선: Σ(체중 × 마릿수) / 총마릿수' : '*Mean Line: Σ(weight × count) / total count'}</p>
+          <p>{lang === 'ko' ? '**표준체중선: (targetMin + targetMax) / 2' : '**Standard Line: (targetMin + targetMax) / 2'}</p>
         </div>
       </div>
 
