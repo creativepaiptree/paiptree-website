@@ -55,7 +55,7 @@ const Footer = () => {
                 {links.map((link) => (
                   <li key={link}>
                     <Link
-                      href={link === '3d matrix' ? '/3d_matrix_js/' : '#'}
+                      href={link === '3d matrix' ? '/PoC' : '#'}
                       className="body-sm hover:text-white transition-colors duration-300"
                       style={{ color: 'var(--text-secondary)' }}
                     >

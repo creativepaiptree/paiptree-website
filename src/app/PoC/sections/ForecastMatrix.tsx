@@ -168,6 +168,7 @@ const CHART_MIN_INDEX = dashboardData.chartRange.minIndex;
  * @description 45일령에 해당. 차트 X축 종료점.
  */
 const CHART_MAX_INDEX = dashboardData.chartRange.maxIndex;
+const MEASUREMENT_STAT_TIME = '2026-01-28 03:00:00';
 
 /**
  * 과거 체중 기록 (8~24일령)
@@ -665,11 +666,8 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           ctx.font = isTodayValue
             ? '700 10px "Noto Sans KR", sans-serif'
             : '400 9px "Noto Sans KR", sans-serif';
-          ctx.strokeStyle = 'rgba(10,10,15,0.9)';
-          ctx.lineWidth = 3;
-          ctx.strokeText(text, x, y - 16);
           ctx.fillStyle = isTodayValue ? '#3fb950' : '#ffc107';
-          ctx.fillText(text, x, y - 16);
+          ctx.fillText(text, x, y - 10);
         });
         ctx.restore();
       },
@@ -814,7 +812,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               if (!tooltipEl) {
                 tooltipEl = document.createElement('div');
                 tooltipEl.id = 'chartjs-tooltip';
-                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 4px; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
                 document.body.appendChild(tooltipEl);
               }
 
@@ -1017,7 +1015,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               if (!tooltipEl) {
                 tooltipEl = document.createElement('div');
                 tooltipEl.id = 'accuracy-tooltip';
-                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 4px; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
                 document.body.appendChild(tooltipEl);
               }
 
@@ -1121,7 +1119,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .forecast-card {
           background: #161b22;
           border: 1px solid #30363d;
-          border-radius: 8px;
+          border-radius: 0;
           padding: 12px;
         }
         .chart-container {
@@ -1138,7 +1136,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           gap: 10px;
           background: rgba(22, 27, 34, 0.85);
           padding: 6px 10px;
-          border-radius: 4px;
+          border-radius: 0;
           border: 1px solid transparent;
           z-index: 10;
         }
@@ -1146,7 +1144,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           display: flex;
           align-items: center;
           gap: 5px;
-          font-size: 9px;
+          font-size: 11px;
           color: #8b949e;
         }
         .chart-error-legend {
@@ -1158,7 +1156,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           gap: 10px;
           background: #161b22;
           padding: 6px 10px;
-          border-radius: 4px;
+          border-radius: 0;
           z-index: 10;
         }
         .chart-mode-switch {
@@ -1167,9 +1165,11 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           gap: 4px;
           background: transparent;
           border: 1px solid #30363d;
-          border-radius: 4px;
-          padding: 3px 8px;
-          font-size: 10px;
+          border-radius: 0;
+          padding: 4px 10px;
+          min-height: 30px;
+          font-size: 12px;
+          font-weight: 700;
           color: #8b949e;
           cursor: pointer;
           transition: all 0.2s;
@@ -1196,7 +1196,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           gap: 2px;
           background: #161b22;
           padding: 6px 8px;
-          border-radius: 4px;
+          border-radius: 0;
           z-index: 10;
         }
         .matrix-table {
@@ -1229,15 +1229,17 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           display: block;
           color: #c9d1d9;
           font-weight: 600;
+          font-size: 12px;
         }
         .date-sub {
-          font-size: 8px;
+          font-size: 10px;
           color: #6e7681;
         }
         .age-main {
           display: block;
           color: #c9d1d9;
           font-weight: 600;
+          font-size: 12px;
         }
         .today-col {
           background: transparent;
@@ -1335,9 +1337,10 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           gap: 5px;
           background: rgba(0, 0, 0, 0.3);
           border: 1px solid #30363d;
-          border-radius: 5px;
+          border-radius: 0;
           padding: 4px 10px;
-          min-width: 110px;
+          min-height: 30px;
+          min-width: 74px;
           position: relative;
         }
         .accuracy-tooltip {
@@ -1349,7 +1352,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           max-width: calc(100vw - 48px);
           background: rgba(10, 10, 15, 0.96);
           border: 1px solid #2a2a3a;
-          border-radius: 6px;
+          border-radius: 0;
           padding: 10px 12px;
           color: #f0f0f5;
           font-size: 12px;
@@ -1382,12 +1385,12 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .accuracy-label .day {
           font-size: 12px;
           font-weight: 700;
-          color: #c9d1d9;
+          color: #8b949e;
         }
         .accuracy-segments {
           display: flex;
           gap: 3px;
-          width: 80px;
+          width: 53px;
         }
         .accuracy-segment {
           flex: 1;
@@ -1400,13 +1403,11 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .accuracy-segment.bad { background: #f85149; }
         .accuracy-value {
           font-size: 12px;
-          font-weight: 600;
+          font-weight: 400;
           min-width: 36px;
           text-align: right;
+          color: #8b949e;
         }
-        .accuracy-item.good .accuracy-value { color: #3fb950; }
-        .accuracy-item.medium .accuracy-value { color: #ff7700; }
-        .accuracy-item.bad .accuracy-value { color: #f85149; }
         .accuracy-item.good .accuracy-tooltip-summary { color: #3fb950; }
         .accuracy-item.medium .accuracy-tooltip-summary { color: #ff7700; }
         .accuracy-item.bad .accuracy-tooltip-summary { color: #f85149; }
@@ -1414,7 +1415,8 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           display: flex;
           align-items: center;
           gap: 8px;
-          font-size: 10px;
+          font-size: 12px;
+          font-weight: 700;
           color: #8b949e;
         }
         .week-btn {
@@ -1433,14 +1435,16 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .fit-switch {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 10px;
+          gap: 4px;
+          font-size: 12px;
+          font-weight: 700;
           color: #8b949e;
           cursor: pointer;
           background: transparent;
           border: 1px solid #30363d;
-          padding: 3px 8px;
-          border-radius: 4px;
+          padding: 4px 10px;
+          min-height: 30px;
+          border-radius: 0;
           transition: all 0.2s;
         }
         .fit-switch:hover {
@@ -1453,18 +1457,12 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         }
       `}</style>
 
-      <div className="forecast-card">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-gray-400 font-medium">CCTV WEIGHT</h3>
-            <button
-              className={`chart-mode-switch ${chartMode === 'accuracy' ? 'active' : ''}`}
-              onClick={() => setChartMode(m => m === 'main' ? 'accuracy' : 'main')}
-            >
-              <span>⇄</span>
-              <span>{chartMode === 'main' ? (lang === 'ko' ? '정확도 보기' : 'Accuracy') : (lang === 'ko' ? '차트 보기' : 'Chart')}</span>
-            </button>
+      <div className="space-y-4">
+        <div className="forecast-card">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center min-w-0">
+            <h3 className="text-gray-400 font-medium">{lang === 'ko' ? 'CCTV 무게예측' : 'CCTV WEIGHT'}</h3>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="accuracy-indicators">
@@ -1544,11 +1542,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                 </div>
               </div>
             </div>
+            <button
+              className={`chart-mode-switch ${chartMode === 'accuracy' ? 'active' : ''}`}
+              onClick={() => setChartMode(m => m === 'main' ? 'accuracy' : 'main')}
+            >
+              <span>⇄</span>
+              <span>{chartMode === 'main' ? (lang === 'ko' ? '정확도 보기' : 'Accuracy') : (lang === 'ko' ? '차트 보기' : 'Chart')}</span>
+            </button>
           </div>
-        </div>
+          </div>
 
-        {/* Chart */}
-        <div className="chart-container">
+          {/* Chart */}
+          <div className="chart-container">
           <canvas ref={chartRef} style={{ display: chartMode === 'main' ? 'block' : 'none' }} />
           <canvas ref={accuracyChartRef} style={{ display: chartMode === 'accuracy' ? 'block' : 'none' }} />
           {/* Chart Legend Overlay */}
@@ -1556,42 +1561,42 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
             {chartMode === 'main' ? (
               <>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#3fb950] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#3fb950] " />
                   <span>{lang === 'ko' ? '3일 예측 구간' : '3-day Forecast'}</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#4da3ff] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#4da3ff] " />
                   <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#808080] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#808080] " />
                   <span>{lang === 'ko' ? '예측무게' : 'Predicted'}</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#ffc107] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#ffc107] " />
                   <span>{lang === 'ko' ? '3일예측' : 'Forecast'}</span>
                 </div>
               </>
             ) : (
               <>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#4da3ff] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#4da3ff] " />
                   <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#c9d1d9] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#c9d1d9] " />
                   <span>{lang === 'ko' ? '실측값' : 'Actual'}</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#3fb950] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#3fb950] " />
                   <span>D-1</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#ff7700] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#ff7700] " />
                   <span>D-2</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#f85149] rounded-sm" />
+                  <div className="w-2 h-2 bg-[#f85149] " />
                   <span>D-3</span>
                 </div>
               </>
@@ -1612,14 +1617,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               <span>{'>'}±5%</span>
             </div>
           </div>
+          <div className="mt-1 flex justify-end">
+            <p className="text-[10px] text-gray-500">
+              {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
+            </p>
+          </div>
+        </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-700 my-6"></div>
-
-        {/* Table Title & Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-gray-400 font-medium">ROLLING FORECAST MATRIX</h3>
+        <div className="forecast-card">
+          {/* Table Title & Header */}
+          <div className="flex justify-between items-center mb-4">
+          <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '3일예측' : 'ROLLING FORECAST MATRIX'}</h3>
           <div className="flex items-center gap-3">
             <div className="week-nav">
               <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>
@@ -1638,10 +1647,10 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               <span>{fitAll ? (lang === 'ko' ? '전체보기' : 'All') : (lang === 'ko' ? '주간보기' : 'Weekly')}</span>
             </button>
           </div>
-        </div>
+          </div>
 
-        {/* Table (Transposed: X-axis=Age, Y-axis=Date) */}
-        <div className="table-wrapper">
+          {/* Table (Transposed: X-axis=Age, Y-axis=Date) */}
+          <div className="table-wrapper">
           <table className="matrix-table">
             <thead>
               <tr>
@@ -1713,8 +1722,13 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               ))}
             </tbody>
           </table>
+          </div>
+          <div className="mt-2 flex justify-end">
+            <p className="text-[10px] text-gray-500">
+              {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
+            </p>
+          </div>
         </div>
-
       </div>
     </>
   );

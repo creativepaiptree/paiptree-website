@@ -1,7 +1,7 @@
 ---
 title: Version Modal 설계 문서
 author: ZORO
-last_updated: 26.02.07
+last_updated: 26.02.10
 ---
 
 # Version Modal 설계 문서
@@ -9,7 +9,7 @@ last_updated: 26.02.07
 ## 1. 문서 정보
 - 문서명: `Version Modal Specification`
 - 관련 구현:
-`/src/app/dashboard/sections/Navbar.tsx`  
+`/src/app/PoC/sections/Navbar.tsx`  
 `/src/app/api/version-notes/route.ts`  
 `/src/data/version-notes.json`
 
@@ -140,4 +140,4 @@ GET /api/version-notes
   - `Version Modal`은 `Navbar` UI 상태와 `version-notes` 데이터 로딩 책임만 가진다.
   - 도메인 차트 데이터(`dashboard-data`) 변경은 본 모듈 영향 범위 밖으로 유지한다.
 - 배포 전 확인:
-`npx tsc --noEmit` + `/dashboard` 수동 확인
+`npx tsc --noEmit` + `/PoC` 수동 확인

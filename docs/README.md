@@ -1,7 +1,7 @@
 ---
 title: 개발 문서 인덱스
 author: ZORO
-last_updated: 26.02.06
+last_updated: 26.02.07
 ---
 
 # 개발 문서 인덱스
@@ -18,12 +18,13 @@ last_updated: 26.02.06
 - `docs/templates/`
   - 신규 문서 템플릿
 
-## 3. 핵심 문서 (README 포함 5개)
+## 3. 핵심 문서 (README 포함 6개)
 - 인덱스
   - `/Users/zoro/projects/paiptree-website/docs/README.md`
 - 컴포넌트 문서
-  - `/Users/zoro/projects/paiptree-website/docs/components/ForecastMatrix.blueprint.md`
-  - `/Users/zoro/projects/paiptree-website/docs/components/versionmodal.md`
+  - `/docs/components/ForecastMatrix.blueprint.md`
+  - `/docs/components/WeightDistribution.blueprint.md`
+  - `/docs/components/versionmodal.md`
 - 작성 가이드
   - `/Users/zoro/projects/paiptree-website/docs/guides/document-authoring.md`
 - 템플릿

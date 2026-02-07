@@ -202,6 +202,16 @@ a {
   animation-play-state: paused;
 }
 
+/* Hide scrollbar but keep scroll behavior */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 @keyframes scroll {
   0% {
     transform: translateX(0);

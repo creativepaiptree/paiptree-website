@@ -273,7 +273,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
               setIsDocsModalOpen(false);
               setIsVersionModalOpen(true);
             }}
-            className="text-[10px] text-[#3fb950] border border-[#3fb950]/40 rounded px-1.5 py-0.5 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
+            className="h-6 text-[10px] leading-none text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
           >
             {lang === 'ko' ? '업데이트 정보' : 'Updates'}
           </button>
@@ -285,7 +285,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
               setActiveDocSource('system');
               setActiveSystemDocKey('index');
             }}
-            className="text-[10px] text-[#3fb950] border border-[#3fb950]/40 rounded px-1.5 py-0.5 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
+            className="h-6 text-[10px] leading-none text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
           >
             {lang === 'ko' ? '개발문서' : 'Dev Docs'}
           </button>
@@ -313,12 +313,12 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
             </div>
 
             {/* Notifications */}
-            <button className="ml-2 p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] rounded transition-colors">
+            <button className="ml-2 w-8 h-8 border border-[#30363d] flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-[#21262d] transition-colors">
               <Bell className="w-5 h-5" />
             </button>
 
             {/* Settings */}
-            <button className="p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] rounded transition-colors">
+            <button className="w-8 h-8 border border-[#30363d] flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-[#21262d] transition-colors">
               <Settings className="w-5 h-5" />
             </button>
 
@@ -329,7 +329,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
 
           {/* User Info */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#21262d] rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#21262d] border border-[#30363d] flex items-center justify-center">
               <User className="w-4 h-4 text-gray-400" />
             </div>
             <div className="text-sm">
@@ -339,7 +339,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
           </div>
 
           {/* Logout */}
-          <button className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-red-400 hover:bg-[#21262d] rounded transition-colors">
+          <button className="h-8 flex items-center gap-2 px-3 border border-[#30363d] text-gray-400 hover:text-red-400 hover:bg-[#21262d] transition-colors">
             <LogOut className="w-4 h-4" />
             <span className="text-sm">Logout</span>
           </button>
@@ -360,7 +360,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
             aria-modal="true"
             tabIndex={-1}
             ref={versionModalRef}
-            className="w-full max-w-[480px] bg-[#161b22] border border-[#30363d] rounded-lg shadow-2xl"
+            className="w-full max-w-[480px] bg-[#161b22] border border-[#30363d]  shadow-2xl"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#30363d]">
               <h3 className="text-gray-400 font-semibold">
@@ -370,7 +370,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                 type="button"
                 ref={versionCloseButtonRef}
                 onClick={closeVersionModal}
-                className="text-gray-400 hover:text-gray-400 text-sm px-2 py-1 rounded hover:bg-[#21262d]"
+                className="text-gray-400 hover:text-gray-400 text-sm px-2 py-1  hover:bg-[#21262d]"
               >
                 {lang === 'ko' ? '닫기' : 'Close'}
               </button>
@@ -389,7 +389,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                   releaseNotes.map((note) => (
                     <section
                       key={`${note.version}-${note.date}`}
-                      className="border border-transparent rounded-md p-3 bg-transparent"
+                      className="border border-transparent  p-3 bg-transparent"
                     >
                       <div className="flex items-baseline gap-2">
                         <span className="text-yellow-400 font-semibold text-lg">{note.version}</span>
@@ -442,7 +442,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
             aria-modal="true"
             tabIndex={-1}
             ref={docsModalRef}
-            className="w-full max-w-[980px] bg-[#161b22] border border-[#30363d] rounded-lg shadow-2xl"
+            className="w-full max-w-[980px] bg-[#161b22] border border-[#30363d]  shadow-2xl"
           >
             <div className="flex items-start justify-between px-5 py-4 border-b border-[#30363d] gap-4">
               <div className="min-w-0">
@@ -461,7 +461,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                             setActiveDocSource('system');
                             setActiveSystemDocKey(button.key);
                           }}
-                          className={`border rounded px-2 py-1 transition-colors flex flex-col items-start leading-tight ${
+                          className={`border  px-2 py-1 transition-colors flex flex-col items-start leading-tight ${
                             isActive
                               ? 'text-[#3fb950] border-[#3fb950]/70 bg-[#3fb950]/10'
                               : 'text-gray-400 border-[#30363d] hover:text-gray-200 hover:border-[#3fb950]/50'
@@ -479,7 +479,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                 type="button"
                 ref={docsCloseButtonRef}
                 onClick={closeDocsModal}
-                className="text-gray-400 hover:text-gray-200 text-sm px-2 py-1 rounded hover:bg-[#21262d]"
+                className="text-gray-400 hover:text-gray-200 text-sm px-2 py-1  hover:bg-[#21262d]"
               >
                 {lang === 'ko' ? '닫기' : 'Close'}
               </button>
@@ -495,7 +495,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
               {!isDocsLoading && !docsError && (
                 <div>
                   <div className="grid grid-cols-[280px_1fr] gap-4">
-                    <aside className="max-h-[520px] overflow-y-auto border border-[#30363d] rounded-md p-2 bg-[#0d1117]">
+                    <aside className="max-h-[520px] overflow-y-auto border border-[#30363d]  p-2 bg-[#0d1117]">
                       <p className="text-xs text-gray-500 px-1 pb-2 border-b border-[#30363d] mb-2">
                         {lang === 'ko' ? '설계문서 목차' : 'Component Spec TOC'}
                       </p>
@@ -509,7 +509,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                               setActiveDocSource('component');
                               setSelectedComponentDocId(doc.id);
                             }}
-                            className={`w-full text-left p-2 rounded-md border transition-colors mb-2 ${
+                            className={`w-full text-left p-2  border transition-colors mb-2 ${
                               isActive
                                 ? 'border-[#3fb950] bg-[#161b22]'
                                 : 'border-transparent hover:border-[#30363d] hover:bg-[#161b22]'
@@ -532,7 +532,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                       )}
                     </aside>
 
-                    <section className="max-h-[520px] overflow-y-auto border border-[#30363d] rounded-md p-4 bg-[#0d1117]">
+                    <section className="max-h-[520px] overflow-y-auto border border-[#30363d]  p-4 bg-[#0d1117]">
                       {selectedDoc ? (
                         <>
                           <div className="mb-3">

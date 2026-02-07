@@ -33,12 +33,12 @@ const data = generateData();
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#1c2128] border border-gray-700 rounded-lg p-3 shadow-lg">
+      <div className="bg-[#1c2128] border border-gray-700  p-3 shadow-lg">
         <p className="text-gray-300 font-medium mb-2">Day {label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 text-sm">
             <div
-              className="w-3 h-3 rounded-sm"
+              className="w-3 h-3 "
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-gray-400">{entry.name}:</span>
@@ -53,25 +53,25 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const ScaleWeightChart = () => {
   return (
-    <div className="bg-[#161b22] rounded-lg p-4 border border-gray-800">
+    <div className="bg-[#161b22]  p-4 border border-gray-800">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-gray-400 font-medium text-lg">SCALE WEIGHT</h3>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-[#8b5cf6] rounded-sm" />
+            <div className="w-3 h-3 bg-[#8b5cf6] " />
             <span className="text-gray-400">AVG</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-[#ef4444] rounded-sm" />
+            <div className="w-3 h-3 bg-[#ef4444] " />
             <span className="text-gray-400">S4</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-[#eab308] rounded-sm" />
+            <div className="w-3 h-3 bg-[#eab308] " />
             <span className="text-gray-400">S5</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-[#f472b6] rounded-sm" />
+            <div className="w-3 h-3 bg-[#f472b6] " />
             <span className="text-gray-400">S6</span>
           </div>
         </div>
@@ -104,7 +104,7 @@ const ScaleWeightChart = () => {
               dataKey="avg"
               fill="#8b5cf6"
               name="AVG"
-              radius={[2, 2, 0, 0]}
+              radius={[0, 0, 0, 0]}
               maxBarSize={20}
             />
 

@@ -1,7 +1,7 @@
 ---
 title: ForecastMatrix 설계 문서
 author: ZORO
-last_updated: 26.02.07
+last_updated: 26.02.10
 ---
 
 # ForecastMatrix 설계 문서
@@ -9,7 +9,7 @@ last_updated: 26.02.07
 ## 1. 문서 정보
 - 문서명: `ForecastMatrix Specification`
 - 관련 구현:
-`/src/app/dashboard/sections/ForecastMatrix.tsx`  
+`/src/app/PoC/sections/ForecastMatrix.tsx`  
 `/src/data/dashboard-data.json`  
 `/src/contracts/dashboard-data.ts`  
 `/src/contracts/dashboard-data.schema.json`  

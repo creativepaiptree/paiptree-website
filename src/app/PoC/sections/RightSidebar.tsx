@@ -95,14 +95,14 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
   }, []);
 
   return (
-    <div className="h-full bg-[#161b22] border border-[#30363d] rounded-lg flex flex-col overflow-auto">
+    <div className="h-full bg-[#161b22] border border-[#30363d] flex flex-col overflow-auto hide-scrollbar">
       {/* Survival Rate & Culling */}
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-gray-400 font-medium mb-3">{t.survivalRateCulling[lang]}</h3>
         <div className="h-[150px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={survivalData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <LineChart data={survivalData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
                 <XAxis
                   dataKey="day"
@@ -114,6 +114,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                 />
                 <YAxis
                   yAxisId="left"
+                  width={30}
                   stroke="#6b7280"
                   fontSize={9}
                   tickLine={false}
@@ -124,6 +125,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                 />
                 <YAxis
                   yAxisId="right"
+                  width={30}
                   orientation="right"
                   stroke="#6b7280"
                   fontSize={9}
@@ -136,7 +138,6 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   contentStyle={{
                     backgroundColor: '#1c2128',
                     border: '1px solid #374151',
-                    borderRadius: '8px'
                   }}
                 />
                 <Line
@@ -165,7 +166,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-gray-400 font-medium">{t.feedbinFullness[lang]}</h3>
-          <div className="flex items-center gap-1 text-[11px] text-[#8b949e]">
+          <div className="flex items-center gap-1 text-[12px] font-bold text-[#8b949e]">
             <button className="hover:text-gray-300 transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -178,7 +179,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={feedbinData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <AreaChart data={feedbinData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="feedbinGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
@@ -186,6 +187,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   </linearGradient>
                 </defs>
                 <YAxis
+                  width={30}
                   stroke="#6b7280"
                   fontSize={9}
                   tickLine={false}
@@ -210,7 +212,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-gray-400 font-medium">{t.temperature[lang]}</h3>
-          <div className="flex items-center gap-1 text-[11px] text-[#8b949e]">
+          <div className="flex items-center gap-1 text-[12px] font-bold text-[#8b949e]">
             <button className="hover:text-gray-300 transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -223,7 +225,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={tempData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <AreaChart data={tempData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
@@ -231,6 +233,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   </linearGradient>
                 </defs>
                 <YAxis
+                  width={30}
                   stroke="#6b7280"
                   fontSize={9}
                   tickLine={false}
@@ -255,7 +258,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-gray-400 font-medium">{t.humidity[lang]}</h3>
-          <div className="flex items-center gap-1 text-[11px] text-[#8b949e]">
+          <div className="flex items-center gap-1 text-[12px] font-bold text-[#8b949e]">
             <button className="hover:text-gray-300 transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -268,7 +271,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={humidityData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <AreaChart data={humidityData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="humidityGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -276,6 +279,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   </linearGradient>
                 </defs>
                 <YAxis
+                  width={30}
                   stroke="#6b7280"
                   fontSize={9}
                   tickLine={false}

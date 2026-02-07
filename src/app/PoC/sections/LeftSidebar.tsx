@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Download, AlertTriangle, ChevronRight } from 'lucide-react';
+import { ChevronDown, Download, ChevronRight } from 'lucide-react';
 
 interface LeftSidebarProps {
   lang: 'ko' | 'en';
@@ -52,10 +52,10 @@ const t = {
 
 const LeftSidebar = ({ lang }: LeftSidebarProps) => {
   return (
-    <div className="h-full bg-[#161b22] border border-[#30363d] rounded-lg flex flex-col overflow-hidden">
+    <div className="h-full bg-[#161b22] border border-[#30363d]  flex flex-col overflow-hidden">
       {/* Previous Cycles Dropdown */}
       <div className="p-4 border-b border-gray-800">
-        <button className="w-full flex items-center justify-between px-3 py-2 bg-[#0d1117] border border-gray-700 rounded text-sm text-gray-300 hover:bg-gray-800 transition-colors">
+        <button className="w-full flex items-center justify-between px-3 py-1.5 bg-[#0d1117] border border-gray-700 text-xs font-medium text-gray-300 hover:bg-gray-800 transition-colors">
           <span>{t.previousCycles[lang]}</span>
           <ChevronDown className="w-4 h-4" />
         </button>
@@ -63,11 +63,10 @@ const LeftSidebar = ({ lang }: LeftSidebarProps) => {
 
       {/* Alert Section */}
       <div className="p-4 border-b border-gray-800">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center mb-3">
           <span className="text-gray-400 font-medium">{t.alert[lang]}</span>
-          <AlertTriangle className="w-4 h-4 text-red-500" />
         </div>
-        <div className="bg-[#0d1117] rounded-lg p-3 space-y-2">
+        <div className="bg-[#0d1117] p-3 space-y-2 min-h-[160px]">
           {alerts.map((alert, idx) => (
             <div key={idx} className="text-red-400">
               <div className="text-[10px] text-red-500">{alert.date}_{alert.type[lang]}: <span className="text-gray-400">{alert.location}</span></div>
@@ -118,7 +117,7 @@ const LeftSidebar = ({ lang }: LeftSidebarProps) => {
 
       {/* Excel Download Button */}
       <div className="p-4 border-b border-gray-800">
-        <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#30363d] hover:bg-[#3d444d] text-gray-300 text-xs font-medium rounded transition-colors">
+        <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#30363d] hover:bg-[#3d444d] text-gray-300 text-xs font-medium  transition-colors">
           <Download className="w-3.5 h-3.5" />
           <span>{t.excelDownload[lang]}</span>
         </button>
@@ -128,15 +127,15 @@ const LeftSidebar = ({ lang }: LeftSidebarProps) => {
       <div className="p-4 flex-1">
         <h3 className="text-gray-400 font-medium mb-4">{t.inputManagement[lang]}</h3>
         <div className="space-y-2">
-          <button className="w-full flex items-center justify-between px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-sm text-gray-300 hover:bg-gray-800 transition-colors">
+          <button className="w-full flex items-center justify-between px-4 py-2 bg-[#0d1117] border border-gray-700 text-sm text-gray-300 hover:bg-gray-800 transition-colors">
             <span>{t.cullingMortality[lang]}</span>
             <ChevronRight className="w-4 h-4 text-gray-500" />
           </button>
-          <button className="w-full flex items-center justify-between px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-sm text-gray-300 hover:bg-gray-800 transition-colors">
+          <button className="w-full flex items-center justify-between px-4 py-2 bg-[#0d1117] border border-gray-700 text-sm text-gray-300 hover:bg-gray-800 transition-colors">
             <span>{t.measuredWeights[lang]}</span>
             <ChevronRight className="w-4 h-4 text-gray-500" />
           </button>
-          <button className="w-full flex items-center justify-between px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-sm text-gray-300 hover:bg-gray-800 transition-colors">
+          <button className="w-full flex items-center justify-between px-4 py-2 bg-[#0d1117] border border-gray-700 text-sm text-gray-300 hover:bg-gray-800 transition-colors">
             <span>{t.feedDelivery[lang]}</span>
             <ChevronRight className="w-4 h-4 text-gray-500" />
           </button>

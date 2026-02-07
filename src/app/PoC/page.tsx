@@ -26,7 +26,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Center Content - flexible, max 1100px */}
-          <div className="flex-1 flex flex-col min-w-0 max-w-[1100px] space-y-4 overflow-auto">
+          <div className="flex-1 flex flex-col min-w-0 max-w-[1100px] space-y-4 overflow-auto hide-scrollbar">
             {/* Header */}
             <Header lang={lang} />
 
@@ -38,7 +38,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right Sidebar - 320px */}
-          <div className="w-[320px] flex-shrink-0 overflow-auto">
+          <div className="w-[320px] flex-shrink-0 overflow-auto hide-scrollbar">
             <RightSidebar lang={lang} />
           </div>
         </div>
