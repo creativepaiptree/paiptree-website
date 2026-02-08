@@ -63,6 +63,7 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
 ];
 
 const SYSTEM_DOC_PATHS = new Set(SYSTEM_DOC_BUTTONS.map((button) => button.path));
+const CURRENT_POC_VERSION = '1.4.0';
 
 const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
@@ -276,7 +277,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
           <span className="text-gray-400 font-semibold text-2xl">Farmers_Mind</span>
-          <span className="text-[#3fb950] font-semibold ml-2 text-base">PoC (Ver.1.3.0)</span>
+          <span className="text-[#3fb950] font-semibold ml-2 text-base">PoC (Ver.{CURRENT_POC_VERSION})</span>
           <button
             type="button"
             onClick={() => {
