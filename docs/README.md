@@ -18,17 +18,19 @@ last_updated: 26.02.07
 - `docs/templates/`
   - 신규 문서 템플릿
 
-## 3. 핵심 문서 (README 포함 6개)
+## 3. 핵심 문서 (README 포함 8개)
 - 인덱스
-  - `/Users/zoro/projects/paiptree-website/docs/README.md`
+  - [개발 문서 인덱스](./README.md)
 - 컴포넌트 문서
-  - `/docs/components/ForecastMatrix.blueprint.md`
-  - `/docs/components/WeightDistribution.blueprint.md`
-  - `/docs/components/versionmodal.md`
+  - [ForecastMatrix.blueprint.md](./components/ForecastMatrix.blueprint.md)
+  - [WeightDistribution.blueprint.md](./components/WeightDistribution.blueprint.md)
+  - [CCTVMonitor.blueprint.md](./components/CCTVMonitor.blueprint.md)
+  - [versionmodal.md](./components/versionmodal.md)
 - 작성 가이드
-  - `/Users/zoro/projects/paiptree-website/docs/guides/document-authoring.md`
+  - [document-authoring.md](./guides/document-authoring.md)
+  - [cctv-live-analysis-benchmark.md](./guides/cctv-live-analysis-benchmark.md)
 - 템플릿
-  - `/Users/zoro/projects/paiptree-website/docs/templates/component-spec.template.md`
+  - [component-spec.template.md](./templates/component-spec.template.md)
 
 ## 4. 작성/갱신 규칙
 1. 코드 변경 시 관련 컴포넌트 문서를 같이 업데이트한다.

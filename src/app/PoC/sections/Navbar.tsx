@@ -62,6 +62,8 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
   },
 ];
 
+const SYSTEM_DOC_PATHS = new Set(SYSTEM_DOC_BUTTONS.map((button) => button.path));
+
 const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
@@ -152,12 +154,16 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
         }
 
         setDevDocs(data.docs);
-        const componentDocs = data.docs.filter((doc) => doc.path.startsWith('docs/components/'));
+        const tocDocs = data.docs.filter((doc) => {
+          const isTocGroup =
+            doc.path.startsWith('docs/components/') || doc.path.startsWith('docs/guides/');
+          return isTocGroup && !SYSTEM_DOC_PATHS.has(doc.path);
+        });
         setSelectedComponentDocId((prev) => {
-          if (prev && componentDocs.some((doc) => doc.id === prev)) {
+          if (prev && tocDocs.some((doc) => doc.id === prev)) {
             return prev;
           }
-          return componentDocs[0]?.id ?? null;
+          return tocDocs[0]?.id ?? null;
         });
       } catch (error) {
         if (controller.signal.aborted) {
@@ -249,7 +255,11 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
 
   const docsByPath = useMemo(() => new Map(devDocs.map((doc) => [doc.path, doc])), [devDocs]);
   const componentDocs = useMemo(
-    () => devDocs.filter((doc) => doc.path.startsWith('docs/components/')),
+    () => devDocs.filter((doc) => {
+      const isTocGroup =
+        doc.path.startsWith('docs/components/') || doc.path.startsWith('docs/guides/');
+      return isTocGroup && !SYSTEM_DOC_PATHS.has(doc.path);
+    }),
     [devDocs],
   );
   const selectedSystemDoc = useMemo(
@@ -497,7 +507,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                   <div className="grid grid-cols-[280px_1fr] gap-4">
                     <aside className="max-h-[520px] overflow-y-auto border border-[#30363d]  p-2 bg-[#0d1117]">
                       <p className="text-xs text-gray-500 px-1 pb-2 border-b border-[#30363d] mb-2">
-                        {lang === 'ko' ? '설계문서 목차' : 'Component Spec TOC'}
+                        {lang === 'ko' ? '설계/가이드 문서 목차' : 'Specs & Guides TOC'}
                       </p>
                       {componentDocs.map((doc) => {
                         const isActive = activeDocSource === 'component' && doc.id === selectedComponentDoc?.id;
@@ -527,7 +537,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                       })}
                       {componentDocs.length === 0 && (
                         <p className="text-xs text-gray-500 px-1">
-                          {lang === 'ko' ? '설계문서가 없습니다.' : 'No component specs found.'}
+                          {lang === 'ko' ? '표시할 문서가 없습니다.' : 'No documents found.'}
                         </p>
                       )}
                     </aside>

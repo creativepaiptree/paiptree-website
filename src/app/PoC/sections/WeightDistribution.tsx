@@ -37,6 +37,7 @@ type BinRow = {
 };
 
 const DISTRIBUTION_STAT_TIME = '2026-01-28 03:00:00';
+const DIST_Y_AXIS_WIDTH = 28;
 // International heavy-broiler processing standard: mean ± 10% (deboning category 2,500-3,200g+).
 // Ross 308 mixed-sex ~40d ≈ 2,981g mean → band 2,700-3,300g.
 const DEFAULT_TARGET_MIN = 2820;
@@ -378,7 +379,7 @@ const buildRows = (
   const targetMax = Math.max(targetMinInput, targetMaxInput);
 
   let cumulative = 0;
-  const rows = sorted.map((point, index) => {
+  const baseRows = sorted.map((point, index) => {
     const left = index === 0 ? point.x - (sorted[index + 1].x - point.x) / 2 : (sorted[index - 1].x + point.x) / 2;
     const right = index === sorted.length - 1 ? point.x + (point.x - sorted[index - 1].x) / 2 : (point.x + sorted[index + 1].x) / 2;
     const pct = (point.y / totalCount) * 100;
@@ -386,13 +387,11 @@ const buildRows = (
 
     const zone: Zone = point.x < targetMin ? 'under' : point.x > targetMax ? 'over' : 'target';
 
-    // Mock D-1: shift distribution left (lighter yesterday) so delta shows improvement.
-    // Under zone gets +12-18% more birds, target stays ~same, over zone gets -10-16% fewer.
-    const prevFactor =
-      zone === 'under' ? 1.12 + Math.sin(index * 0.3) * 0.06
-      : zone === 'over' ? 0.84 + Math.sin(index * 0.3) * 0.06
-      : 0.97 + Math.sin(index * 0.3) * 0.03;
-    const prevCount = Math.max(0, Math.round(point.y * prevFactor));
+    // Mock D-1: keep overall counts slightly higher than today.
+    const prevFactor = zone === 'target'
+      ? 1.10 + Math.sin(index * 0.25) * 0.02
+      : 1.08 + Math.sin(index * 0.25) * 0.02;
+    const prevCountBase = Math.max(0, Math.round(point.y * prevFactor));
 
     return {
       center: Number(point.x.toFixed(1)),
@@ -400,12 +399,35 @@ const buildRows = (
       rangeEnd: Number(right.toFixed(1)),
       rangeLabel: `${Math.round(left)}-${Math.round(right)}`,
       count: point.y,
-      prevCount,
+      prevCountBase,
       percentage: pct,
       cumulative,
       zone,
     };
   });
+
+  // Force "today vs D-1" target-fit delta to about -1.7%p.
+  const currentTargetCount = baseRows.filter((row) => row.zone === 'target').reduce((acc, row) => acc + row.count, 0);
+  const currentTargetRatio = totalCount > 0 ? currentTargetCount / totalCount : 0;
+  const desiredPrevTargetRatio = Math.min(0.99, Math.max(0.01, currentTargetRatio + 0.017));
+
+  const prevTargetBase = baseRows.filter((row) => row.zone === 'target').reduce((acc, row) => acc + row.prevCountBase, 0);
+  const prevNonTargetBase = baseRows.filter((row) => row.zone !== 'target').reduce((acc, row) => acc + row.prevCountBase, 0);
+  const targetBoost = prevTargetBase > 0
+    ? (desiredPrevTargetRatio * prevNonTargetBase) / (prevTargetBase * (1 - desiredPrevTargetRatio))
+    : 1;
+
+  const rows = baseRows.map((row) => ({
+    center: row.center,
+    rangeStart: row.rangeStart,
+    rangeEnd: row.rangeEnd,
+    rangeLabel: row.rangeLabel,
+    count: row.count,
+    prevCount: Math.max(0, Math.round(row.prevCountBase * (row.zone === 'target' ? targetBoost : 1))),
+    percentage: row.percentage,
+    cumulative: row.cumulative,
+    zone: row.zone,
+  }));
 
   return {
     rows,
@@ -525,27 +547,31 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-gray-500">{t.targetRange[lang]}</span>
-          <input
-            type="number"
-            className="w-20 bg-[#0d1117] border border-[#30363d] px-2 py-1 text-gray-300"
-            value={targetMinInput}
-            onChange={(e) => setTargetMinInput(Number(e.target.value) || 0)}
-          />
-          <span className="text-gray-500">~</span>
-          <input
-            type="number"
-            className="w-20 bg-[#0d1117] border border-[#30363d] px-2 py-1 text-gray-300"
-            value={targetMaxInput}
-            onChange={(e) => setTargetMaxInput(Number(e.target.value) || 0)}
-          />
+          <div className="border border-[#30363d] min-h-[30px] pl-[8px] pr-[4px] py-[4px] flex items-center gap-1.5">
+            <span className="text-gray-400 text-[12px] font-bold mr-1">{t.targetRange[lang]}</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className="w-14 h-5 bg-[#0d1117] px-1 text-gray-300 border-0 outline-none text-center"
+              value={targetMinInput}
+              onChange={(e) => setTargetMinInput(Number(e.target.value) || 0)}
+            />
+            <span className="text-gray-500">~</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className="w-14 h-5 bg-[#0d1117] px-1 text-gray-300 border-0 outline-none text-center"
+              value={targetMaxInput}
+              onChange={(e) => setTargetMaxInput(Number(e.target.value) || 0)}
+            />
+          </div>
           <button
             type="button"
             onClick={() => setShowComparison((v) => !v)}
-            className={`border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors ${
-              showComparison
-                ? 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
-                : 'border-[#30363d] text-gray-400 hover:text-gray-200'
+            className={`border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center gap-1 border-[#30363d] ${
+              showComparison ? 'text-[#3fb950]' : 'text-gray-400'
             }`}
           >
             {t.compareD1[lang]}
@@ -565,9 +591,9 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
         ))}
       </div>
 
-      <div className="relative h-[260px]">
+      <div className="relative h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={model.rows} margin={{ top: 12, right: 12, left: 4, bottom: 18 }}>
+          <ComposedChart data={model.rows} margin={{ top: 12, right: 12, left: 0, bottom: 18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2f37" vertical={false} />
             <ReferenceArea
               x1={model.targetMin}
@@ -591,6 +617,7 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
               stroke="#6b7280"
               fontSize={10}
               tickLine={false}
+              width={DIST_Y_AXIS_WIDTH}
               axisLine={{ stroke: '#374151' }}
             />
             <Tooltip content={<CustomTooltip lang={lang} />} />
@@ -635,7 +662,10 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
           </div>
         </div>
 
-        <div className="absolute top-[15px] left-[70px] px-2 py-1 text-[10px] text-gray-500 space-y-0.5">
+        <div
+          className="absolute top-[15px] px-2 py-1 text-[10px] text-gray-500 space-y-0.5 pointer-events-none"
+          style={{ left: `calc(${DIST_Y_AXIS_WIDTH}px + 6px)` }}
+        >
           <p>{lang === 'ko' ? '*평균선: Σ(체중 × 마릿수) / 총마릿수' : '*Mean Line: Σ(weight × count) / total count'}</p>
           <p>{lang === 'ko' ? '**표준체중선: (targetMin + targetMax) / 2' : '**Standard Line: (targetMin + targetMax) / 2'}</p>
         </div>
@@ -646,17 +676,25 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
       </div>
 
       <div className="mt-2 flex items-center justify-between border-t border-[#30363d] pt-3">
-        <p className="text-sm text-gray-300">
-          {t.summaryUnder[lang]}: <span className="font-semibold text-[#f85149]">{formatCount(stats.underCount)}{lang === 'ko' ? '마리' : ''}</span>
-        </p>
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1"
-        >
-          {expanded ? t.detailClose[lang] : t.detailOpen[lang]}
-          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-        </button>
+        <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '상세지표' : t.researchMetrics.en}</h3>
+        <div className="flex items-center gap-2">
+          <div className="border border-[#30363d] bg-[rgba(0,0,0,0.3)] min-h-[30px] px-[10px] py-[4px] text-[12px] flex items-center gap-1 text-gray-400">
+            <span>{t.summaryUnder[lang]}:</span>
+            <span className="font-semibold text-[#f85149]">{formatCount(stats.underCount)}{lang === 'ko' ? '마리' : ''}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className={`border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center gap-1 ${
+              expanded
+                ? 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
+                : 'border-[#30363d] text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            {expanded ? t.detailClose[lang] : t.detailOpen[lang]}
+            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+        </div>
       </div>
 
       {expanded && (

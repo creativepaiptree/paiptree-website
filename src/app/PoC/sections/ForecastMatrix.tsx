@@ -13,7 +13,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import dashboardDataJson from '@/data/dashboard-data.json';
 import { assertDashboardForecastData, type Point } from '@/contracts/dashboard-data';
 import {
@@ -116,6 +116,14 @@ type AccuracyHoverLine = { text: string; tone: AccuracyLineTone };
  * 정확도 호버 정보 (툴팁용)
  */
 type AccuracyHoverInfo = { summary: string; lines: AccuracyHoverLine[] };
+type PredictionCard = {
+  key: string;
+  label: string;
+  value: string;
+  errorText: string;
+  isToday: boolean;
+  tone: 'good' | 'medium' | 'bad' | 'forecast' | 'neutral';
+};
 
 /**
  * 기준 날짜 (xIndex = 0)
@@ -442,6 +450,8 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   /** 차트 모드: 메인 차트 vs 예측 정확도 차트 */
   const [chartMode, setChartMode] = useState<'main' | 'accuracy'>('main');
+  /** 3일예측 카드 접힘 상태 */
+  const [isRollingCollapsed, setIsRollingCollapsed] = useState(true);
   const maxDay = CHART_MAX_INDEX;
 
   /**
@@ -550,6 +560,49 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
 
   const dateMap = lang === 'ko' ? dateMaps.ko : dateMaps.en;
   const plainDateMap = dateMaps.plain;
+  const predictionCards = useMemo<PredictionCard[]>(() => {
+    const modelMap = pointMap(MODEL_POINTS);
+    const observedMap = pointMap(OBSERVED_ACTUAL_POINTS);
+    const todayAge = TODAY_INDEX - AGE_OFFSET;
+    const cards = [todayAge, todayAge + 1, todayAge + 2, todayAge + 3];
+
+    return cards.map((age, idx) => {
+      const xIndex = age + AGE_OFFSET;
+      const predicted = modelMap.get(xIndex);
+      const value = typeof predicted === 'number' ? formatWeight(predicted) : '-';
+      if (idx === 0) {
+        const actual = observedMap.get(xIndex);
+        if (typeof predicted === 'number' && typeof actual === 'number') {
+          const pct = ((actual - predicted) / actual) * 100;
+          return {
+            key: `pred-${age}`,
+            label: lang === 'ko' ? '오늘' : 'Today',
+            value,
+            errorText: `(${formatSigned(actual - predicted, 'g')}/${formatSignedPercentCeil(pct)})`,
+            isToday: true,
+            tone: calcErrorClass(pct, ERROR_THRESHOLDS),
+          };
+        }
+        return {
+          key: `pred-${age}`,
+          label: lang === 'ko' ? '오늘' : 'Today',
+          value,
+          errorText: '(-)',
+          isToday: true,
+          tone: 'neutral',
+        };
+      }
+
+      return {
+        key: `pred-${age}`,
+        label: lang === 'ko' ? `${age}일령` : `${age}d`,
+        value,
+        errorText: '',
+        isToday: false,
+        tone: 'forecast',
+      };
+    });
+  }, [lang]);
 
   /**
    * 현재 페이지에 표시할 일령 열 (X축)
@@ -885,12 +938,11 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
             type: 'linear',
             min: CHART_MIN_INDEX,
             max: CHART_MAX_INDEX,
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            grid: { color: '#2a2f37' },
+            border: { color: '#374151' },
             ticks: {
-              color: (context: any) => {
-                const value = context.tick?.value;
-                return value === TODAY_INDEX ? '#00d4aa' : '#8888a0';
-              },
+              color: '#6b7280',
+              font: { size: 10 },
               stepSize: 1,
               callback: (value: any) => {
                 const day = Number(value);
@@ -904,9 +956,11 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           y: {
             min: 0,
             max: 3500,
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            grid: { color: '#2a2f37' },
+            border: { color: '#374151' },
             ticks: {
-              color: '#8888a0',
+              color: '#6b7280',
+              font: { size: 10 },
               stepSize: 500,
               callback: (value: any) => `${value}g`,
             },
@@ -1078,9 +1132,11 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
             type: 'linear',
             min: 26,  // 24일령 (여백용)
             max: 47,  // 45일령
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            grid: { color: '#2a2f37' },
+            border: { color: '#374151' },
             ticks: {
-              color: '#8888a0',
+              color: '#6b7280',
+              font: { size: 10 },
               stepSize: 1,
               callback: (value: any) => {
                 const day = Number(value);
@@ -1094,9 +1150,11 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           y: {
             min: 1200,
             max: 3000,
-            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            grid: { color: '#2a2f37' },
+            border: { color: '#374151' },
             ticks: {
-              color: '#8888a0',
+              color: '#6b7280',
+              font: { size: 10 },
               stepSize: 500,
               callback: (value: any) => `${value}g`,
             },
@@ -1116,15 +1174,19 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
   return (
     <>
       <style jsx>{`
-        .forecast-card {
+        .forecast-group {
           background: #161b22;
           border: 1px solid #30363d;
           border-radius: 0;
+        }
+        .forecast-card {
+          background: transparent;
+          border: none;
           padding: 12px;
         }
         .chart-container {
-          height: 300px;
-          margin-bottom: 12px;
+          height: 250px;
+          margin-bottom: 0;
           position: relative;
         }
         .chart-legend-overlay {
@@ -1234,6 +1296,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .date-sub {
           font-size: 10px;
           color: #6e7681;
+          white-space: nowrap;
         }
         .age-main {
           display: block;
@@ -1401,6 +1464,16 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         .accuracy-segment.good { background: #3fb950; }
         .accuracy-segment.medium { background: #ff7700; }
         .accuracy-segment.bad { background: #f85149; }
+        .prediction-placeholder .accuracy-segment {
+          opacity: 0;
+        }
+        .prediction-placeholder {
+          width: 0 !important;
+          min-width: 0 !important;
+          overflow: hidden;
+          margin: 0 !important;
+          gap: 0 !important;
+        }
         .accuracy-value {
           font-size: 12px;
           font-weight: 400;
@@ -1408,6 +1481,24 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           text-align: right;
           color: #8b949e;
         }
+        .prediction-main {
+          font-size: 12px;
+          font-weight: 400;
+        }
+        .prediction-main.forecast { color: #ffc107; }
+        .prediction-main.good { color: #3fb950; }
+        .prediction-main.medium { color: #ff7700; }
+        .prediction-main.bad { color: #f85149; }
+        .prediction-main.neutral { color: #8b949e; }
+        .prediction-error {
+          margin-left: 4px;
+          font-size: 11px;
+          font-weight: 400;
+        }
+        .prediction-error.good { color: #3fb950; }
+        .prediction-error.medium { color: #ff7700; }
+        .prediction-error.bad { color: #f85149; }
+        .prediction-error.neutral { color: #8b949e; }
         .accuracy-item.good .accuracy-tooltip-summary { color: #3fb950; }
         .accuracy-item.medium .accuracy-tooltip-summary { color: #ff7700; }
         .accuracy-item.bad .accuracy-tooltip-summary { color: #f85149; }
@@ -1457,8 +1548,9 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         }
       `}</style>
 
-      <div className="space-y-4">
-        <div className="forecast-card">
+      <div className="space-y-0">
+        <div className="forecast-group">
+        <div className="forecast-card pt-3">
           {/* Header */}
           <div className="flex justify-between items-center mb-3">
           <div className="flex items-center min-w-0">
@@ -1627,107 +1719,157 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
 
         <div className="forecast-card">
           {/* Table Title & Header */}
-          <div className="flex justify-between items-center mb-4">
-          <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '3일예측' : 'ROLLING FORECAST MATRIX'}</h3>
-          <div className="flex items-center gap-3">
-            <div className="week-nav">
-              <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span>{ageRangeLabels[week][lang]}</span>
-              <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1) as 1 | 2 | 3)}>
-                <ChevronRight className="w-4 h-4" />
+          <div className="mt-1 border-t border-[#30363d] pt-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '3일 예측 매트릭스' : 'ROLLING FORECAST MATRIX'}</h3>
+            <div className="flex items-center gap-3">
+              <div className="accuracy-indicators">
+                {predictionCards.map((card) => (
+                  <div key={card.key} className="accuracy-item">
+                    <div className="accuracy-label">
+                      <span className="day">{card.label}</span>
+                    </div>
+                    <div className="accuracy-segments prediction-placeholder">
+                      {[0, 1, 2].map((i) => (
+                        <div key={`pred-slot-${card.key}-${i}`} className="accuracy-segment" />
+                      ))}
+                    </div>
+                    <span className="accuracy-value">
+                      <span className={`prediction-main ${card.tone}`}>{card.value}</span>
+                      {card.isToday && <span className={`prediction-error ${card.tone}`}>{card.errorText}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {!isRollingCollapsed && (
+                <>
+                  {!fitAll && (
+                    <div className="week-nav">
+                      <button className="week-btn" onClick={() => setWeek(w => (w === 1 ? 3 : w - 1) as 1 | 2 | 3)}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span>{ageRangeLabels[week][lang]}</span>
+                      <button className="week-btn" onClick={() => setWeek(w => (w === 3 ? 1 : w + 1) as 1 | 2 | 3)}>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+              <button
+                type="button"
+                className={`border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center gap-1 ${
+                  isRollingCollapsed
+                    ? 'border-[#30363d] text-gray-400 hover:text-gray-200'
+                    : 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
+                }`}
+                onClick={() => setIsRollingCollapsed(v => !v)}
+                aria-label={lang === 'ko' ? '3일 예측 매트릭스 접기/펼치기' : 'Toggle forecast table'}
+              >
+                <span>{isRollingCollapsed ? (lang === 'ko' ? '상세보기' : 'Show Details') : (lang === 'ko' ? '상세닫기' : 'Hide Details')}</span>
+                {isRollingCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
               </button>
             </div>
-            <button
-              className={`fit-switch ${!fitAll ? 'active' : ''}`}
-              onClick={() => setFitAll(v => !v)}
-            >
-              <span>↕</span>
-              <span>{fitAll ? (lang === 'ko' ? '전체보기' : 'All') : (lang === 'ko' ? '주간보기' : 'Weekly')}</span>
-            </button>
           </div>
           </div>
 
-          {/* Table (Transposed: X-axis=Age, Y-axis=Date) */}
-          <div className="table-wrapper">
-          <table className="matrix-table">
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left' }}>{lang === 'ko' ? '날짜' : 'Date'}</th>
-                {visibleAgeColumns.map(col => (
-                  <th
-                    key={col.age}
-                    className={`${col.isTodayAge ? 'today-col' : ''} ${hoveredColumnAge === col.age ? 'hovered-col' : ''}`}
-                  >
-                    <span className="age-main">{col.age}{lang === 'ko' ? '일령' : 'd'}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleRows.map((row, rowIdx) => (
-                <tr key={rowIdx} className={row.isToday ? 'today-row' : ''}>
-                  <td className="row-header">
-                    <span className="date-main">{row.date[lang]}</span>
-                    <span className="date-sub">{row.dateSub[lang]}</span>
-                  </td>
-                  {visibleAgeColumns.map(col => {
-                    const cellIdx = transposedColumns.findIndex(c => c.age === col.age);
-                    const cell = row.cells[cellIdx];
-                    const todayColClass = col.isTodayAge ? ' today-col' : '';
-                    const hoveredClass = hoveredColumnAge === col.age ? ' hovered-col' : '';
-                    if (!cell) return <td key={col.age} className={`empty-cell${todayColClass}${hoveredClass}`}>-</td>;
+          {!isRollingCollapsed && (
+            <>
+              {/* Table (Transposed: X-axis=Age, Y-axis=Date) */}
+              <div className="table-wrapper mt-3">
+                <table className="matrix-table">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left' }}>{lang === 'ko' ? '날짜' : 'Date'}</th>
+                      {visibleAgeColumns.map(col => (
+                        <th
+                          key={col.age}
+                          className={`${col.isTodayAge ? 'today-col' : ''} ${hoveredColumnAge === col.age ? 'hovered-col' : ''}`}
+                        >
+                          <span className="age-main">{col.age}{lang === 'ko' ? '일령' : 'd'}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleRows.map((row, rowIdx) => (
+                      <tr key={rowIdx} className={row.isToday ? 'today-row' : ''}>
+                        <td className="row-header">
+                          <span className="date-main">{row.date[lang]}</span>
+                          <span className="date-sub">{row.dateSub[lang]}</span>
+                        </td>
+                        {visibleAgeColumns.map(col => {
+                          const cellIdx = transposedColumns.findIndex(c => c.age === col.age);
+                          const cell = row.cells[cellIdx];
+                          const todayColClass = col.isTodayAge ? ' today-col' : '';
+                          const hoveredClass = hoveredColumnAge === col.age ? ' hovered-col' : '';
+                          if (!cell) return <td key={col.age} className={`empty-cell${todayColClass}${hoveredClass}`}>-</td>;
 
-                    if (cell.type === 'prediction') {
-                      return (
-                        <td key={col.age} className={`prediction-cell${todayColClass}${hoveredClass}`}>
-                          <span className="value">{cell.value}</span>
-                          {cell.error && <span className={`error ${cell.errorClass}`}>{cell.error}</span>}
-                        </td>
-                      );
-                    }
-                    if (cell.type === 'actual') {
-                      const checkText =
-                        lang === 'ko'
-                          ? cell.check
-                              .replace(/✓/g, '')
-                              .replace(/실측/g, '')
-                              .replace(/[()]/g, '')
-                              .replace(/\s+/g, ' ')
-                              .trim()
-                          : cell.check
-                              .replace(/✓/g, '')
-                              .replace('실측', 'Actual')
-                              .replace(/[()]/g, '')
-                              .trim();
-                      return (
-                        <td key={col.age} className={`actual-cell${todayColClass}${hoveredClass}`}>
-                          <span className="value">{cell.value}</span>
-                          <span className="check">{checkText}</span>
-                        </td>
-                      );
-                    }
-                    if (cell.type === 'future') {
-                      return (
-                        <td key={col.age} className={`future-cell${todayColClass}${hoveredClass}`}>
-                          <span className="value">{cell.value}</span>
-                          <span className="label">{cell.label}</span>
-                        </td>
-                      );
-                    }
-                    return <td key={col.age} className={`empty-cell${todayColClass}${hoveredClass}`}>{cell.value}</td>;
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-          <div className="mt-2 flex justify-end">
-            <p className="text-[10px] text-gray-500">
-              {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
-            </p>
-          </div>
+                          if (cell.type === 'prediction') {
+                            return (
+                              <td key={col.age} className={`prediction-cell${todayColClass}${hoveredClass}`}>
+                                <span className="value">{cell.value}</span>
+                                {cell.error && <span className={`error ${cell.errorClass}`}>{cell.error}</span>}
+                              </td>
+                            );
+                          }
+                          if (cell.type === 'actual') {
+                            const checkText =
+                              lang === 'ko'
+                                ? cell.check
+                                    .replace(/✓/g, '')
+                                    .replace(/실측/g, '')
+                                    .replace(/[()]/g, '')
+                                    .replace(/\s+/g, ' ')
+                                    .trim()
+                                : cell.check
+                                    .replace(/✓/g, '')
+                                    .replace('실측', 'Actual')
+                                    .replace(/[()]/g, '')
+                                    .trim();
+                            return (
+                              <td key={col.age} className={`actual-cell${todayColClass}${hoveredClass}`}>
+                                <span className="value">{cell.value}</span>
+                                <span className="check">{checkText}</span>
+                              </td>
+                            );
+                          }
+                          if (cell.type === 'future') {
+                            return (
+                              <td key={col.age} className={`future-cell${todayColClass}${hoveredClass}`}>
+                                <span className="value">{cell.value}</span>
+                                <span className="label">{cell.label}</span>
+                              </td>
+                            );
+                          }
+                          return <td key={col.age} className={`empty-cell${todayColClass}${hoveredClass}`}>{cell.value}</td>;
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-2 flex justify-end">
+                <p className="text-[10px] text-gray-500">
+                  {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFitAll(v => !v)}
+                className={`mt-1 w-full border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center justify-center ${
+                  fitAll
+                    ? 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
+                    : 'border-[#30363d] text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {fitAll
+                  ? (lang === 'ko' ? '전체닫기' : 'Hide All')
+                  : (lang === 'ko' ? '전체보기' : 'Show All')}
+              </button>
+            </>
+          )}
+        </div>
         </div>
       </div>
     </>
