@@ -75,7 +75,7 @@ const BATCH_TEMPLATES: BatchTemplate[] = [
 
 const PAGE_SIZE = 12;
 const BATCH_FRAME_COUNT = 72;
-const SAMPLE_LIVE_VIDEO_URL = '/media/cctv-sample-test1/cctv.mov';
+const SAMPLE_LIVE_VIDEO_URL = '/media/cctv-sample-test1/cctv.mp4';
 const SAMPLE_ARCHIVE_IMAGE_URLS = Array.from(
   { length: BATCH_FRAME_COUNT },
   (_, index) => `/media/cctv-sample-test1/images/frame-${String(index + 1).padStart(3, '0')}.jpg`,
