@@ -1,7 +1,7 @@
 ---
 title: CCTVMonitor 설계 문서
 author: ZORO
-last_updated: 26.02.08
+last_updated: 26.02.09
 ---
 
 # CCTVMonitor 설계 문서
@@ -9,6 +9,9 @@ last_updated: 26.02.08
 ## 1. 문서 정보
 - 구현 파일
   - `/Users/zoro/projects/paiptree-website/src/app/PoC/sections/CCTVMonitor.tsx`
+- 샘플 미디어
+  - `/Users/zoro/projects/paiptree-website/public/media/cctv-sample-test1/cctv.mp4`
+  - `/Users/zoro/projects/paiptree-website/public/media/cctv-sample-test1/images/frame-001.jpg ~ frame-072.jpg`
 - 적용 범위
   - PoC 대시보드의 CCTV 라이브 + 보관 분석 이미지(6시간/72장) 통합 모니터링 UI
 
@@ -21,22 +24,30 @@ last_updated: 26.02.08
 - 상단 헤더
   - 타이틀 + 활성 배치 기준 `정상/총 프레임`, `이상 프레임` 요약
 - 본문 3영역
-  - 좌측 카메라 레일(`360px`)
-    - 카드형 목록 + 우측 미니 라이브 프리뷰(`23:18`, `width 192px`)
+  - 좌측 카메라 레일(`280px`)
+    - 카드형 목록 + 우측 미니 라이브 프리뷰(`16:12`, `width 120px`)
     - 미니 프리뷰 오버레이: `LIVE/OFF`, 카메라 ID, latency
     - 카드 정보: 카메라명, latency/heartbeat, 최신 배치 `정상/실패/누락`
     - 목록 패널은 중앙 라이브 높이에 맞춰 stretch 되고 내부는 세로 스크롤(카메라 증가 시 약 4개 카드 가시)
-  - 중앙 라이브 패널: 운영 상태바(스트림 상태, 지연, heartbeat, 재연결), 상시 라이브 표시
+  - 중앙 라이브 패널(`820px`): 운영 상태바(스트림 상태, 지연, heartbeat, 재연결), 상시 라이브 표시
     - 라이브 캔버스는 소스 `920x720`(23:18) 비율 유지, `max-width 800px`
-  - 우측 보관 이미지 패널(`520px`)
-    - 상단 미리보기는 고정 비율이 아닌 세로 확장형(`preview-pane`이 남는 높이를 차지)
+  - 우측 보관 이미지 패널(`flex 1`, `min-width 320px`)
+    - 상단 미리보기는 `16:9` 고정 비율(`preview-canvas`)
     - 6시간 배치 선택, 페이지 이동, 72장 썸네일
-    - `보관된 가공 이미지 조회 전용` 안내 박스/하단 상세 카드 영역은 제거
+    - `보관된 가공 이미지 조회 전용` 안내 문구만 유지
+- 반응형 규칙
+  - `<=1360px`: 썸네일 `4열 -> 3열`
+  - `<=1350px`: 3컬럼을 세로 스택으로 전환, 카메라 목록 가로 스크롤, 카드 최소폭 `380px`
+  - `<=640px`: 썸네일 `2열`
 
 ## 4. 핵심 로직
 - 데이터 소스 분리
   - 라이브 상태: `fetchLiveStreamState(cameraId)`
   - 보관 배치: `fetchArchiveBatches(cameraId)`
+- 샘플 미디어 매핑
+  - 라이브 영상: `SAMPLE_LIVE_VIDEO_URL = /media/cctv-sample-test1/cctv.mp4`
+  - 보관 이미지: `SAMPLE_ARCHIVE_IMAGE_URLS = frame-001 ~ frame-072`
+  - 3개 카메라(CT01/CT02/CT03)가 동일 샘플 소스를 공유
 - 배치 모델
   - 카메라별 배치: `latest`, `prev-1`, `prev-2`
   - 각 배치 `72장`, `5분 간격`
@@ -107,6 +118,8 @@ interface ArchiveBatch {
   - 썸네일은 `button`과 `aria-label` 제공
 
 ## 7. 예외/에러 처리
+- 라이브/보관 로딩 중
+  - 상태바와 패널에 `loadingLive`, `loadingArchive` 문구를 분리 노출
 - 보관 배치 없음
   - 빈 상태 메시지 표시, 선택 이미지 `null` 처리
 - 오프라인 카메라
@@ -122,4 +135,10 @@ interface ArchiveBatch {
 - 배치/페이지 변경 시 기본 선택이 각 페이지 우상단으로 맞춰지는가
 - 72장 기준 페이지(`12 x 6`)가 정확히 동작하는가
 - 썸네일 상태 배지가 `정상(녹색)` / `없음(빨강)`으로 양끝 정렬되는가
-- 우측 상단 미리보기가 세로 확장되어 좌/중 컬럼 높이와 균형을 맞추는가
+- 우측 상단 미리보기가 `16:9` 비율로 고정되고 가로 넘침 없이 렌더링되는가
+
+## 9. 업데이트 기록
+- `v1.5.0` (`26.02.09`)
+  - CCTV 3컬럼 폭을 `280 / 820 / flex(min 320)`로 재정렬하고 모바일 전환 기준을 `1350px`로 명시
+  - 라이브 영상 샘플을 `cctv.mp4` 단일 소스로 고정하고, 보관 이미지 72장을 `frame-001~072` 규칙으로 통일
+  - 페이지 기본 선택 규칙(각 페이지 우상단 index 3)과 썸네일/미리보기 비율 규칙(`16:9`)을 문서화

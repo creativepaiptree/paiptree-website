@@ -63,7 +63,7 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
 ];
 
 const SYSTEM_DOC_PATHS = new Set(SYSTEM_DOC_BUTTONS.map((button) => button.path));
-const CURRENT_POC_VERSION = '1.4.0';
+const CURRENT_POC_VERSION = '1.5.0';
 
 const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);

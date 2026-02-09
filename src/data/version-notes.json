@@ -1,5 +1,39 @@
 [
   {
+    "version": "1.5.0",
+    "date": "26.02.09",
+    "items": [
+      {
+        "titleKo": "CCTV 라이브/보관 화면 비율 및 폭 재조정",
+        "titleEn": "CCTV Live/Archive Ratio and Width Rebalancing",
+        "detailsKo": [
+          "CCTV 3영역 레이아웃을 좌 280px·중앙 820px·우측 flex(min 320px) 기준으로 정렬해 가로 넘침을 완화",
+          "중앙 라이브 프레임을 소스 비율(23:18) 유지 상태로 재배치하고 반응형 전환 지점을 정리",
+          "우측 보관 미리보기/썸네일 비율 규칙을 고정해 화면 크기 변화 시 정보 밀도가 균일하게 유지되도록 개선"
+        ],
+        "detailsEn": [
+          "Rebalanced the three-pane CCTV layout to 280px left, 820px center, and flexible right panel (min 320px) to reduce horizontal overflow.",
+          "Repositioned the center live frame while preserving the source ratio (23:18) and clarified responsive breakpoints.",
+          "Fixed archive preview/thumbnail ratio rules so information density stays consistent across viewport sizes."
+        ]
+      },
+      {
+        "titleKo": "샘플 미디어 매핑 및 페이지 기본 선택 규칙 통일",
+        "titleEn": "Unified Sample Media Mapping and Default Page Selection Rule",
+        "detailsKo": [
+          "라이브 샘플 소스를 `/media/cctv-sample-test1/cctv.mp4`로 고정하고 카메라 1/2/3에 동일 적용",
+          "보관 분석 이미지를 72장(`frame-001~frame-072`)으로 연결해 각 카메라가 동일 세트를 참조하도록 정리",
+          "페이지 이동 시 기본 선택 썸네일을 우상단(index 3)으로 통일해 탐색 시작점 일관성을 확보"
+        ],
+        "detailsEn": [
+          "Set the live sample source to `/media/cctv-sample-test1/cctv.mp4` and applied it consistently to cameras 1/2/3.",
+          "Mapped archived analysis images to a 72-frame set (`frame-001~frame-072`) so each camera references the same dataset.",
+          "Standardized the default thumbnail selection to the top-right item (index 3) on each page for consistent navigation entry."
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.4.0",
     "date": "26.02.08",
     "items": [
