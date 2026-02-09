@@ -3,17 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Camera,
-  CarFront,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  MinusCircle,
   RefreshCw,
-  ShieldAlert,
-  UserRound,
   Wifi,
   WifiOff,
-  XCircle,
 } from 'lucide-react';
 
 interface CCTVMonitorProps {
@@ -80,6 +75,11 @@ const BATCH_TEMPLATES: BatchTemplate[] = [
 
 const PAGE_SIZE = 12;
 const BATCH_FRAME_COUNT = 72;
+const SAMPLE_LIVE_VIDEO_URL = '/media/cctv-sample-test1/cctv.mov';
+const SAMPLE_ARCHIVE_IMAGE_URLS = Array.from(
+  { length: BATCH_FRAME_COUNT },
+  (_, index) => `/media/cctv-sample-test1/images/frame-${String(index + 1).padStart(3, '0')}.jpg`,
+);
 
 const t = {
   title: { ko: 'CCTV 모니터링', en: 'CCTV Monitoring' },
@@ -154,13 +154,6 @@ const getStatusColor = (ok: number, total: number): string => {
   return '#f85149';
 };
 
-const getEventIcon = (eventType: EventType, className: string) => {
-  if (eventType === 'person') return <UserRound className={className} />;
-  if (eventType === 'vehicle') return <CarFront className={className} />;
-  if (eventType === 'intrusion') return <ShieldAlert className={className} />;
-  return <MinusCircle className={className} />;
-};
-
 const buildArchiveImages = (cameraId: string, batch: BatchTemplate, seedOffset: number): ProcessedArchiveImage[] => {
   const seedMap: Record<string, number> = { CT01: 42, CT02: 137, CT03: 256 };
   const rand = seededRandom((seedMap[cameraId] ?? 1) + seedOffset);
@@ -198,7 +191,7 @@ const buildArchiveImages = (cameraId: string, batch: BatchTemplate, seedOffset: 
       status,
       eventType,
       score,
-      processedImageUrl: `/archive/processed/${cameraId}/${batch.id}/${String(i).padStart(3, '0')}.jpg`,
+      processedImageUrl: SAMPLE_ARCHIVE_IMAGE_URLS[i % SAMPLE_ARCHIVE_IMAGE_URLS.length],
     };
   });
 };
@@ -403,7 +396,7 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
         .cctv-shell {
           background: #161b22;
           border: 1px solid #30363d;
-          width: min(100%, 1732px);
+          width: 100%;
         }
         .cctv-header {
           display: flex;
@@ -419,21 +412,18 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
           padding: 12px 0 0;
         }
         .cctv-left {
-          width: 360px;
+          width: 280px;
           display: flex;
           flex-shrink: 0;
         }
         .cctv-center {
-          flex: 0 0 820px;
+          flex: 0 0 auto;
           width: 820px;
-          min-width: 820px;
-          max-width: 820px;
+          min-width: 0;
         }
         .cctv-right {
-          flex: 0 0 520px;
-          width: 520px;
-          min-width: 520px;
-          max-width: 520px;
+          flex: 1;
+          min-width: 320px;
           display: flex;
         }
         .panel {
@@ -450,6 +440,15 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
         }
         .camera-list-head {
           flex: 0 0 auto;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 38px;
+          padding: 8px;
+          font-size: 11px;
+          color: #c9d1d9;
+          border: 1px solid #30363d;
+          background: #11161d;
         }
         .camera-list-scroll {
           flex: 1;
@@ -459,14 +458,15 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
           flex-direction: column;
           gap: 8px;
           padding-right: 2px;
+          border-top: 1px solid #30363d;
+          padding-top: 8px;
         }
         .camera-btn {
           border: 1px solid #30363d;
           background: #11161d;
-          padding: 12px 10px 12px 6px;
+          padding: 6px;
           text-align: left;
           transition: border-color 0.15s, background 0.15s;
-          min-height: 166px;
         }
         .camera-btn:hover {
           border-color: #58a6ff;
@@ -495,9 +495,9 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
           color: #8b949e;
         }
         .camera-mini-live {
-          width: 192px;
+          width: 120px;
           flex-shrink: 0;
-          aspect-ratio: 23 / 18;
+          aspect-ratio: 16 / 12;
           border: 1px solid #30363d;
           background: radial-gradient(circle at 20% 20%, #243244 0%, #101823 70%);
           position: relative;
@@ -506,8 +506,20 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
           align-items: flex-start;
           justify-content: flex-start;
         }
+        .camera-mini-media {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          filter: saturate(0.95) contrast(1.05);
+        }
         .camera-mini-live.offline {
           background: linear-gradient(135deg, #171b22 0%, #0a0f16 100%);
+        }
+        .camera-mini-live.offline .camera-mini-media {
+          filter: grayscale(1) brightness(0.55);
         }
         .camera-mini-live.active {
           border-color: #3fb950;
@@ -612,10 +624,23 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
           height: auto;
           aspect-ratio: 23 / 18;
           border: 1px solid #30363d;
-          background: radial-gradient(circle at top left, #1c2430 0%, #0b1017 70%);
+          background: #0b1017;
+          position: relative;
+          overflow: hidden;
+        }
+        .live-media {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .live-overlay {
+          position: absolute;
+          left: 10px;
+          bottom: 10px;
           display: flex;
           align-items: center;
-          justify-content: center;
+          gap: 6px;
         }
         .live-pulse {
           width: 8px;
@@ -671,15 +696,29 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
            min-height: 0;
            height: 100%;
            width: 100%;
-           padding: 10px;
+           padding: 10px 10px 6px;
            gap: 8px;
          }
          .archive-header {
            display: flex;
            justify-content: space-between;
            align-items: center;
-           font-size: 12px;
+           gap: 6px;
+           min-height: 38px;
+           padding: 8px;
+           font-size: 11px;
            color: #c9d1d9;
+           border: 1px solid #30363d;
+           background: #11161d;
+         }
+         .archive-content {
+           display: flex;
+           flex-direction: column;
+           gap: 8px;
+           border-top: 1px solid #30363d;
+           padding-top: 8px;
+           flex: 1;
+           min-height: 0;
          }
         .archive-note {
           border: 1px solid #30363d;
@@ -694,40 +733,53 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
           padding: 8px;
           display: flex;
           flex-direction: column;
-          flex: 1;
-          min-height: 260px;
+          border-top: 1px solid #30363d;
+          padding-top: 8px;
         }
         .preview-canvas {
           border: 1px solid #30363d;
-          aspect-ratio: auto;
-          min-height: 220px;
-          height: 100%;
-          flex: 1;
+          aspect-ratio: 16 / 9;
           background: radial-gradient(circle at top, #202a36 0%, #0b1017 70%);
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
+          position: relative;
+        }
+        .preview-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
         .preview-meta {
-          margin-top: 6px;
+          position: absolute;
+          top: 6px;
+          right: 6px;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          color: #8b949e;
-          font-size: 11px;
+          gap: 6px;
+          color: #c9d1d9;
+          font-size: 10px;
+          background: rgba(0, 0, 0, 0.7);
+          padding: 2px 6px;
+          pointer-events: none;
         }
         .batch-row {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 6px;
+          gap: 4px;
         }
          .batch-btn {
            border: 1px solid #30363d;
            background: #11161d;
            color: #8b949e;
            text-align: left;
-           padding: 6px;
+           padding: 6px 6px;
+           display: flex;
+           align-items: center;
+           justify-content: space-between;
+           gap: 4px;
          }
          .batch-btn.active {
            border-color: #58a6ff;
@@ -781,6 +833,13 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
            justify-content: center;
            background: #0d1117;
            margin-bottom: 6px;
+           overflow: hidden;
+         }
+         .thumb-image {
+           width: 100%;
+           height: 100%;
+           object-fit: cover;
+           display: block;
          }
          .thumb-meta-row {
            display: flex;
@@ -805,7 +864,7 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
         }
-        @media (max-width: 1100px) {
+        @media (max-width: 1350px) {
           .cctv-layout {
             flex-direction: column;
             gap: 12px;
@@ -833,14 +892,14 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
             grid-template-columns: 1fr 1fr;
           }
           .live-frame {
-            width: min(calc(100% - 20px), 740px);
+            width: calc(100% - 20px);
           }
           .batch-row {
             grid-template-columns: 1fr;
           }
           .preview-pane {
             flex: 0 0 auto;
-            min-height: 220px;
+            min-height: 180px;
           }
           .preview-canvas {
             min-height: 180px;
@@ -875,7 +934,7 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
          <div className="cctv-layout">
           <div className="cctv-left">
             <aside className="panel camera-rail">
-              <div className="camera-list-head text-xs text-gray-500">{t.cameraList[lang]}</div>
+              <div className="camera-list-head">{t.cameraList[lang]}</div>
               <div className="camera-list-scroll">
                 {cameraSummaries.map((camera) => {
                   const active = camera.id === activeCamera;
@@ -898,15 +957,27 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
                             <span>·</span>
                             <span>{camera.live.lastHeartbeat}</span>
                           </div>
-                          <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-400">
-                            <span className="badge" style={{ borderColor: camera.color, color: camera.color }}>
+                          <div className="mt-1 flex items-center gap-1 text-[10px]">
+                            <span className="badge" style={{ borderColor: camera.color, color: camera.color, flex: 1, justifyContent: 'center' }}>
                               {camera.counts.ok}/{camera.counts.total}
                             </span>
-                            <span className="badge text-[#f85149]">{camera.counts.failed}</span>
-                            <span className="badge text-gray-400">{camera.counts.missing}</span>
+                            <span className="badge" style={{ borderColor: '#f85149', color: '#f85149', flex: 1, justifyContent: 'center' }}>
+                              {lang === 'ko' ? '누락' : 'Miss'} {camera.counts.abnormal}
+                            </span>
                           </div>
                         </div>
                         <div className={`camera-mini-live${camera.live.online ? '' : ' offline'}${active ? ' active' : ''}`}>
+                          {camera.live.online && (
+                            <video
+                              className="camera-mini-media"
+                              src={SAMPLE_LIVE_VIDEO_URL}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              preload="metadata"
+                            />
+                          )}
                           <div className="camera-mini-overlay">
                             <div className="camera-mini-head">
                               <span className={`camera-mini-chip${camera.live.online ? '' : ' offline'}`}>
@@ -959,14 +1030,24 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
              </div>
 
              <div className="live-frame">
-               <div className="flex flex-col items-center gap-2 text-center px-4">
-                 <Camera className="w-12 h-12 text-gray-500" />
-                 <div className="flex items-center gap-2">
+               {liveState?.online && (
+                 <video
+                   className="live-media"
+                   src={SAMPLE_LIVE_VIDEO_URL}
+                   autoPlay
+                   muted
+                   loop
+                   playsInline
+                   preload="metadata"
+                 />
+               )}
+               <div className="live-overlay">
+                 <span className="badge">
                    <span className="live-pulse" />
-                   <span className="text-sm text-gray-200 font-semibold">{t.alwaysOn[lang]}</span>
-                 </div>
-                 <span className="text-xs text-gray-400">{t.separated[lang]}</span>
-                 <span className="text-xs text-gray-500 font-mono">{activeCamera} · LIVE · SRC 920x720</span>
+                   {liveState?.online ? 'LIVE' : 'OFF'}
+                 </span>
+                 <span className="badge">{activeCamera}</span>
+                 <span className="badge">SRC 920x720</span>
                </div>
              </div>
 
@@ -991,33 +1072,33 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
                <span className="text-[#f85149]">{t.abnormal[lang]} {counts.abnormal}</span>
              </div>
 
+             <div className="archive-content">
              {loadingArchive && (
                <div className="text-[11px] text-gray-500">{t.loadingArchive[lang]}</div>
              )}
 
              <div className="preview-pane">
                <div className="preview-canvas">
-                 {selectedImage ? (
-                   <div className="flex flex-col items-center gap-2">
-                     {getEventIcon(selectedImage.eventType, 'w-8 h-8 text-gray-300')}
-                     <span className="text-sm text-gray-200 font-mono">{selectedImage.capturedAt}</span>
-                     <span className="badge" style={{ color: getFrameColor(selectedImage), borderColor: getFrameColor(selectedImage) }}>
-                       {statusLabel[selectedImage.status][lang]}
-                     </span>
-                   </div>
-                 ) : (
+                 {selectedImage && selectedImage.status === 'ok' ? (
+                   <img
+                     className="preview-image"
+                     src={selectedImage.processedImageUrl}
+                     alt={`${selectedImage.capturedAt} ${statusLabel[selectedImage.status][lang]}`}
+                     loading="lazy"
+                   />
+                 ) : !selectedImage ? (
                    <span className="text-xs text-gray-500">{t.noFrame[lang]}</span>
-                 )}
-               </div>
-               <div className="preview-meta">
-                 <span>{t.selectedFrame[lang]}</span>
-                 {selectedImage ? (
-                   <span>
-                     #{selectedImage.sequence + 1}/{BATCH_FRAME_COUNT}
-                   </span>
-                 ) : (
-                   <span>-</span>
-                 )}
+                 ) : null}
+                 <div className="preview-meta">
+                   <span>{t.selectedFrame[lang]}</span>
+                   {selectedImage ? (
+                     <span>
+                       #{selectedImage.sequence + 1}/{BATCH_FRAME_COUNT}
+                     </span>
+                   ) : (
+                     <span>-</span>
+                   )}
+                 </div>
                </div>
              </div>
 
@@ -1031,8 +1112,8 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
                      className={`batch-btn${active ? ' active' : ''}`}
                      onClick={() => setActiveBatchId(batch.id)}
                    >
-                     <div className="text-[11px] font-semibold">{batch.label[lang]}</div>
-                     <div className="text-[10px] text-gray-500 mt-1">{batch.rangeText}</div>
+                     <span className="text-[11px] font-semibold whitespace-nowrap">{batch.label[lang]}</span>
+                     <span className="text-[10px] text-gray-500 whitespace-nowrap">{batch.rangeText}</span>
                    </button>
                  );
                })}
@@ -1080,7 +1161,14 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
                        aria-label={`${img.capturedAt} ${statusLabel[img.status][lang]} ${eventLabel[img.eventType][lang]}`}
                      >
                        <div className="thumb-preview">
-                         {getEventIcon(img.eventType, 'w-4 h-4 text-gray-400')}
+                         {compactOk ? (
+                           <img
+                             className="thumb-image"
+                             src={img.processedImageUrl}
+                             alt={`${img.capturedAt} thumbnail`}
+                             loading="lazy"
+                           />
+                         ) : null}
                        </div>
                        <div className="thumb-meta-row">
                          <span className="text-[11px] text-gray-300 font-mono">{img.capturedAt}</span>
@@ -1095,6 +1183,7 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
              ) : (
                <div className="empty">{t.noFrame[lang]}</div>
              )}
+             </div>
 
             </section>
           </div>

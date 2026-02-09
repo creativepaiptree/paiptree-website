@@ -34,7 +34,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Center Content - flexible, max 1100px */}
-            <div className="flex-1 flex flex-col min-w-0 max-w-[1100px] space-y-4">
+            <div className="flex-1 flex flex-col min-w-0 max-w-[1128px] space-y-4">
               {/* Header */}
               <Header lang={lang} />
 
