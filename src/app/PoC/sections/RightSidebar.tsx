@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   LineChart,
@@ -16,7 +16,114 @@ import {
 
 interface RightSidebarProps {
   lang: 'ko' | 'en';
+  feedbinBySensor?: Record<string, SensorSeriesRecord[]>;
+  temperatureBySensor?: Record<string, SensorSeriesRecord[]>;
+  humidityBySensor?: Record<string, SensorSeriesRecord[]>;
+  totalBirdCount?: number;
 }
+
+export interface SensorSeriesRecord {
+  stat_time: string;
+  average_value?: number | string;
+  value?: number | string;
+  temp?: number | string;
+  temperature?: number | string;
+  humidity?: number | string;
+  farm_id?: string;
+  module_id?: string;
+  house_id?: string;
+  data_type?: string;
+  [key: string]: unknown;
+}
+
+type ChartPoint = {
+  index: number;
+  value: number;
+};
+
+const toFiniteNumber = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const mapSensorSeriesToChartData = (
+  series: SensorSeriesRecord[] | undefined,
+  fallback: ChartPoint[],
+  valueKeys: string[]
+): ChartPoint[] => {
+  if (!series || series.length === 0) {
+    return fallback;
+  }
+
+  const mapped = [...series]
+    .sort((a, b) => a.stat_time.localeCompare(b.stat_time))
+    .map((item, index) => {
+      for (const key of valueKeys) {
+        const numericValue = toFiniteNumber(item[key]);
+        if (numericValue !== null) {
+          return {
+            index,
+            value: numericValue,
+          };
+        }
+      }
+      return null;
+    })
+    .filter((item): item is ChartPoint => item !== null);
+
+  return mapped.length > 0 ? mapped : fallback;
+};
+
+const buildAxis = (
+  data: ChartPoint[],
+  options: {
+    defaultMin: number;
+    defaultMax: number;
+    step: number;
+    padding: number;
+    minLimit?: number;
+    maxLimit?: number;
+  }
+) => {
+  if (data.length === 0) {
+    const ticks: number[] = [];
+    for (let tick = options.defaultMin; tick <= options.defaultMax; tick += options.step) {
+      ticks.push(tick);
+    }
+    return { min: options.defaultMin, max: options.defaultMax, ticks };
+  }
+
+  let minValue = Number.POSITIVE_INFINITY;
+  let maxValue = Number.NEGATIVE_INFINITY;
+  for (const point of data) {
+    if (point.value < minValue) minValue = point.value;
+    if (point.value > maxValue) maxValue = point.value;
+  }
+
+  let min = Math.floor((minValue - options.padding) / options.step) * options.step;
+  let max = Math.ceil((maxValue + options.padding) / options.step) * options.step;
+
+  if (options.minLimit !== undefined) min = Math.max(options.minLimit, min);
+  if (options.maxLimit !== undefined) max = Math.min(options.maxLimit, max);
+  if (max <= min) max = min + options.step;
+  if (options.maxLimit !== undefined && max > options.maxLimit) {
+    min = Math.max(options.minLimit ?? Number.NEGATIVE_INFINITY, max - options.step);
+  }
+
+  const ticks: number[] = [];
+  for (let tick = min; tick <= max; tick += options.step) {
+    ticks.push(Number(tick.toFixed(4)));
+  }
+  if (ticks.length < 2) {
+    ticks.push(Number((min + options.step).toFixed(4)));
+  }
+
+  return { min, max, ticks };
+};
 
 // Seeded random for consistent values
 const seededRandom = (seed: number) => {
@@ -24,16 +131,34 @@ const seededRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-// Generate survival rate data
-const generateSurvivalData = () => {
+const generateCullingByDay = (day: number) => {
+  if (day <= 10) {
+    // Early age: around 100 birds/day
+    return Math.round(80 + seededRandom(day + 300) * 50);
+  }
+
+  // Later age: 2~30 birds/day
+  return Math.round(2 + seededRandom(day + 300) * 28);
+};
+
+// Generate survival rate data from cumulative culling
+const generateSurvivalData = (totalBirdCount: number) => {
   const data = [];
+  const safeTotal = Math.max(1, totalBirdCount);
+  let cumulativeCulling = 0;
+
   for (let day = 1; day <= 51; day++) {
+    const culling = generateCullingByDay(day);
+    cumulativeCulling = Math.min(safeTotal, cumulativeCulling + culling);
+    const survivalRate = ((safeTotal - cumulativeCulling) / safeTotal) * 100;
+
     data.push({
       day,
-      survivalRate: 100 - (day * 0.05),
-      culling: Math.max(0, Math.sin(day * 0.2) * 100),
+      survivalRate: Number(survivalRate.toFixed(2)),
+      culling,
     });
   }
+
   return data;
 };
 
@@ -75,7 +200,6 @@ const generateHumidityData = () => {
   return data;
 };
 
-const survivalData = generateSurvivalData();
 const feedbinData = generateFeedbinData();
 const tempData = generateTempData();
 const humidityData = generateHumidityData();
@@ -87,12 +211,165 @@ const t = {
   humidity: { ko: '습도', en: 'HUMIDITY' },
 };
 
-const RightSidebar = ({ lang }: RightSidebarProps) => {
+const RightSidebar = ({
+  lang,
+  feedbinBySensor,
+  temperatureBySensor,
+  humidityBySensor,
+  totalBirdCount = 20500,
+}: RightSidebarProps) => {
   const [mounted, setMounted] = useState(false);
+  const [feedbinSensorIndex, setFeedbinSensorIndex] = useState(0);
+  const [temperatureSensorIndex, setTemperatureSensorIndex] = useState(0);
+  const [humiditySensorIndex, setHumiditySensorIndex] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const feedbinSensorIds = useMemo(() => {
+    const ids = Object.keys(feedbinBySensor ?? {});
+    return ids.length > 0 ? ids : ['H01B1'];
+  }, [feedbinBySensor]);
+
+  useEffect(() => {
+    if (feedbinSensorIndex >= feedbinSensorIds.length) {
+      setFeedbinSensorIndex(0);
+    }
+  }, [feedbinSensorIds.length, feedbinSensorIndex]);
+
+  const currentFeedbinSensorId = feedbinSensorIds[feedbinSensorIndex] ?? 'H01B1';
+
+  const feedbinChartData = useMemo(() => {
+    return mapSensorSeriesToChartData(feedbinBySensor?.[currentFeedbinSensorId], feedbinData, [
+      'average_value',
+      'feedbin_percent',
+      'feedbin',
+      'percent',
+      'value',
+    ]);
+  }, [feedbinBySensor, currentFeedbinSensorId]);
+
+  const feedbinAxis = useMemo(() => {
+    return buildAxis(feedbinChartData, {
+      defaultMin: 0,
+      defaultMax: 100,
+      step: 20,
+      padding: 2,
+      minLimit: 0,
+      maxLimit: 100,
+    });
+  }, [feedbinChartData]);
+
+  const temperatureSensorIds = useMemo(() => {
+    const ids = Object.keys(temperatureBySensor ?? {});
+    return ids.length > 0 ? ids : ['H01T1'];
+  }, [temperatureBySensor]);
+
+  useEffect(() => {
+    if (temperatureSensorIndex >= temperatureSensorIds.length) {
+      setTemperatureSensorIndex(0);
+    }
+  }, [temperatureSensorIds.length, temperatureSensorIndex]);
+
+  const currentTemperatureSensorId = temperatureSensorIds[temperatureSensorIndex] ?? 'H01T1';
+
+  const temperatureChartData = useMemo(() => {
+    return mapSensorSeriesToChartData(temperatureBySensor?.[currentTemperatureSensorId], tempData, [
+      'average_value',
+      'temperature',
+      'temp',
+      'value',
+    ]);
+  }, [temperatureBySensor, currentTemperatureSensorId]);
+
+  const temperatureAxis = useMemo(() => {
+    return buildAxis(temperatureChartData, {
+      defaultMin: 20,
+      defaultMax: 40,
+      step: 2,
+      padding: 1,
+    });
+  }, [temperatureChartData]);
+
+  const humiditySensorIds = useMemo(() => {
+    const ids = Object.keys(humidityBySensor ?? {});
+    return ids.length > 0 ? ids : ['H01T1'];
+  }, [humidityBySensor]);
+
+  useEffect(() => {
+    if (humiditySensorIndex >= humiditySensorIds.length) {
+      setHumiditySensorIndex(0);
+    }
+  }, [humiditySensorIds.length, humiditySensorIndex]);
+
+  const currentHumiditySensorId = humiditySensorIds[humiditySensorIndex] ?? 'H01T1';
+
+  const humidityChartData = useMemo(() => {
+    return mapSensorSeriesToChartData(humidityBySensor?.[currentHumiditySensorId], humidityData, [
+      'average_value',
+      'humidity',
+      'value',
+    ]);
+  }, [humidityBySensor, currentHumiditySensorId]);
+
+  const humidityAxis = useMemo(() => {
+    return buildAxis(humidityChartData, {
+      defaultMin: 40,
+      defaultMax: 100,
+      step: 10,
+      padding: 2,
+      minLimit: 0,
+      maxLimit: 100,
+    });
+  }, [humidityChartData]);
+
+  const canNavigateFeedbinSensors = feedbinSensorIds.length > 1;
+  const canNavigateTemperatureSensors = temperatureSensorIds.length > 1;
+  const canNavigateHumiditySensors = humiditySensorIds.length > 1;
+
+  const goPrevFeedbinSensor = () => {
+    if (!canNavigateFeedbinSensors) return;
+    setFeedbinSensorIndex((prev) => (prev - 1 + feedbinSensorIds.length) % feedbinSensorIds.length);
+  };
+
+  const goNextFeedbinSensor = () => {
+    if (!canNavigateFeedbinSensors) return;
+    setFeedbinSensorIndex((prev) => (prev + 1) % feedbinSensorIds.length);
+  };
+
+  const goPrevTemperatureSensor = () => {
+    if (!canNavigateTemperatureSensors) return;
+    setTemperatureSensorIndex((prev) => (prev - 1 + temperatureSensorIds.length) % temperatureSensorIds.length);
+  };
+
+  const goNextTemperatureSensor = () => {
+    if (!canNavigateTemperatureSensors) return;
+    setTemperatureSensorIndex((prev) => (prev + 1) % temperatureSensorIds.length);
+  };
+
+  const goPrevHumiditySensor = () => {
+    if (!canNavigateHumiditySensors) return;
+    setHumiditySensorIndex((prev) => (prev - 1 + humiditySensorIds.length) % humiditySensorIds.length);
+  };
+
+  const goNextHumiditySensor = () => {
+    if (!canNavigateHumiditySensors) return;
+    setHumiditySensorIndex((prev) => (prev + 1) % humiditySensorIds.length);
+  };
+
+  const survivalData = useMemo(() => generateSurvivalData(totalBirdCount), [totalBirdCount]);
+
+  const cullingAxis = useMemo(() => {
+    const chartData = survivalData.map((item) => ({ index: item.day, value: item.culling }));
+    return buildAxis(chartData, {
+      defaultMin: 0,
+      defaultMax: 140,
+      step: 20,
+      padding: 5,
+      minLimit: 0,
+    });
+  }, [survivalData]);
 
   return (
     <div className="h-full bg-[#161b22] border border-[#30363d] flex flex-col overflow-auto hide-scrollbar">
@@ -131,8 +408,8 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   fontSize={9}
                   tickLine={false}
                   axisLine={{ stroke: '#374151' }}
-                  domain={[0, 500]}
-                  ticks={[0, 100, 200, 300, 400, 500]}
+                  domain={[cullingAxis.min, cullingAxis.max]}
+                  ticks={cullingAxis.ticks}
                 />
                 <Tooltip
                   contentStyle={{
@@ -167,11 +444,19 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-gray-400 font-medium">{t.feedbinFullness[lang]}</h3>
           <div className="flex items-center gap-1 text-[12px] font-bold text-[#8b949e]">
-            <button className="hover:text-gray-300 transition-colors">
+            <button
+              onClick={goPrevFeedbinSensor}
+              disabled={!canNavigateFeedbinSensors}
+              className="hover:text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span>H01B1</span>
-            <button className="hover:text-gray-300 transition-colors">
+            <span>{currentFeedbinSensorId}</span>
+            <button
+              onClick={goNextFeedbinSensor}
+              disabled={!canNavigateFeedbinSensors}
+              className="hover:text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -179,7 +464,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={feedbinData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+              <AreaChart data={feedbinChartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="feedbinGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
@@ -192,8 +477,8 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   fontSize={9}
                   tickLine={false}
                   axisLine={{ stroke: '#374151' }}
-                  domain={[0, 100]}
-                  ticks={[0, 20, 40, 60, 80, 100]}
+                  domain={[feedbinAxis.min, feedbinAxis.max]}
+                  ticks={feedbinAxis.ticks}
                 />
                 <Area
                   type="step"
@@ -213,11 +498,19 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-gray-400 font-medium">{t.temperature[lang]}</h3>
           <div className="flex items-center gap-1 text-[12px] font-bold text-[#8b949e]">
-            <button className="hover:text-gray-300 transition-colors">
+            <button
+              onClick={goPrevTemperatureSensor}
+              disabled={!canNavigateTemperatureSensors}
+              className="hover:text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span>H01T1</span>
-            <button className="hover:text-gray-300 transition-colors">
+            <span>{currentTemperatureSensorId}</span>
+            <button
+              onClick={goNextTemperatureSensor}
+              disabled={!canNavigateTemperatureSensors}
+              className="hover:text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -225,7 +518,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={tempData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+              <AreaChart data={temperatureChartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
@@ -238,8 +531,8 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   fontSize={9}
                   tickLine={false}
                   axisLine={{ stroke: '#374151' }}
-                  domain={[20, 40]}
-                  ticks={[20, 24, 28, 32, 36, 40]}
+                  domain={[temperatureAxis.min, temperatureAxis.max]}
+                  ticks={temperatureAxis.ticks}
                 />
                 <Area
                   type="monotone"
@@ -259,11 +552,19 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-gray-400 font-medium">{t.humidity[lang]}</h3>
           <div className="flex items-center gap-1 text-[12px] font-bold text-[#8b949e]">
-            <button className="hover:text-gray-300 transition-colors">
+            <button
+              onClick={goPrevHumiditySensor}
+              disabled={!canNavigateHumiditySensors}
+              className="hover:text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span>H01T1</span>
-            <button className="hover:text-gray-300 transition-colors">
+            <span>{currentHumiditySensorId}</span>
+            <button
+              onClick={goNextHumiditySensor}
+              disabled={!canNavigateHumiditySensors}
+              className="hover:text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -271,7 +572,7 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={humidityData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+              <AreaChart data={humidityChartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="humidityGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -284,8 +585,8 @@ const RightSidebar = ({ lang }: RightSidebarProps) => {
                   fontSize={9}
                   tickLine={false}
                   axisLine={{ stroke: '#374151' }}
-                  domain={[40, 100]}
-                  ticks={[40, 50, 60, 70, 80, 90, 100]}
+                  domain={[humidityAxis.min, humidityAxis.max]}
+                  ticks={humidityAxis.ticks}
                 />
                 <Area
                   type="monotone"

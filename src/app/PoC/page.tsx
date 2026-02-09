@@ -8,9 +8,15 @@ import ForecastMatrix from './sections/ForecastMatrix';
 import WeightDistribution from './sections/WeightDistribution';
 import RightSidebar from './sections/RightSidebar';
 import CCTVMonitor from './sections/CCTVMonitor';
+import {
+  feedbinBySensorSample,
+  humidityBySensorSample,
+  temperatureBySensorSample,
+} from './sample-sensor-data';
 
 export default function DashboardPage() {
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
+  const totalBirdCount = 20500;
 
   return (
     <div className="h-screen bg-[#0d1117] text-gray-100 flex flex-col overflow-hidden">
@@ -41,7 +47,13 @@ export default function DashboardPage() {
 
             {/* Right Sidebar - 320px */}
             <div className="w-[320px] flex-shrink-0">
-              <RightSidebar lang={lang} />
+              <RightSidebar
+                lang={lang}
+                feedbinBySensor={feedbinBySensorSample}
+                temperatureBySensor={temperatureBySensorSample}
+                humidityBySensor={humidityBySensorSample}
+                totalBirdCount={totalBirdCount}
+              />
             </div>
           </div>
 
