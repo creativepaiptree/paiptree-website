@@ -1,5 +1,53 @@
 [
   {
+    "version": "1.6.0",
+    "date": "26.02.11",
+    "items": [
+      {
+        "titleKo": "문서 운영 구조 재정비 및 페이지 문서 기준선 확정",
+        "titleEn": "Documentation Structure Rework and Page Docs Baseline Finalization",
+        "detailsKo": [
+          "페이지 문서를 `docs/pages/*.page.md` 체계로 정리하고 주요 라우트(10개) 기준 문서를 통일",
+          "관리 허브 문서(`docs/admin/README.md`)를 중심으로 문서 인덱스/분류/운영 규칙을 재정렬",
+          "레거시 컴포넌트 문서는 `docs/old/`로 이관해 운영 문서와 아카이브 문서 영역을 분리"
+        ],
+        "detailsEn": [
+          "Standardized page documentation under `docs/pages/*.page.md` and aligned baseline docs for 10 major routes.",
+          "Reorganized indexes, categories, and operating rules around the central hub document (`docs/admin/README.md`).",
+          "Moved legacy component docs to `docs/old/` to separate active operations docs from archived references."
+        ]
+      },
+      {
+        "titleKo": "문서 자동화/검증 파이프라인과 개발 문서 접근성 강화",
+        "titleEn": "Documentation Automation/Validation Pipeline and Improved Doc Accessibility",
+        "detailsKo": [
+          "문서 동기화/검증/페이지 스캐폴딩 스크립트를 추가하고 `predev`/`prebuild` 단계에 자동 점검을 연결",
+          "PoC 상단 문서 모달에서 허브/인덱스/가이드/템플릿을 빠르게 확인하도록 시스템 문서 섹션을 확장",
+          "문서 `수정(Edit)` 버튼으로 로컬 원본 파일을 VS Code 등 외부 에디터에서 직접 열 수 있도록 개선"
+        ],
+        "detailsEn": [
+          "Added doc sync/validation/page-scaffolding scripts and wired automatic checks into `predev`/`prebuild`.",
+          "Expanded the PoC top document modal with quick access to hub/index/guide/template system docs.",
+          "Added a document `Edit` action to open local source files directly in external editors such as VS Code."
+        ]
+      },
+      {
+        "titleKo": "프론트엔드 미디어 최적화 및 API 키 보안 하드닝",
+        "titleEn": "Frontend Media Optimization and API Key Security Hardening",
+        "detailsKo": [
+          "`<img>` 사용 구간을 `next/image`로 정리해 주요 페이지/PoC의 이미지 로딩 정책을 일관화",
+          "Google Sheets 연동에서 하드코딩된 API 키 폴백을 제거하고 환경변수 미설정 시 안전하게 조회를 중단",
+          "배포 전 lint/build 검증 루프를 재실행해 회귀 없이 반영 상태를 확인"
+        ],
+        "detailsEn": [
+          "Replaced remaining `<img>` usage with `next/image` to standardize image loading across key pages and PoC.",
+          "Removed the hardcoded API key fallback in Google Sheets integration and fail safely when env vars are missing.",
+          "Re-ran lint/build validation loop before deployment to confirm no regressions."
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.0",
     "date": "26.02.09",
     "items": [

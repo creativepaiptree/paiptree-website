@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Settings, LogOut, User, Bell } from 'lucide-react';
+import versionNotes from '@/data/version-notes.json';
 
 interface NavbarProps {
   lang: 'ko' | 'en';
@@ -71,7 +72,29 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
 ];
 
 const SYSTEM_DOC_PATHS = new Set(SYSTEM_DOC_BUTTONS.map((button) => button.path));
-const CURRENT_POC_VERSION = '1.5.0';
+const SEMVER_LIKE_PATTERN = /^\d+\.\d+\.\d+$/;
+
+const compareSemverDesc = (a: string, b: string): number => {
+  const aParts = a.split('.').map(Number);
+  const bParts = b.split('.').map(Number);
+
+  for (let index = 0; index < 3; index += 1) {
+    if (aParts[index] !== bParts[index]) {
+      return bParts[index] - aParts[index];
+    }
+  }
+
+  return 0;
+};
+
+const CURRENT_POC_VERSION = (() => {
+  const versions = (Array.isArray(versionNotes) ? versionNotes : [])
+    .map((note) => (typeof note?.version === 'string' ? note.version.trim() : ''))
+    .filter((version): version is string => SEMVER_LIKE_PATTERN.test(version))
+    .sort(compareSemverDesc);
+
+  return versions[0] ?? '0.0.0';
+})();
 
 const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
