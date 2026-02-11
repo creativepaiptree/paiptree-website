@@ -13,11 +13,15 @@ export interface NewsItem {
 
 const SHEET_ID = '1yZv36dAuFRSkWfbfuW3LBHPPn_kVrJ6Q6jVcPhbnyHw';
 const SHEET_NAME = 'news_data';
-// 정적 빌드 환경에서 API 키 하드코딩 (public 스프레드시트이므로 보안 문제 없음)
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_SHEETS_API_KEY || 'AIzaSyAFVIh0f-sIdeqoMe-LCKcJ85eXYpxrWow';
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_SHEETS_API_KEY?.trim();
 
 export async function fetchNewsData(): Promise<NewsItem[]> {
   try {
+    if (!API_KEY) {
+      console.warn('NEXT_PUBLIC_GOOGLE_SHEETS_API_KEY is not set. Skip Google Sheets fetch.');
+      return [];
+    }
+
     // Sheet name이 명확하지 않을 때는 기본 범위로 접근
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:I?key=${API_KEY}`;
     
