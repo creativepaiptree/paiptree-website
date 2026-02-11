@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -458,11 +458,16 @@ const CustomTooltip = ({ active, payload, label, lang }: { active?: boolean; pay
 };
 
 const WeightDistribution = ({ lang, onOpenTrace }: WeightDistributionProps) => {
+  const [chartMounted, setChartMounted] = useState(false);
   const [showComparison, setShowComparison] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [tableExpanded, setTableExpanded] = useState(false);
   const [targetMinInput, setTargetMinInput] = useState<number>(DEFAULT_TARGET_MIN);
   const [targetMaxInput, setTargetMaxInput] = useState<number>(DEFAULT_TARGET_MAX);
+
+  useEffect(() => {
+    setChartMounted(true);
+  }, []);
 
   const model = useMemo(
     () => buildRows(RAW_POINTS, targetMinInput, targetMaxInput),
@@ -829,50 +834,54 @@ const WeightDistribution = ({ lang, onOpenTrace }: WeightDistributionProps) => {
       </div>
 
       <div className="relative h-[250px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={model.rows} margin={{ top: 12, right: 12, left: 0, bottom: 18 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2f37" vertical={false} />
-            <ReferenceArea
-              x1={model.targetMin}
-              x2={model.targetMax}
-              y1={0}
-              y2="auto"
-              ifOverflow="extendDomain"
-              fill="rgba(63,185,80,0.08)"
-            />
-            <XAxis
-              type="number"
-              dataKey="center"
-              domain={['dataMin', 'dataMax']}
-              tickCount={8}
-              stroke="#6b7280"
-              fontSize={10}
-              tickLine={false}
-              axisLine={{ stroke: '#374151' }}
-            />
-            <YAxis
-              stroke="#6b7280"
-              fontSize={10}
-              tickLine={false}
-              width={DIST_Y_AXIS_WIDTH}
-              axisLine={{ stroke: '#374151' }}
-            />
-            <Tooltip content={<CustomTooltip lang={lang} />} />
+        {chartMounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={model.rows} margin={{ top: 12, right: 12, left: 0, bottom: 18 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2f37" vertical={false} />
+              <ReferenceArea
+                x1={model.targetMin}
+                x2={model.targetMax}
+                y1={0}
+                y2="auto"
+                ifOverflow="extendDomain"
+                fill="rgba(63,185,80,0.08)"
+              />
+              <XAxis
+                type="number"
+                dataKey="center"
+                domain={['dataMin', 'dataMax']}
+                tickCount={8}
+                stroke="#6b7280"
+                fontSize={10}
+                tickLine={false}
+                axisLine={{ stroke: '#374151' }}
+              />
+              <YAxis
+                stroke="#6b7280"
+                fontSize={10}
+                tickLine={false}
+                width={DIST_Y_AXIS_WIDTH}
+                axisLine={{ stroke: '#374151' }}
+              />
+              <Tooltip content={<CustomTooltip lang={lang} />} />
 
-            {showComparison && (
-              <Bar dataKey="prevCount" fill="rgba(139, 148, 158, 0.28)" radius={[0, 0, 0, 0]} barSize={7} />
-            )}
+              {showComparison ? (
+                <Bar dataKey="prevCount" fill="rgba(139, 148, 158, 0.28)" radius={[0, 0, 0, 0]} barSize={7} />
+              ) : null}
 
-            <Bar dataKey="count" radius={[0, 0, 0, 0]} barSize={11}>
-              {model.rows.map((row) => (
-                <Cell key={row.rangeLabel} fill={ZONE_COLORS[row.zone]} />
-              ))}
-            </Bar>
+              <Bar dataKey="count" radius={[0, 0, 0, 0]} barSize={11}>
+                {model.rows.map((row) => (
+                  <Cell key={row.rangeLabel} fill={ZONE_COLORS[row.zone]} />
+                ))}
+              </Bar>
 
-            <ReferenceLine x={model.mean} stroke="#ffffff" strokeDasharray="6 4" strokeWidth={2} />
-            <ReferenceLine x={(model.targetMin + model.targetMax) / 2} stroke="#4da3ff" strokeDasharray="4 4" strokeWidth={2} />
-          </ComposedChart>
-        </ResponsiveContainer>
+              <ReferenceLine x={model.mean} stroke="#ffffff" strokeDasharray="6 4" strokeWidth={2} />
+              <ReferenceLine x={(model.targetMin + model.targetMax) / 2} stroke="#4da3ff" strokeDasharray="4 4" strokeWidth={2} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full w-full border border-[#30363d] bg-[#0d1117]" aria-hidden="true" />
+        )}
 
         <div className="absolute top-2 right-2 text-[10px]">
           <div className="flex flex-col items-start gap-1 text-gray-400">

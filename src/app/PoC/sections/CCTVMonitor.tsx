@@ -728,6 +728,7 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
         .ops-item {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 6px;
           border: 1px solid #30363d;
           padding: 8px;
@@ -735,6 +736,7 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
           color: #c9d1d9;
           background: #11161d;
           min-height: 38px;
+          text-align: center;
         }
         .retry-btn {
           border: 1px solid #3fb95055;
