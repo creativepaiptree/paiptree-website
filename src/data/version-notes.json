@@ -1,5 +1,67 @@
 [
   {
+    "version": "1.7.0",
+    "date": "26.02.11",
+    "items": [
+      {
+        "titleKo": "기획서 기준 3-Layer 추적 플로우 적용 범위 확장 (1~3차 완료)",
+        "titleEn": "Expanded 3-Layer Trace Flow Coverage per Plan (Phase 1-3 Complete)",
+        "detailsKo": [
+          "L1 적용 대상을 `Header`/`WeightDistribution`/`ForecastMatrix`/`RightSidebar`/`CCTVMonitor`까지 확장해 핵심 KPI가 동일한 추적 진입 패턴을 사용하도록 통일",
+          "L2는 우측 `TracePanel` 단일 진입점으로 표준화하고 탭 구조를 `Summary`/`Logic`/`Sources`/`History`(+CCTV trace 시 `CCTV`)로 고정",
+          "L3는 `Sources` 탭에서 목록-상세 분할 구조로 정리하고, 파일/DB/API 등 타입별 원본 메타데이터를 동일 포맷으로 검증 가능하게 통일",
+          "차트 포인트/툴팁(`ForecastMatrix`)에서도 trace 진입을 지원해 카드 값뿐 아니라 시계열 데이터도 동일한 추적 체인으로 연결",
+          "기획서의 No Orphaned Data 원칙에 맞춰 주요 운영 값이 값(L1)-로직(L2)-원본(L3)으로 역추적되도록 반영"
+        ],
+        "detailsEn": [
+          "Expanded L1 trace coverage across `Header`, `WeightDistribution`, `ForecastMatrix`, `RightSidebar`, and `CCTVMonitor` with a consistent entry pattern.",
+          "Standardized L2 into a single right-side `TracePanel` with fixed tabs: `Summary`, `Logic`, `Sources`, `History`, plus `CCTV` for CCTV traces.",
+          "Normalized L3 into a list-detail structure in `Sources`, allowing consistent validation of file/DB/API metadata.",
+          "Enabled trace entry from chart points/tooltips (`ForecastMatrix`) so both KPI cards and time-series points share the same trace chain.",
+          "Implemented major operational values to satisfy the No Orphaned Data principle through L1-L2-L3 backtracking."
+        ]
+      },
+      {
+        "titleKo": "데이터 계약/타입/샘플 데이터 동기화",
+        "titleEn": "Data Contract, Type, and Sample Data Synchronization",
+        "detailsKo": [
+          "`src/types/traceability.ts` 기준으로 `TraceabilityPayload`/`DataSourceReference`를 고정하고 화면 컴포넌트들이 공통 타입으로 trace 데이터를 주고받도록 정리",
+          "`src/contracts/dashboard-data.ts` 및 `src/contracts/dashboard-data.schema.json`에 `traceCatalog`/`traceabilityPayload` 계약을 반영해 API-UI 연결 기준을 명시",
+          "핵심 필드(`display_value`, `logic_summary`, `logic_formula`, `data_source[]`, `is_ai_generated`, `source_version`, `snapshot_at`, `confidence`)를 기준 필드로 확정",
+          "버전 비교를 위한 `version_history` 구조를 각 예측/지표 trace에 연결해 시점별 값/신뢰도/원본 diff 계산 기반을 확보",
+          "`src/data/dashboard-data.json`과 섹션별 샘플 trace를 업데이트해 UI 동작이 계약 필드와 불일치하지 않도록 동기화"
+        ],
+        "detailsEn": [
+          "Fixed `TraceabilityPayload`/`DataSourceReference` in `src/types/traceability.ts` so components exchange trace data through one shared contract.",
+          "Reflected `traceCatalog`/`traceabilityPayload` in `src/contracts/dashboard-data.ts` and `src/contracts/dashboard-data.schema.json` for API-UI consistency.",
+          "Locked core fields (`display_value`, `logic_summary`, `logic_formula`, `data_source[]`, `is_ai_generated`, `source_version`, `snapshot_at`, `confidence`) as baseline requirements.",
+          "Connected `version_history` across forecast/KPI traces to enable snapshot-based value/confidence/source diff comparison.",
+          "Synchronized `src/data/dashboard-data.json` and section-level sample traces to prevent contract drift."
+        ]
+      },
+      {
+        "titleKo": "운영 화면 가독성/검증 UX 개선 및 안정화",
+        "titleEn": "Operational Readability, Verification UX, and Stability Improvements",
+        "detailsKo": [
+          "값 인접의 인포 원형 아이콘과 `출처` 라벨을 제거하고, 버튼/hover 기반의 추적 진입 affordance는 유지해 화면 노이즈를 축소",
+          "CCTV 보관 분석 썸네일의 시간/상태 정보를 이미지 오버레이로 이동시켜 하단 텍스트 영역 의존도를 낮추고 모니터링 시선 이동을 단축",
+          "CCTV 상태 바(`스트림 상태/지연/마지막 heartbeat`) 정렬 및 예측 카드 정렬 규칙을 조정해 운영 화면 밀집도와 판독성을 개선",
+          "`TracePanel`의 `History` 탭에서 시점 2개를 선택해 값 변화/신뢰도 변화/요약 변경 여부/출처 추가·제거·공통 diff를 확인하도록 고도화",
+          "Weight Distribution 차트를 클라이언트 마운트 이후 렌더로 전환해 Recharts `width(-1)/height(-1)` 빌드 경고를 제거하고 초기 레이아웃 안정성 확보",
+          "배포 전 `lint`/`build` 검증 루프를 재실행해 기능 반영 및 회귀 여부를 확인"
+        ],
+        "detailsEn": [
+          "Removed circular info icons and `source` labels near values while preserving button/hover-based trace-entry affordances.",
+          "Moved CCTV archived thumbnail time/status metadata to image overlays to reduce bottom-text dependency and shorten scan paths.",
+          "Retuned CCTV status bar (`stream`, `latency`, `heartbeat`) and forecast card alignment for denser operational readability.",
+          "Enhanced `History` in `TracePanel` to compare two snapshots with value/confidence deltas, summary change checks, and added/removed/shared source diff.",
+          "Switched Weight Distribution chart rendering to client-mount timing to remove Recharts `width(-1)/height(-1)` build warnings and improve initial stability.",
+          "Re-ran `lint`/`build` validation loops before deployment to confirm no regressions."
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.6.0",
     "date": "26.02.11",
     "items": [

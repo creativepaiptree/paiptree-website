@@ -22,7 +22,7 @@ last_updated: 26.02.11
 ## 3. 화면/기능 구성
 - L1 Surface
   - 최종 값 중심 노출 (`82%`, `1,081g` 등)
-  - 모든 값에 출처 인디케이터(`출처`, `AI/H`) 표시
+  - 모든 값은 클릭 가능한 `TraceableValue` 패턴으로 통일하고 출처 정체성은 `AI/H` 배지로 구분
   - 구현 컴포넌트: `TraceableValue`
 - L2 Logic
   - 값 선택 시 우측 추적 패널 오픈
@@ -115,3 +115,56 @@ last_updated: 26.02.11
   - `CCTVMonitor` 프레임 메타데이터(`capturedAt`/`processedAt`/`imageUrl`) L3 소스 연결
   - `TracePanel` CCTV 전용 탭(`Frame`/`Pipeline`/`Raw`) 추가
   - 버전 히스토리/시점 비교 UX 추가
+
+## 10. 업데이트 진행 현황 (26.02.11)
+- 범위 기준: 본 문서 2~6장의 설계 원칙(L1/L2/L3, 출처 정체성, 계약 필드)을 완료 기준으로 점검
+- 진행 요약
+  - 1차/2차/3차 계획 항목 모두 구현 완료
+  - PoC 주요 섹션(`Header`, `ForecastMatrix`, `WeightDistribution`, `RightSidebar`, `CCTVMonitor`) 추적 연결 완료
+  - 데이터 계약/샘플 데이터/UI 동작 간 필드 정합성 점검 완료
+
+### 10-1. L1 Surface 진행 상세
+- 완료
+  - KPI/예측/센서/프레임 메타 값을 `TraceableValue`로 통일
+  - 값 자체가 버튼 semantics를 가지며 클릭 시 L2 진입되도록 정리
+  - AI/H 배지로 Human/AI 정체성을 일관 표시
+- 최근 조정(운영 가독성)
+  - 값 옆 인포 원형 아이콘 제거
+  - 값 옆 `출처` 텍스트 제거
+  - 클릭 가능한 패턴(hover/focus, 배지, 값 강조)은 유지
+
+### 10-2. L2 Logic 진행 상세
+- 완료
+  - 우측 `TracePanel` 단일 진입 구조로 표준화
+  - 탭 구조: `Summary` / `Logic` / `Sources` / `History`(+CCTV trace 시 `CCTV`)
+  - `ForecastMatrix` 툴팁 버튼/포인트 클릭에서 직접 trace 진입 지원
+- 상세 동작
+  - 요약/계산식/스냅샷 시각/버전/신뢰도 표시
+  - `History`에서 target/base 스냅샷 선택 및 값 변화/신뢰도 변화 계산
+  - 요약 텍스트 변경 여부와 source diff(추가/제거/공통) 동시 확인
+
+### 10-3. L3 Source 진행 상세
+- 완료
+  - `Sources` 탭의 목록-상세 분할 레이아웃 적용
+  - source type(file/db/api/slack/email/jira/drive)별 메타 표시 규칙 통일
+  - 원본 새 탭 열기 및 하이라이트/앵커 표시 지원
+  - trace 체인 URL 복사와 성공 피드백(`복사 완료`) 제공
+- CCTV 특화
+  - `CCTV` 탭 내 `Frame`/`Pipeline`/`Raw` 전환 지원
+  - 프레임 캡처/가공 시각과 원본 링크를 동일 패널에서 검증 가능
+
+### 10-4. 데이터 계약/엔지니어링 진행 상세
+- 완료
+  - `src/types/traceability.ts`: 공통 타입 고정
+  - `src/contracts/dashboard-data.ts`: `traceCatalog` 계약 반영
+  - `src/contracts/dashboard-data.schema.json`: 스키마 레벨 검증 항목 반영
+  - `src/data/dashboard-data.json` 및 섹션별 샘플 trace 데이터 정합성 동기화
+- 필수 필드 운용
+  - `display_value`, `logic_summary`, `logic_formula`, `data_source[]`, `is_ai_generated`
+  - `source_version`, `snapshot_at`, `confidence`, `version_history`
+
+### 10-5. 안정화/검증 진행 상세
+- 완료
+  - `WeightDistribution` 차트의 Recharts `width(-1)/height(-1)` 빌드 경고 해소
+  - 클라이언트 마운트 후 차트 렌더 + 동일 크기 placeholder로 초기 레이아웃 안정화
+  - 린트/빌드 검증 루프 통과로 회귀 여부 확인

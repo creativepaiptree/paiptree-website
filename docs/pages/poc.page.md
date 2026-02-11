@@ -46,7 +46,7 @@ last_updated: 26.02.11
 - [ ] 상단 모달(업데이트 정보/개발문서) 열기/닫기가 정상 동작한다.
 - [ ] 3열 레이아웃과 하단 CCTV 영역이 스크롤 내에서 정상 표시된다.
 - [ ] 언어 전환 시 주요 섹션 텍스트가 즉시 반영된다.
-- [x] `Header`/`WeightDistribution`/`ForecastMatrix`/`RightSidebar`/`CCTVMonitor` 값에 출처 인디케이터(`출처`, `AI/H`)가 노출된다.
+- [x] `Header`/`WeightDistribution`/`ForecastMatrix`/`RightSidebar`/`CCTVMonitor` 값이 `TraceableValue`로 렌더링되고 `AI/H` 배지가 노출된다.
 - [x] 값 클릭 시 `TracePanel`이 열리고 `ESC`/배경 클릭으로 닫힌다.
 - [x] `TracePanel`의 `Sources` 탭에서 출처 선택, 하이라이트, 외부 링크 열기가 동작한다.
 - [x] `TracePanel`의 `History` 탭에서 시점 비교(`현재` vs `과거`)가 동작한다.
