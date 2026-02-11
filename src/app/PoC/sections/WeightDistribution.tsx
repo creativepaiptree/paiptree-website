@@ -14,12 +14,15 @@ import {
   Cell,
 } from 'recharts';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import TraceableValue from '../components/trace/TraceableValue';
+import type { TraceabilityPayload } from '@/types/traceability';
 
 type Lang = 'ko' | 'en';
 type Zone = 'under' | 'target' | 'over';
 
 interface WeightDistributionProps {
   lang: Lang;
+  onOpenTrace: (trace: TraceabilityPayload) => void;
 }
 
 type RawPoint = { x: number; y: number };
@@ -454,7 +457,7 @@ const CustomTooltip = ({ active, payload, label, lang }: { active?: boolean; pay
   );
 };
 
-const WeightDistribution = ({ lang }: WeightDistributionProps) => {
+const WeightDistribution = ({ lang, onOpenTrace }: WeightDistributionProps) => {
   const [showComparison, setShowComparison] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [tableExpanded, setTableExpanded] = useState(false);
@@ -520,13 +523,240 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
   const judgmentTone: 'good' | 'medium' | 'bad' =
     stats.targetFit >= 75 ? 'good' : stats.targetFit >= 50 ? 'medium' : 'bad';
 
-  const topKpis = [
-    { label: t.avgWeight[lang], desc: lang === 'ko' ? 'Σ(체중×마릿수) / N' : 'Σ(weight×count) / N', value: `${Math.round(model.mean).toLocaleString()}g`, sub: `vs${lang === 'ko' ? '표준' : 'Std'} ${formatSigned(model.mean - standardWeight)}g`, tone: 'good' as const },
-    { label: t.cv[lang], desc: lang === 'ko' ? '표준편차 / 평균 × 100' : 'StdDev / Mean × 100', value: formatPct(stats.cv), sub: cvLabel, tone: cvTone },
-    { label: t.targetFit[lang], desc: lang === 'ko' ? '목표범위 내 비율' : 'Share in target range', value: formatPct(stats.targetFit), sub: `${formatCount(stats.targetCount)}${lang === 'ko' ? '마리' : ''}`, tone: getPoultryTone('targetFit', stats.targetFit) },
-    { label: t.under[lang], desc: lang === 'ko' ? '목표 미달 비율' : 'Below target range', value: formatPct(stats.under), sub: `${formatCount(stats.underCount)}${lang === 'ko' ? '마리' : ''}`, tone: getPoultryTone('under', stats.under) },
-    { label: t.expectedShip[lang], desc: lang === 'ko' ? 'N − Under 마릿수' : 'N − Under count', value: `${formatCount(model.totalCount - stats.underCount)}${lang === 'ko' ? '마리' : ''}`, sub: formatPct(100 - stats.under), tone: stats.targetFit >= 75 ? 'good' as const : stats.targetFit >= 50 ? 'medium' as const : 'bad' as const },
-    { label: t.opDelta[lang], desc: lang === 'ko' ? '적합률·미달률 일일 변화' : 'Daily fit/under change', value: `Fit ${formatSignedPp(deltaTarget)}`, sub: `Under ${formatSignedPp(deltaUnder)}`, tone: getDeltaTone(deltaTarget, deltaUnder) },
+  const buildKpiTrace = ({
+    key,
+    value,
+    logicSummary,
+    logicFormula,
+    isAiGenerated,
+    highlightText,
+    confidence,
+  }: {
+    key: string;
+    value: string;
+    logicSummary: string;
+    logicFormula: string;
+    isAiGenerated: boolean;
+    highlightText: string;
+    confidence?: number;
+  }): TraceabilityPayload => ({
+    trace_id: `weight-distribution:${key}`,
+    display_value: value,
+    logic_summary: logicSummary,
+    logic_formula: logicFormula,
+    data_source: [
+      {
+        source_id: 'db:weight_histogram:2026-01-28-03',
+        type: 'db',
+        name: 'weight_histogram_daily',
+        url: 'https://p-root.local/db/weight_histogram_daily?batch=2026-01-28T03:00:00',
+        row_id: 'house=H01,batch=2026-01-28T03:00:00',
+        highlight_text: highlightText,
+        highlight_anchor: `metric=${key}`,
+      },
+      {
+        source_id: isAiGenerated ? 'file:model_weight_ops_20260207' : 'db:weight_distribution_ops',
+        type: isAiGenerated ? 'file' : 'db',
+        name: isAiGenerated ? 'weight_ops_model_report_20260207.json' : 'weight_distribution_ops_snapshot',
+        url: isAiGenerated
+          ? 'https://p-root.local/files/weight_ops_model_report_20260207.json'
+          : 'https://p-root.local/db/weight_distribution_ops_snapshot?batch=2026-01-28T03:00:00',
+        highlight_text: logicFormula,
+        highlight_anchor: isAiGenerated ? '$.metrics' : `ops_metric=${key}`,
+      },
+    ],
+    is_ai_generated: isAiGenerated,
+    source_version: isAiGenerated ? 'model-2.4.1' : 'v2026.02.11',
+    snapshot_at: DISTRIBUTION_STAT_TIME,
+    confidence,
+    version_history: isAiGenerated
+      ? [
+          {
+            source_version: 'model-2.4.0',
+            snapshot_at: '2026-01-27 03:00:00',
+            display_value: value,
+            logic_summary:
+              lang === 'ko'
+                ? '이전 버전 대비 분포 가중치가 보수적으로 적용되었습니다.'
+                : 'Previous version applied a more conservative distribution weight.',
+            confidence: confidence !== undefined ? Math.max(confidence - 0.04, 0) : undefined,
+            data_source: [
+              {
+                source_id: 'file:model_weight_ops_20260127',
+                type: 'file',
+                name: 'weight_ops_model_report_20260127.json',
+                url: 'https://p-root.local/files/weight_ops_model_report_20260127.json',
+                highlight_text: logicFormula,
+                highlight_anchor: '$.metrics',
+              },
+              {
+                source_id: 'db:weight_histogram:2026-01-27-03',
+                type: 'db',
+                name: 'weight_histogram_daily',
+                url: 'https://p-root.local/db/weight_histogram_daily?batch=2026-01-27T03:00:00',
+                row_id: 'house=H01,batch=2026-01-27T03:00:00',
+                highlight_text: highlightText,
+                highlight_anchor: `metric=${key}`,
+              },
+            ],
+          },
+          {
+            source_version: 'model-2.3.9',
+            snapshot_at: '2026-01-26 03:00:00',
+            display_value: value,
+            logic_summary:
+              lang === 'ko'
+                ? '기준선 산출 시 D-2 영향도를 더 크게 반영한 버전입니다.'
+                : 'Older baseline used stronger D-2 influence.',
+            confidence: confidence !== undefined ? Math.max(confidence - 0.07, 0) : undefined,
+            data_source: [
+              {
+                source_id: 'file:model_weight_ops_20260126',
+                type: 'file',
+                name: 'weight_ops_model_report_20260126.json',
+                url: 'https://p-root.local/files/weight_ops_model_report_20260126.json',
+                highlight_text: logicFormula,
+                highlight_anchor: '$.metrics',
+              },
+            ],
+          },
+        ]
+      : undefined,
+  });
+
+  const topKpis: Array<{
+    label: string;
+    desc: string;
+    value: string;
+    sub: string;
+    tone: 'good' | 'medium' | 'bad';
+    trace: TraceabilityPayload;
+  }> = [
+    {
+      label: t.avgWeight[lang],
+      desc: lang === 'ko' ? 'Σ(체중×마릿수) / N' : 'Σ(weight×count) / N',
+      value: `${Math.round(model.mean).toLocaleString()}g`,
+      sub: `vs${lang === 'ko' ? '표준' : 'Std'} ${formatSigned(model.mean - standardWeight)}g`,
+      tone: 'good',
+      trace: buildKpiTrace({
+        key: 'avg_weight',
+        value: `${Math.round(model.mean).toLocaleString()}g`,
+        logicSummary:
+          lang === 'ko'
+            ? '구간별 체중 중심값과 마릿수를 가중 평균해 평균 체중을 계산했습니다.'
+            : 'Mean weight is calculated by weighted average of bin center and counts.',
+        logicFormula:
+          lang === 'ko'
+            ? '평균체중 = Σ(체중중심값×마릿수) / 총마릿수'
+            : 'mean = Σ(bin_center×count) / total_count',
+        isAiGenerated: false,
+        highlightText: `mean=${Math.round(model.mean)}, total=${model.totalCount}`,
+      }),
+    },
+    {
+      label: t.cv[lang],
+      desc: lang === 'ko' ? '표준편차 / 평균 × 100' : 'StdDev / Mean × 100',
+      value: formatPct(stats.cv),
+      sub: cvLabel,
+      tone: cvTone,
+      trace: buildKpiTrace({
+        key: 'cv',
+        value: formatPct(stats.cv),
+        logicSummary:
+          lang === 'ko'
+            ? '체중 분포 산포도를 표준편차 대비 평균 비율로 계산했습니다.'
+            : 'CV is calculated as the ratio between standard deviation and mean.',
+        logicFormula: lang === 'ko' ? 'CV = (표준편차 / 평균) × 100' : 'CV = (std_dev / mean) × 100',
+        isAiGenerated: false,
+        highlightText: `cv=${stats.cv.toFixed(2)}%`,
+      }),
+    },
+    {
+      label: t.targetFit[lang],
+      desc: lang === 'ko' ? '목표범위 내 비율' : 'Share in target range',
+      value: formatPct(stats.targetFit),
+      sub: `${formatCount(stats.targetCount)}${lang === 'ko' ? '마리' : ''}`,
+      tone: getPoultryTone('targetFit', stats.targetFit),
+      trace: buildKpiTrace({
+        key: 'target_fit',
+        value: formatPct(stats.targetFit),
+        logicSummary:
+          lang === 'ko'
+            ? '타겟 체중 구간에 포함된 마릿수 비율을 계산했습니다.'
+            : 'Target fit is the share of birds within target weight band.',
+        logicFormula:
+          lang === 'ko'
+            ? `적합률 = (${stats.targetCount} / ${model.totalCount}) × 100`
+            : `fit_rate = (${stats.targetCount} / ${model.totalCount}) × 100`,
+        isAiGenerated: false,
+        highlightText: `target_count=${stats.targetCount}, fit=${stats.targetFit.toFixed(2)}%`,
+      }),
+    },
+    {
+      label: t.under[lang],
+      desc: lang === 'ko' ? '목표 미달 비율' : 'Below target range',
+      value: formatPct(stats.under),
+      sub: `${formatCount(stats.underCount)}${lang === 'ko' ? '마리' : ''}`,
+      tone: getPoultryTone('under', stats.under),
+      trace: buildKpiTrace({
+        key: 'under_ratio',
+        value: formatPct(stats.under),
+        logicSummary:
+          lang === 'ko'
+            ? '목표 하한 미만 마릿수 비율을 계산했습니다.'
+            : 'Under ratio is the share of birds below target minimum.',
+        logicFormula:
+          lang === 'ko'
+            ? `미달률 = (${stats.underCount} / ${model.totalCount}) × 100`
+            : `under_ratio = (${stats.underCount} / ${model.totalCount}) × 100`,
+        isAiGenerated: false,
+        highlightText: `under_count=${stats.underCount}, under_ratio=${stats.under.toFixed(2)}%`,
+      }),
+    },
+    {
+      label: t.expectedShip[lang],
+      desc: lang === 'ko' ? 'N − Under 마릿수' : 'N − Under count',
+      value: `${formatCount(model.totalCount - stats.underCount)}${lang === 'ko' ? '마리' : ''}`,
+      sub: formatPct(100 - stats.under),
+      tone: stats.targetFit >= 75 ? 'good' : stats.targetFit >= 50 ? 'medium' : 'bad',
+      trace: buildKpiTrace({
+        key: 'expected_ship',
+        value: `${formatCount(model.totalCount - stats.underCount)}${lang === 'ko' ? '마리' : ''}`,
+        logicSummary:
+          lang === 'ko'
+            ? '목표 하한 미달 마릿수를 제외해 출하 가능 마릿수를 추정했습니다.'
+            : 'Expected shipment count is estimated by excluding under-spec birds.',
+        logicFormula:
+          lang === 'ko'
+            ? `${model.totalCount} - ${stats.underCount} = ${model.totalCount - stats.underCount}`
+            : `${model.totalCount} - ${stats.underCount} = ${model.totalCount - stats.underCount}`,
+        isAiGenerated: true,
+        highlightText: `expected_ship=${model.totalCount - stats.underCount}`,
+        confidence: 0.81,
+      }),
+    },
+    {
+      label: t.opDelta[lang],
+      desc: lang === 'ko' ? '적합률·미달률 일일 변화' : 'Daily fit/under change',
+      value: `Fit ${formatSignedPp(deltaTarget)}`,
+      sub: `Under ${formatSignedPp(deltaUnder)}`,
+      tone: getDeltaTone(deltaTarget, deltaUnder),
+      trace: buildKpiTrace({
+        key: 'op_delta',
+        value: `Fit ${formatSignedPp(deltaTarget)} | Under ${formatSignedPp(deltaUnder)}`,
+        logicSummary:
+          lang === 'ko'
+            ? '오늘 지표와 D-1 분포를 비교해 적합률/미달률 증감을 계산했습니다.'
+            : 'Delta is computed by comparing today metrics with D-1 distribution.',
+        logicFormula:
+          lang === 'ko'
+            ? `ΔFit=${formatSignedPp(deltaTarget)}, ΔUnder=${formatSignedPp(deltaUnder)}`
+            : `ΔFit=${formatSignedPp(deltaTarget)}, ΔUnder=${formatSignedPp(deltaUnder)}`,
+        isAiGenerated: true,
+        highlightText: `delta_fit=${deltaTarget.toFixed(2)}, delta_under=${deltaUnder.toFixed(2)}`,
+        confidence: 0.76,
+      }),
+    },
   ];
 
   const bottomKpis = [
@@ -585,7 +815,14 @@ const WeightDistribution = ({ lang }: WeightDistributionProps) => {
           <div key={kpi.label} className="bg-[#0d1117] border border-[#30363d] px-2 py-2">
             <p className={`${lang === 'en' && kpi.label === t.expectedShip.en ? 'text-[10px]' : 'text-[12px]'} text-gray-500`}>{kpi.label}</p>
             <p className="text-[10px] text-gray-600">({kpi.desc})</p>
-            <p className="text-[17px] font-semibold text-right" style={{ color: TONE_COLORS[kpi.tone] }}>{kpi.value}</p>
+            <TraceableValue
+              value={<span style={{ color: TONE_COLORS[kpi.tone] }}>{kpi.value}</span>}
+              trace={kpi.trace}
+              onOpenTrace={onOpenTrace}
+              align="right"
+              className="justify-end px-0"
+              valueClassName="text-[17px] font-semibold"
+            />
             <p className="text-[10px] text-gray-500 text-right">{kpi.sub}</p>
           </div>
         ))}

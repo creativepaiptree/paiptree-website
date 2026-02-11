@@ -35,6 +35,8 @@ last_updated: 26.02.11
 - 작성 가이드
   - [document-authoring.md](./guides/document-authoring.md)
   - [cctv-live-analysis-benchmark.md](./guides/cctv-live-analysis-benchmark.md)
+  - [p-root-traceability-ui-plan.md](./guides/p-root-traceability-ui-plan.md)
+  - [p-root-traceability-youtube-blog-draft.md](./guides/p-root-traceability-youtube-blog-draft.md)
 - 템플릿
   - [component-spec.template.md](./templates/component-spec.template.md)
 - 아카이브

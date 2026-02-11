@@ -79,6 +79,10 @@
           }
         }
       }
+    },
+    "traceCatalog": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/traceabilityPayload" }
     }
   },
   "$defs": {
@@ -93,6 +97,59 @@
     "pointArray": {
       "type": "array",
       "items": { "$ref": "#/$defs/point" }
+    },
+    "dataSourceReference": {
+      "type": "object",
+      "required": ["source_id", "type", "name", "url"],
+      "properties": {
+        "source_id": { "type": "string" },
+        "type": {
+          "enum": ["file", "db", "slack", "email", "jira", "drive", "api"]
+        },
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "page": { "type": "number" },
+        "row_id": { "type": "string" },
+        "highlight_text": { "type": "string" },
+        "highlight_anchor": { "type": "string" }
+      }
+    },
+    "traceabilityPayload": {
+      "type": "object",
+      "required": ["trace_id", "display_value", "logic_summary", "data_source", "is_ai_generated"],
+      "properties": {
+        "trace_id": { "type": "string" },
+        "display_value": { "type": "string" },
+        "logic_summary": { "type": "string" },
+        "logic_formula": { "type": "string" },
+        "data_source": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dataSourceReference" }
+        },
+        "is_ai_generated": { "type": "boolean" },
+        "source_version": { "type": "string" },
+        "snapshot_at": { "type": "string" },
+        "confidence": { "type": "number" },
+        "version_history": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/traceVersionSnapshot" }
+        }
+      }
+    },
+    "traceVersionSnapshot": {
+      "type": "object",
+      "required": ["source_version", "snapshot_at"],
+      "properties": {
+        "source_version": { "type": "string" },
+        "snapshot_at": { "type": "string" },
+        "display_value": { "type": "string" },
+        "logic_summary": { "type": "string" },
+        "confidence": { "type": "number" },
+        "data_source": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dataSourceReference" }
+        }
+      }
     }
   }
 }

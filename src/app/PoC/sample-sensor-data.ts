@@ -1,3 +1,5 @@
+import type { DataSourceReference } from '@/types/traceability';
+
 type SensorRecord = {
   stat_time: string;
   average_value: number;
@@ -5,6 +7,13 @@ type SensorRecord = {
   module_id?: string;
   house_id?: string;
   data_type?: string;
+  trace_id?: string;
+  display_value?: string;
+  logic_summary?: string;
+  data_source?: DataSourceReference[];
+  is_ai_generated?: boolean;
+  source_version?: string;
+  snapshot_at?: string;
 };
 
 export const humidityBySensorSample: Record<string, SensorRecord[]> = {

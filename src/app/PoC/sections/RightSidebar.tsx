@@ -13,6 +13,8 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+import TraceableValue from '../components/trace/TraceableValue';
+import type { TraceabilityPayload } from '@/types/traceability';
 
 interface RightSidebarProps {
   lang: 'ko' | 'en';
@@ -20,6 +22,7 @@ interface RightSidebarProps {
   temperatureBySensor?: Record<string, SensorSeriesRecord[]>;
   humidityBySensor?: Record<string, SensorSeriesRecord[]>;
   totalBirdCount?: number;
+  onOpenTrace: (trace: TraceabilityPayload) => void;
 }
 
 export interface SensorSeriesRecord {
@@ -217,6 +220,7 @@ const RightSidebar = ({
   temperatureBySensor,
   humidityBySensor,
   totalBirdCount = 20500,
+  onOpenTrace,
 }: RightSidebarProps) => {
   const [mounted, setMounted] = useState(false);
   const [feedbinSensorIndex, setFeedbinSensorIndex] = useState(0);
@@ -371,11 +375,157 @@ const RightSidebar = ({
     });
   }, [survivalData]);
 
+  const latestSurvival = survivalData[survivalData.length - 1];
+  const latestFeedbinValue = feedbinChartData[feedbinChartData.length - 1]?.value ?? 0;
+  const latestTemperatureValue = temperatureChartData[temperatureChartData.length - 1]?.value ?? 0;
+  const latestHumidityValue = humidityChartData[humidityChartData.length - 1]?.value ?? 0;
+
+  const survivalTrace: TraceabilityPayload = {
+    trace_id: 'right-sidebar:survival-rate',
+    display_value: `${latestSurvival?.survivalRate ?? 0}%`,
+    logic_summary:
+      lang === 'ko'
+        ? '총 사육수에서 누적 도태수를 제외해 생존율을 계산했습니다.'
+        : 'Survival is calculated from total birds minus cumulative culling.',
+    logic_formula:
+      lang === 'ko'
+        ? `생존율 = (총마릿수-${latestSurvival?.culling ?? 0})/총마릿수 × 100`
+        : `survival = (total-${latestSurvival?.culling ?? 0})/total × 100`,
+    data_source: [
+      {
+        source_id: 'db:survival_daily:2026-02-07',
+        type: 'db',
+        name: 'survival_daily',
+        url: 'https://p-root.local/db/survival_daily?date=2026-02-07',
+        row_id: `day=${latestSurvival?.day ?? 0}`,
+        highlight_text: `survival=${latestSurvival?.survivalRate ?? 0}%`,
+        highlight_anchor: `day=${latestSurvival?.day ?? 0}`,
+      },
+    ],
+    is_ai_generated: false,
+    source_version: 'v2026.02.11',
+    snapshot_at: '2026-02-07 20:00:00',
+  };
+
+  const cullingTrace: TraceabilityPayload = {
+    trace_id: 'right-sidebar:culling-daily',
+    display_value: `${latestSurvival?.culling ?? 0}`,
+    logic_summary:
+      lang === 'ko'
+        ? '일자별 도태 기록을 집계한 당일 도태 마릿수입니다.'
+        : 'Daily culling count aggregated from per-event culling logs.',
+    logic_formula: lang === 'ko' ? '당일 도태 = Σ(도태 이벤트 수량)' : 'daily_culling = Σ(culling events)',
+    data_source: [
+      {
+        source_id: 'db:culling_events:2026-02-07',
+        type: 'db',
+        name: 'culling_events',
+        url: 'https://p-root.local/db/culling_events?date=2026-02-07',
+        row_id: `day=${latestSurvival?.day ?? 0}`,
+        highlight_text: `culling=${latestSurvival?.culling ?? 0}`,
+        highlight_anchor: `day=${latestSurvival?.day ?? 0}`,
+      },
+    ],
+    is_ai_generated: false,
+    source_version: 'v2026.02.11',
+    snapshot_at: '2026-02-07 20:00:00',
+  };
+
+  const feedbinTrace: TraceabilityPayload = {
+    trace_id: 'right-sidebar:feedbin-latest',
+    display_value: `${Math.round(latestFeedbinValue)}%`,
+    logic_summary:
+      lang === 'ko'
+        ? `${currentFeedbinSensorId} 센서의 최신 사료빈 잔량 측정값입니다.`
+        : `Latest feedbin fullness from sensor ${currentFeedbinSensorId}.`,
+    logic_formula: lang === 'ko' ? '표시값 = 최신 센서 average_value' : 'display = latest sensor average_value',
+    data_source: [
+      {
+        source_id: `db:feedbin:${currentFeedbinSensorId}`,
+        type: 'db',
+        name: 'sensor_feedbin_hourly',
+        url: `https://p-root.local/db/sensor_feedbin_hourly?sensor=${currentFeedbinSensorId}`,
+        row_id: `sensor=${currentFeedbinSensorId}`,
+        highlight_text: `latest=${Math.round(latestFeedbinValue)}%`,
+        highlight_anchor: `sensor=${currentFeedbinSensorId}`,
+      },
+    ],
+    is_ai_generated: false,
+    source_version: 'v2026.02.11',
+    snapshot_at: '2026-02-07 20:00:00',
+  };
+
+  const temperatureTrace: TraceabilityPayload = {
+    trace_id: 'right-sidebar:temperature-latest',
+    display_value: `${latestTemperatureValue.toFixed(1)}°C`,
+    logic_summary:
+      lang === 'ko'
+        ? `${currentTemperatureSensorId} 센서의 최신 온도 측정값입니다.`
+        : `Latest temperature from sensor ${currentTemperatureSensorId}.`,
+    logic_formula: lang === 'ko' ? '표시값 = 최신 센서 average_value' : 'display = latest sensor average_value',
+    data_source: [
+      {
+        source_id: `db:temperature:${currentTemperatureSensorId}`,
+        type: 'db',
+        name: 'sensor_temperature_hourly',
+        url: `https://p-root.local/db/sensor_temperature_hourly?sensor=${currentTemperatureSensorId}`,
+        row_id: `sensor=${currentTemperatureSensorId}`,
+        highlight_text: `latest=${latestTemperatureValue.toFixed(1)}°C`,
+        highlight_anchor: `sensor=${currentTemperatureSensorId}`,
+      },
+    ],
+    is_ai_generated: false,
+    source_version: 'v2026.02.11',
+    snapshot_at: '2026-02-07 20:00:00',
+  };
+
+  const humidityTrace: TraceabilityPayload = {
+    trace_id: 'right-sidebar:humidity-latest',
+    display_value: `${latestHumidityValue.toFixed(1)}%`,
+    logic_summary:
+      lang === 'ko'
+        ? `${currentHumiditySensorId} 센서의 최신 습도 측정값입니다.`
+        : `Latest humidity from sensor ${currentHumiditySensorId}.`,
+    logic_formula: lang === 'ko' ? '표시값 = 최신 센서 average_value' : 'display = latest sensor average_value',
+    data_source: [
+      {
+        source_id: `db:humidity:${currentHumiditySensorId}`,
+        type: 'db',
+        name: 'sensor_humidity_hourly',
+        url: `https://p-root.local/db/sensor_humidity_hourly?sensor=${currentHumiditySensorId}`,
+        row_id: `sensor=${currentHumiditySensorId}`,
+        highlight_text: `latest=${latestHumidityValue.toFixed(1)}%`,
+        highlight_anchor: `sensor=${currentHumiditySensorId}`,
+      },
+    ],
+    is_ai_generated: false,
+    source_version: 'v2026.02.11',
+    snapshot_at: '2026-02-07 20:00:00',
+  };
+
   return (
     <div className="h-full bg-[#161b22] border border-[#30363d] flex flex-col overflow-auto hide-scrollbar">
       {/* Survival Rate & Culling */}
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-gray-400 font-medium mb-3">{t.survivalRateCulling[lang]}</h3>
+        <div className="mb-2 grid grid-cols-2 gap-2">
+          <TraceableValue
+            value={`${latestSurvival?.survivalRate ?? 0}%`}
+            trace={survivalTrace}
+            onOpenTrace={onOpenTrace}
+            indicatorMode="compact"
+            valueClassName="text-xs font-semibold text-[#f97316]"
+            className="bg-[#0d1117] border border-[#30363d] px-2 py-1 justify-between"
+          />
+          <TraceableValue
+            value={`${latestSurvival?.culling ?? 0}`}
+            trace={cullingTrace}
+            onOpenTrace={onOpenTrace}
+            indicatorMode="compact"
+            valueClassName="text-xs font-semibold text-[#8b5cf6]"
+            className="bg-[#0d1117] border border-[#30363d] px-2 py-1 justify-between"
+          />
+        </div>
         <div className="h-[150px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
@@ -461,6 +611,15 @@ const RightSidebar = ({
             </button>
           </div>
         </div>
+        <TraceableValue
+          value={`${Math.round(latestFeedbinValue)}%`}
+          trace={feedbinTrace}
+          onOpenTrace={onOpenTrace}
+          indicatorMode="compact"
+          align="right"
+          valueClassName="text-xs font-semibold text-[#3fb950]"
+          className="mb-2 border border-[#30363d] bg-[#0d1117] px-2 py-1 justify-between"
+        />
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
@@ -515,6 +674,15 @@ const RightSidebar = ({
             </button>
           </div>
         </div>
+        <TraceableValue
+          value={`${latestTemperatureValue.toFixed(1)}°C`}
+          trace={temperatureTrace}
+          onOpenTrace={onOpenTrace}
+          indicatorMode="compact"
+          align="right"
+          valueClassName="text-xs font-semibold text-[#ef4444]"
+          className="mb-2 border border-[#30363d] bg-[#0d1117] px-2 py-1 justify-between"
+        />
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
@@ -569,6 +737,15 @@ const RightSidebar = ({
             </button>
           </div>
         </div>
+        <TraceableValue
+          value={`${latestHumidityValue.toFixed(1)}%`}
+          trace={humidityTrace}
+          onOpenTrace={onOpenTrace}
+          indicatorMode="compact"
+          align="right"
+          valueClassName="text-xs font-semibold text-[#3b82f6]"
+          className="mb-2 border border-[#30363d] bg-[#0d1117] px-2 py-1 justify-between"
+        />
         <div className="h-[120px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">

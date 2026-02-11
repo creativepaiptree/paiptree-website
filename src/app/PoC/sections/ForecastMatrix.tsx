@@ -11,11 +11,13 @@
  *
  * @see /docs/components/ForecastMatrix.blueprint.md
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import dashboardDataJson from '@/data/dashboard-data.json';
 import { assertDashboardForecastData, type Point } from '@/contracts/dashboard-data';
+import TraceableValue from '../components/trace/TraceableValue';
+import type { TraceabilityPayload } from '@/types/traceability';
 import {
   calcErrorClass,
   formatSigned,
@@ -38,6 +40,8 @@ type Cell =
   | { type: 'actual'; value: string; check: string; isToday: boolean }
   | { type: 'future'; value: string; label: string; isToday: boolean }
   | { type: 'empty'; value: string; isToday: boolean };
+
+type TraceableMatrixCell = Exclude<Cell, { type: 'empty' }>;
 
 /**
  * 전치 테이블의 열(X축) 정보
@@ -72,6 +76,7 @@ type TransposedRow = {
 const rawDashboardData: unknown = dashboardDataJson;
 assertDashboardForecastData(rawDashboardData);
 const dashboardData = rawDashboardData;
+const traceCatalog = dashboardData.traceCatalog ?? {};
 
 /**
  * 테이블 시작 날짜 인덱스
@@ -123,6 +128,7 @@ type PredictionCard = {
   errorText: string;
   isToday: boolean;
   tone: 'good' | 'medium' | 'bad' | 'forecast' | 'neutral';
+  trace: TraceabilityPayload;
 };
 
 /**
@@ -423,6 +429,7 @@ const ageRangeLabels = generateAgeRangeLabels();
 interface ForecastMatrixProps {
   /** 표시 언어 */
   lang: 'ko' | 'en';
+  onOpenTrace: (trace: TraceabilityPayload) => void;
 }
 
 /**
@@ -441,7 +448,7 @@ interface ForecastMatrixProps {
  *
  * @see /docs/components/ForecastMatrix.blueprint.md
  */
-const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
+const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
   /** 전체보기(true) vs 주간보기(false) */
   const [fitAll, setFitAll] = useState(false);
   /** 현재 페이지: 1=25~31d, 2=32~38d, 3=39~45d */
@@ -536,6 +543,131 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
     };
   }, [lang]);
 
+  const buildForecastVersionHistory = useCallback(
+    (displayValue: string, summary: string, confidence?: number) => [
+      {
+        source_version: 'model-2.4.0',
+        snapshot_at: '2026-01-27 03:00:00',
+        display_value: displayValue,
+        logic_summary:
+          lang === 'ko'
+            ? `${summary} (이전 버전, 피처 가중치 보수 적용)`
+            : `${summary} (previous version, conservative feature weights)`,
+        confidence: confidence !== undefined ? Math.max(confidence - 0.03, 0) : undefined,
+        data_source: [
+          {
+            source_id: 'file:forecast_model_run_20260127',
+            type: 'file' as const,
+            name: 'forecast_model_run_20260127.json',
+            url: 'https://p-root.local/files/forecast_model_run_20260127.json',
+            highlight_text: `display_value=${displayValue}`,
+            highlight_anchor: '$.forecast.daily',
+          },
+          {
+            source_id: 'db:forecast_features:2026-01-27',
+            type: 'db' as const,
+            name: 'forecast_feature_snapshot',
+            url: 'https://p-root.local/db/forecast_feature_snapshot?date=2026-01-27',
+            row_id: 'house=H01,date=2026-01-27',
+            highlight_text: 'feature_set=v2.4.0',
+            highlight_anchor: 'house=H01,date=2026-01-27',
+          },
+        ],
+      },
+      {
+        source_version: 'model-2.3.9',
+        snapshot_at: '2026-01-26 03:00:00',
+        display_value: displayValue,
+        logic_summary:
+          lang === 'ko'
+            ? `${summary} (초기 버전, D-2 영향도 확대)`
+            : `${summary} (older version, higher D-2 influence)`,
+        confidence: confidence !== undefined ? Math.max(confidence - 0.06, 0) : undefined,
+        data_source: [
+          {
+            source_id: 'file:forecast_model_run_20260126',
+            type: 'file' as const,
+            name: 'forecast_model_run_20260126.json',
+            url: 'https://p-root.local/files/forecast_model_run_20260126.json',
+            highlight_text: `display_value=${displayValue}`,
+            highlight_anchor: '$.forecast.daily',
+          },
+        ],
+      },
+    ],
+    [lang]
+  );
+
+  const accuracyTraces = useMemo<{
+    d1: TraceabilityPayload;
+    d2: TraceabilityPayload;
+    d3: TraceabilityPayload;
+  }>(() => {
+    const buildAccuracyTrace = (
+      horizon: 'd1' | 'd2' | 'd3',
+      traceId: string,
+      colorLabel: string
+    ): TraceabilityPayload => {
+      const catalogTrace = traceCatalog[traceId];
+      if (catalogTrace) {
+        const summary = accuracyHoverInfo[horizon].summary;
+        const displayValue = `${avgAccuracy[horizon]}%`;
+        return {
+          ...catalogTrace,
+          display_value: displayValue,
+          logic_summary: summary,
+          version_history:
+            catalogTrace.version_history ?? buildForecastVersionHistory(displayValue, summary, catalogTrace.confidence),
+        };
+      }
+
+      const sourceName = horizon.toUpperCase();
+      const summary = accuracyHoverInfo[horizon].summary;
+      const displayValue = `${avgAccuracy[horizon]}%`;
+      const confidence = horizon === 'd1' ? 0.86 : horizon === 'd2' ? 0.82 : 0.79;
+      return {
+        trace_id: traceId,
+        display_value: displayValue,
+        logic_summary: summary,
+        logic_formula:
+          lang === 'ko'
+            ? `정확도(${sourceName}) = 100 - 평균(|예측-실측|/실측 × 100), 허용오차 톤=${colorLabel}`
+            : `accuracy(${sourceName}) = 100 - avg(|predicted-actual|/actual × 100), tone=${colorLabel}`,
+        data_source: [
+          {
+            source_id: `db:weight_predictions_${horizon}:2026-02-07`,
+            type: 'db',
+            name: `weight_predictions_${horizon}`,
+            url: `https://p-root.local/db/weight_predictions_${horizon}?date=2026-02-07`,
+            row_id: 'house=H01,date=2026-02-07',
+            highlight_text: accuracyHoverInfo[horizon].summary,
+            highlight_anchor: `metric=${horizon}_avg_accuracy`,
+          },
+          {
+            source_id: 'db:cctv_weight_actual:2026-02-07',
+            type: 'db',
+            name: 'cctv_weight_actual',
+            url: 'https://p-root.local/db/cctv_weight_actual?date=2026-02-07',
+            row_id: 'house=H01,date=2026-02-07',
+            highlight_text: accuracyHoverInfo[horizon].lines[0]?.text ?? '-',
+            highlight_anchor: 'series=daily_actual',
+          },
+        ],
+        is_ai_generated: true,
+        source_version: 'model-2.4.1',
+        snapshot_at: MEASUREMENT_STAT_TIME,
+        confidence,
+        version_history: buildForecastVersionHistory(displayValue, summary, confidence),
+      };
+    };
+
+    return {
+      d1: buildAccuracyTrace('d1', 'forecast:d1-avg-accuracy', 'good/medium/bad'),
+      d2: buildAccuracyTrace('d2', 'forecast:d2-avg-accuracy', 'good/medium/bad'),
+      d3: buildAccuracyTrace('d3', 'forecast:d3-avg-accuracy', 'good/medium/bad'),
+    };
+  }, [accuracyHoverInfo, avgAccuracy, buildForecastVersionHistory, lang]);
+
   /**
    * 날짜 인덱스 → 표시 문자열 매핑
    * @description 차트/테이블에서 날짜 표시용
@@ -570,10 +702,79 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
       const xIndex = age + AGE_OFFSET;
       const predicted = modelMap.get(xIndex);
       const value = typeof predicted === 'number' ? formatWeight(predicted) : '-';
+      const baseSummary =
+        idx === 0
+          ? (lang === 'ko'
+              ? '오늘 예측값과 실측값을 비교해 오차를 계산한 카드입니다.'
+              : 'Today card compares predicted and actual values with error.')
+          : (lang === 'ko'
+              ? `${age}일령 모델 예측값 카드입니다.`
+              : `Model forecast card for age ${age}.`);
+      const baseConfidence = idx === 0 ? 0.85 : 0.8;
+      const baseTrace: TraceabilityPayload = {
+        trace_id: idx === 0 ? 'forecast:matrix-today' : `forecast:matrix-age-${age}`,
+        display_value: value,
+        logic_summary: baseSummary,
+        logic_formula:
+          idx === 0
+            ? (lang === 'ko'
+                ? '오차(%) = (실측-예측)/실측 × 100'
+                : 'error(%) = (actual-predicted)/actual × 100')
+            : (lang === 'ko'
+                ? `예측값 = model(age=${age})`
+                : `predicted = model(age=${age})`),
+        data_source: [
+          {
+            source_id: 'db:weight_model_prediction:2026-02-07',
+            type: 'db',
+            name: 'weight_model_prediction',
+            url: 'https://p-root.local/db/weight_model_prediction?date=2026-02-07',
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `predicted=${value}`,
+            highlight_anchor: `age=${age}`,
+          },
+        ],
+        is_ai_generated: true,
+        source_version: 'model-2.4.1',
+        snapshot_at: MEASUREMENT_STAT_TIME,
+        confidence: baseConfidence,
+        version_history: buildForecastVersionHistory(value, baseSummary, baseConfidence),
+      };
+
       if (idx === 0) {
         const actual = observedMap.get(xIndex);
         if (typeof predicted === 'number' && typeof actual === 'number') {
           const pct = ((actual - predicted) / actual) * 100;
+          const catalogTrace = traceCatalog['forecast:matrix-today'];
+          const todayTrace: TraceabilityPayload = catalogTrace
+            ? {
+                ...catalogTrace,
+                display_value: value,
+                logic_summary:
+                  lang === 'ko'
+                    ? `오늘 예측 ${value}, 실측 ${formatWeight(actual)}, 오차 ${formatSignedPercentCeil(pct)}`
+                    : `Today predicted ${value}, actual ${formatWeight(actual)}, error ${formatSignedPercentCeil(pct)}`,
+              }
+            : {
+                ...baseTrace,
+                logic_summary:
+                  lang === 'ko'
+                    ? `오늘 예측 ${value}, 실측 ${formatWeight(actual)}, 오차 ${formatSignedPercentCeil(pct)}`
+                    : `Today predicted ${value}, actual ${formatWeight(actual)}, error ${formatSignedPercentCeil(pct)}`,
+                data_source: [
+                  ...baseTrace.data_source,
+                  {
+                    source_id: 'db:cctv_weight_actual:2026-02-07',
+                    type: 'db',
+                    name: 'cctv_weight_actual',
+                    url: 'https://p-root.local/db/cctv_weight_actual?date=2026-02-07',
+                    row_id: `house=H01,age=${age}`,
+                    highlight_text: `actual=${formatWeight(actual)}`,
+                    highlight_anchor: `age=${age}`,
+                  },
+                ],
+              };
+
           return {
             key: `pred-${age}`,
             label: lang === 'ko' ? '오늘' : 'Today',
@@ -581,6 +782,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
             errorText: `(${formatSigned(actual - predicted, 'g')}/${formatSignedPercentCeil(pct)})`,
             isToday: true,
             tone: calcErrorClass(pct, ERROR_THRESHOLDS),
+            trace: todayTrace,
           };
         }
         return {
@@ -590,6 +792,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           errorText: '(-)',
           isToday: true,
           tone: 'neutral',
+          trace: baseTrace,
         };
       }
 
@@ -600,9 +803,10 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         errorText: '',
         isToday: false,
         tone: 'forecast',
+        trace: baseTrace,
       };
     });
-  }, [lang]);
+  }, [buildForecastVersionHistory, lang]);
 
   /**
    * 현재 페이지에 표시할 일령 열 (X축)
@@ -640,12 +844,250 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
       .reverse();
   }, [fitAll, week]);
 
+  const buildMainChartPointTrace = useCallback(
+    (dayIndex: number): TraceabilityPayload => {
+      const age = dayIndex - AGE_OFFSET;
+      const modelMap = pointMap(MODEL_POINTS);
+      const observedMap = pointMap(OBSERVED_ACTUAL_POINTS);
+      const d1Map = pointMap(D1_POINTS);
+      const d2Map = pointMap(D2_POINTS);
+      const d3Map = pointMap(D3_POINTS);
+      const dateLabel = plainDateMap.get(dayIndex) ?? '-';
+      const predicted = modelMap.get(dayIndex);
+      const actual = observedMap.get(dayIndex);
+      const d1 = d1Map.get(dayIndex + 1);
+      const d2 = d2Map.get(dayIndex + 2);
+      const d3 = d3Map.get(dayIndex + 3);
+
+      const baseSummaryKo = `${age}일령(${dateLabel}) 기준 예측 시계열 포인트`;
+      const baseSummaryEn = `Forecast series point at age ${age} (${dateLabel})`;
+      const displayValue = typeof predicted === 'number' ? `${predicted.toLocaleString()}g` : '-';
+      const summary =
+        lang === 'ko'
+          ? `${baseSummaryKo} · 실측 ${typeof actual === 'number' ? `${actual.toLocaleString()}g` : '없음'}`
+          : `${baseSummaryEn} · Actual ${typeof actual === 'number' ? `${actual.toLocaleString()}g` : 'N/A'}`;
+      const confidence = typeof actual === 'number' ? 0.84 : 0.74;
+
+      return {
+        trace_id: `forecast:chart-point:${dayIndex}`,
+        display_value: displayValue,
+        logic_summary: summary,
+        logic_formula:
+          lang === 'ko'
+            ? '예측값 = model(age), D+1/2/3 = d1/d2/d3 시계열 참조'
+            : 'predicted=model(age), D+1/2/3 from d1/d2/d3 series',
+        data_source: [
+          {
+            source_id: 'db:weight_model_prediction:2026-02-07',
+            type: 'db',
+            name: 'weight_model_prediction',
+            url: 'https://p-root.local/db/weight_model_prediction?date=2026-02-07',
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `model=${typeof predicted === 'number' ? predicted.toLocaleString() : '-'}g`,
+            highlight_anchor: `age=${age}`,
+          },
+          {
+            source_id: 'db:cctv_weight_actual:2026-02-07',
+            type: 'db',
+            name: 'cctv_weight_actual',
+            url: 'https://p-root.local/db/cctv_weight_actual?date=2026-02-07',
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `actual=${typeof actual === 'number' ? actual.toLocaleString() : '-'}g`,
+            highlight_anchor: `age=${age}`,
+          },
+          {
+            source_id: 'file:forecast_horizons_20260207',
+            type: 'file',
+            name: 'forecast_horizons_20260207.json',
+            url: 'https://p-root.local/files/forecast_horizons_20260207.json',
+            highlight_text: `d1=${d1 ?? '-'}, d2=${d2 ?? '-'}, d3=${d3 ?? '-'}`,
+            highlight_anchor: `x=${dayIndex}`,
+          },
+        ],
+        is_ai_generated: true,
+        source_version: 'model-2.4.1',
+        snapshot_at: MEASUREMENT_STAT_TIME,
+        confidence,
+        version_history: buildForecastVersionHistory(displayValue, summary, confidence),
+      };
+    },
+    [buildForecastVersionHistory, lang, plainDateMap]
+  );
+
+  const buildAccuracyChartPointTrace = useCallback(
+    (dayIndex: number): TraceabilityPayload => {
+      const age = dayIndex - AGE_OFFSET;
+      const observedMap = pointMap(OBSERVED_ACTUAL_POINTS);
+      const d1Map = pointMap(D1_POINTS);
+      const d2Map = pointMap(D2_POINTS);
+      const d3Map = pointMap(D3_POINTS);
+      const actual = observedMap.get(dayIndex);
+      const d1 = d1Map.get(dayIndex);
+      const d2 = d2Map.get(dayIndex);
+      const d3 = d3Map.get(dayIndex);
+
+      const calcPct = (value: number | undefined) => {
+        if (typeof actual !== 'number' || typeof value !== 'number') return '-';
+        const pct = ((value - actual) / actual) * 100;
+        return formatSignedPercentCeil(pct);
+      };
+      const displayValue = typeof actual === 'number' ? `${actual.toLocaleString()}g` : '-';
+      const summary =
+        lang === 'ko'
+          ? `${age}일령 정확도 비교 포인트 (실측 vs D-1/D-2/D-3)`
+          : `${age}d accuracy comparison point (actual vs D-1/D-2/D-3)`;
+      const confidence = 0.83;
+
+      return {
+        trace_id: `forecast:accuracy-point:${dayIndex}`,
+        display_value: displayValue,
+        logic_summary: summary,
+        logic_formula:
+          lang === 'ko'
+            ? '오차율 = (예측-실측)/실측 × 100'
+            : 'error_pct = (predicted-actual)/actual × 100',
+        data_source: [
+          {
+            source_id: 'db:cctv_weight_actual:2026-02-07',
+            type: 'db',
+            name: 'cctv_weight_actual',
+            url: 'https://p-root.local/db/cctv_weight_actual?date=2026-02-07',
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `actual=${actual ?? '-'}g`,
+            highlight_anchor: `age=${age}`,
+          },
+          {
+            source_id: 'db:weight_predictions_accuracy:2026-02-07',
+            type: 'db',
+            name: 'weight_predictions_accuracy',
+            url: 'https://p-root.local/db/weight_predictions_accuracy?date=2026-02-07',
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `d1=${calcPct(d1)}, d2=${calcPct(d2)}, d3=${calcPct(d3)}`,
+            highlight_anchor: `age=${age}`,
+          },
+        ],
+        is_ai_generated: true,
+        source_version: 'model-2.4.1',
+        snapshot_at: MEASUREMENT_STAT_TIME,
+        confidence,
+        version_history: buildForecastVersionHistory(displayValue, summary, confidence),
+      };
+    },
+    [buildForecastVersionHistory, lang]
+  );
+
+  const buildMatrixCellTrace = (
+    row: TransposedRow,
+    col: TransposedColumn,
+    cell: TraceableMatrixCell
+  ): TraceabilityPayload => {
+    const age = col.age;
+    const measurementX = col.xIndex;
+    const horizon = measurementX - row.xIndex;
+    const traceId = `forecast:matrix-cell:${row.xIndex}:${age}:${cell.type}`;
+
+    if (cell.type === 'actual') {
+      return {
+        trace_id: traceId,
+        display_value: cell.value,
+        logic_summary:
+          lang === 'ko'
+            ? `${age}일령 실측 체중과 전일 대비 변화량입니다.`
+            : `${age}d actual weight and daily delta.`,
+        logic_formula:
+          lang === 'ko'
+            ? '실측 변화율 = (오늘실측-전일실측)/전일실측 × 100'
+            : 'delta_pct = (actual_today-actual_prev)/actual_prev × 100',
+        data_source: [
+          {
+            source_id: 'db:cctv_weight_actual:2026-02-07',
+            type: 'db',
+            name: 'cctv_weight_actual',
+            url: 'https://p-root.local/db/cctv_weight_actual?date=2026-02-07',
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `${cell.value} ${cell.check}`,
+            highlight_anchor: `age=${age}`,
+          },
+        ],
+        is_ai_generated: false,
+        source_version: 'v2026.02.11',
+        snapshot_at: MEASUREMENT_STAT_TIME,
+      };
+    }
+
+    if (cell.type === 'future') {
+      const summary =
+        lang === 'ko'
+          ? `${age}일령 미래 예측 구간(${cell.label}) 값입니다.`
+          : `${age}d future forecast value (${cell.label}).`;
+      const confidence = 0.76;
+      return {
+        trace_id: traceId,
+        display_value: cell.value,
+        logic_summary: summary,
+        logic_formula:
+          lang === 'ko'
+            ? `horizon=${horizon}일, model 예측값 사용`
+            : `horizon=${horizon}, model forecast`,
+        data_source: [
+          {
+            source_id: `db:weight_predictions_h${Math.max(1, horizon)}:2026-02-07`,
+            type: 'db',
+            name: `weight_predictions_h${Math.max(1, horizon)}`,
+            url: `https://p-root.local/db/weight_predictions_h${Math.max(1, horizon)}?date=2026-02-07`,
+            row_id: `house=H01,age=${age}`,
+            highlight_text: `${cell.value} (${cell.label})`,
+            highlight_anchor: `age=${age}`,
+          },
+        ],
+        is_ai_generated: true,
+        source_version: 'model-2.4.1',
+        snapshot_at: MEASUREMENT_STAT_TIME,
+        confidence,
+        version_history: buildForecastVersionHistory(cell.value, summary, confidence),
+      };
+    }
+
+    const predictionSummary =
+      lang === 'ko'
+        ? `${age}일령 D-${horizon} 예측값${cell.error ? ` (오차 ${cell.error})` : ''}`
+        : `${age}d D-${horizon} prediction${cell.error ? ` (error ${cell.error})` : ''}`;
+    const predictionConfidence = horizon === 1 ? 0.86 : horizon === 2 ? 0.82 : 0.79;
+    return {
+      trace_id: traceId,
+      display_value: cell.value,
+      logic_summary: predictionSummary,
+      logic_formula:
+        lang === 'ko'
+          ? '오차율 = (예측-실측)/실측 × 100'
+          : 'error_pct = (predicted-actual)/actual × 100',
+      data_source: [
+        {
+          source_id: `db:weight_predictions_d${Math.max(1, Math.min(3, horizon))}:2026-02-07`,
+          type: 'db',
+          name: `weight_predictions_d${Math.max(1, Math.min(3, horizon))}`,
+          url: `https://p-root.local/db/weight_predictions_d${Math.max(1, Math.min(3, horizon))}?date=2026-02-07`,
+          row_id: `house=H01,age=${age}`,
+          highlight_text: `${cell.value}${cell.error ? ` / ${cell.error}` : ''}`,
+          highlight_anchor: `age=${age}`,
+        },
+      ],
+      is_ai_generated: true,
+      source_version: 'model-2.4.1',
+      snapshot_at: MEASUREMENT_STAT_TIME,
+      confidence: predictionConfidence,
+      version_history: buildForecastVersionHistory(cell.value, predictionSummary, predictionConfidence),
+    };
+  };
+
   /**
    * 차트-테이블 연동: 호버된 일령 계산
    * @description 차트에서 특정 xIndex에 호버하면 해당 일령의 테이블 열을 하이라이트
    */
   const hoveredAge = hoveredDay != null ? hoveredDay - AGE_OFFSET : null;
   const hoveredColumnAge = transposedColumns.find(c => c.age === hoveredAge)?.age ?? null;
+  const hoveredMainTooltipDayRef = useRef<number | null>(null);
+  const hoveredAccuracyTooltipDayRef = useRef<number | null>(null);
 
   /** 차트 캔버스 ref */
   const chartRef = useRef<HTMLCanvasElement | null>(null);
@@ -853,6 +1295,14 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
             setHoveredDay(Math.round(xVal));
           }
         },
+        onClick: (_event: unknown, elements: any[]) => {
+          const clickedX = elements?.[0]?.element?.parsed?.x;
+          const fallbackX = hoveredMainTooltipDayRef.current;
+          const targetX = typeof clickedX === 'number' ? Math.round(clickedX) : fallbackX;
+          if (typeof targetX === 'number') {
+            onOpenTrace(buildMainChartPointTrace(targetX));
+          }
+        },
         plugins: {
           filler: { drawTime: 'beforeDatasetsDraw' },
           legend: { display: false },
@@ -865,17 +1315,19 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               if (!tooltipEl) {
                 tooltipEl = document.createElement('div');
                 tooltipEl.id = 'chartjs-tooltip';
-                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: auto; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
                 document.body.appendChild(tooltipEl);
               }
 
               if (tooltip.opacity === 0) {
+                hoveredMainTooltipDayRef.current = null;
                 tooltipEl.style.opacity = '0';
                 return;
               }
 
               const dayIndex = tooltip.dataPoints?.[0]?.parsed?.x;
               if (typeof dayIndex !== 'number') return;
+              hoveredMainTooltipDayRef.current = Math.round(dayIndex);
 
               const dayAge = dayIndex - AGE_OFFSET;
               const dateLabel = plainDateMap.get(dayIndex) ?? '';
@@ -924,8 +1376,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                 }
               }
 
+              html += `<button type="button" data-trace-open style="margin-top:8px;border:1px solid #30363d;background:#11161d;color:#c9d1d9;padding:4px 8px;font-size:11px;cursor:pointer;">${lang === 'ko' ? '출처 열기' : 'Open Trace'}</button>`;
+
               tooltipEl.innerHTML = html;
               tooltipEl.style.opacity = '1';
+              const traceButton = tooltipEl.querySelector<HTMLButtonElement>('[data-trace-open]');
+              if (traceButton) {
+                traceButton.onclick = (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onOpenTrace(buildMainChartPointTrace(Math.round(dayIndex)));
+                };
+              }
 
               const pos = chart.canvas.getBoundingClientRect();
               tooltipEl.style.left = pos.left + window.scrollX + tooltip.caretX + 10 + 'px';
@@ -975,7 +1437,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         chartInstanceRef.current = null;
       }
     };
-  }, [lang, dateMap, plainDateMap]);
+  }, [buildMainChartPointTrace, dateMap, lang, onOpenTrace, plainDateMap]);
 
   /**
    * 예측 정확도 차트 초기화 (D-1, D-2, D-3 vs 실측값)
@@ -1058,6 +1520,14 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        onClick: (_event: unknown, elements: any[]) => {
+          const clickedX = elements?.[0]?.element?.parsed?.x;
+          const fallbackX = hoveredAccuracyTooltipDayRef.current;
+          const targetX = typeof clickedX === 'number' ? Math.round(clickedX) : fallbackX;
+          if (typeof targetX === 'number') {
+            onOpenTrace(buildAccuracyChartPointTrace(targetX));
+          }
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -1069,17 +1539,19 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               if (!tooltipEl) {
                 tooltipEl = document.createElement('div');
                 tooltipEl.id = 'accuracy-tooltip';
-                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: none; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: auto; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
                 document.body.appendChild(tooltipEl);
               }
 
               if (tooltip.opacity === 0) {
+                hoveredAccuracyTooltipDayRef.current = null;
                 tooltipEl.style.opacity = '0';
                 return;
               }
 
               const dayIndex = tooltip.dataPoints?.[0]?.parsed?.x;
               if (typeof dayIndex !== 'number') return;
+              hoveredAccuracyTooltipDayRef.current = Math.round(dayIndex);
 
               const dayAge = dayIndex - AGE_OFFSET;
               const observedMap = new Map(OBSERVED_ACTUAL_POINTS.map(p => [p.x, p.y]));
@@ -1117,9 +1589,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
               html += formatValue(d1, '#3fb950', 'D-1');
               html += formatValue(d2, '#ff7700', 'D-2');
               html += formatValue(d3, '#f85149', 'D-3');
+              html += `<button type="button" data-accuracy-trace-open style="margin-top:8px;border:1px solid #30363d;background:#11161d;color:#c9d1d9;padding:4px 8px;font-size:11px;cursor:pointer;">${lang === 'ko' ? '출처 열기' : 'Open Trace'}</button>`;
 
               tooltipEl.innerHTML = html;
               tooltipEl.style.opacity = '1';
+              const traceButton = tooltipEl.querySelector<HTMLButtonElement>('[data-accuracy-trace-open]');
+              if (traceButton) {
+                traceButton.onclick = (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onOpenTrace(buildAccuracyChartPointTrace(Math.round(dayIndex)));
+                };
+              }
 
               const pos = chart.canvas.getBoundingClientRect();
               tooltipEl.style.left = pos.left + window.scrollX + tooltip.caretX + 10 + 'px';
@@ -1169,7 +1650,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
         accuracyChartInstanceRef.current = null;
       }
     };
-  }, [lang, chartMode]);
+  }, [buildAccuracyChartPointTrace, chartMode, lang, onOpenTrace]);
 
   return (
     <>
@@ -1406,6 +1887,10 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           min-width: 74px;
           position: relative;
         }
+        .prediction-item {
+          min-width: fit-content;
+          flex-shrink: 0;
+        }
         .accuracy-tooltip {
           position: absolute;
           right: 0;
@@ -1481,9 +1966,18 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           text-align: right;
           color: #8b949e;
         }
+        .prediction-value {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          white-space: nowrap;
+          min-width: 0;
+          text-align: left;
+        }
         .prediction-main {
           font-size: 12px;
           font-weight: 400;
+          white-space: nowrap;
         }
         .prediction-main.forecast { color: #ffc107; }
         .prediction-main.good { color: #3fb950; }
@@ -1494,6 +1988,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
           margin-left: 4px;
           font-size: 11px;
           font-weight: 400;
+          white-space: nowrap;
         }
         .prediction-error.good { color: #3fb950; }
         .prediction-error.medium { color: #ff7700; }
@@ -1573,7 +2068,15 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                     </div>
                   );
                 })()}
-                <span className="accuracy-value">{avgAccuracy.d1}%</span>
+                <TraceableValue
+                  value={`${avgAccuracy.d1}%`}
+                  trace={accuracyTraces.d1}
+                  onOpenTrace={onOpenTrace}
+                  indicatorMode="compact"
+                  align="right"
+                  className="w-full justify-end px-0 py-0"
+                  valueClassName="accuracy-value"
+                />
                 <div className="accuracy-tooltip">
                   <div className="accuracy-tooltip-summary">{accuracyHoverInfo.d1.summary}</div>
                   {accuracyHoverInfo.d1.lines.map((line, idx) => (
@@ -1598,7 +2101,15 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                     </div>
                   );
                 })()}
-                <span className="accuracy-value">{avgAccuracy.d2}%</span>
+                <TraceableValue
+                  value={`${avgAccuracy.d2}%`}
+                  trace={accuracyTraces.d2}
+                  onOpenTrace={onOpenTrace}
+                  indicatorMode="compact"
+                  align="right"
+                  className="w-full justify-end px-0 py-0"
+                  valueClassName="accuracy-value"
+                />
                 <div className="accuracy-tooltip">
                   <div className="accuracy-tooltip-summary">{accuracyHoverInfo.d2.summary}</div>
                   {accuracyHoverInfo.d2.lines.map((line, idx) => (
@@ -1623,7 +2134,15 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                     </div>
                   );
                 })()}
-                <span className="accuracy-value">{avgAccuracy.d3}%</span>
+                <TraceableValue
+                  value={`${avgAccuracy.d3}%`}
+                  trace={accuracyTraces.d3}
+                  onOpenTrace={onOpenTrace}
+                  indicatorMode="compact"
+                  align="right"
+                  className="w-full justify-end px-0 py-0"
+                  valueClassName="accuracy-value"
+                />
                 <div className="accuracy-tooltip">
                   <div className="accuracy-tooltip-summary">{accuracyHoverInfo.d3.summary}</div>
                   {accuracyHoverInfo.d3.lines.map((line, idx) => (
@@ -1725,7 +2244,7 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
             <div className="flex items-center gap-3">
               <div className="accuracy-indicators">
                 {predictionCards.map((card) => (
-                  <div key={card.key} className="accuracy-item">
+                  <div key={card.key} className="accuracy-item prediction-item">
                     <div className="accuracy-label">
                       <span className="day">{card.label}</span>
                     </div>
@@ -1734,8 +2253,15 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                         <div key={`pred-slot-${card.key}-${i}`} className="accuracy-segment" />
                       ))}
                     </div>
-                    <span className="accuracy-value">
-                      <span className={`prediction-main ${card.tone}`}>{card.value}</span>
+                    <span className="accuracy-value prediction-value">
+                      <TraceableValue
+                        value={<span className={`prediction-main ${card.tone}`}>{card.value}</span>}
+                        trace={card.trace}
+                        onOpenTrace={onOpenTrace}
+                        indicatorMode="compact"
+                        align="center"
+                        className="w-auto justify-center px-0 py-0"
+                      />
                       {card.isToday && <span className={`prediction-error ${card.tone}`}>{card.errorText}</span>}
                     </span>
                   </div>
@@ -1808,7 +2334,16 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                           if (cell.type === 'prediction') {
                             return (
                               <td key={col.age} className={`prediction-cell${todayColClass}${hoveredClass}`}>
-                                <span className="value">{cell.value}</span>
+                                <TraceableValue
+                                  value={cell.value}
+                                  trace={buildMatrixCellTrace(row, col, cell)}
+                                  onOpenTrace={onOpenTrace}
+                                  indicatorMode="compact"
+                                  showOriginBadge={false}
+                                  align="right"
+                                  className="w-full justify-end px-0 py-0"
+                                  valueClassName="value"
+                                />
                                 {cell.error && <span className={`error ${cell.errorClass}`}>{cell.error}</span>}
                               </td>
                             );
@@ -1829,7 +2364,16 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                                     .trim();
                             return (
                               <td key={col.age} className={`actual-cell${todayColClass}${hoveredClass}`}>
-                                <span className="value">{cell.value}</span>
+                                <TraceableValue
+                                  value={cell.value}
+                                  trace={buildMatrixCellTrace(row, col, cell)}
+                                  onOpenTrace={onOpenTrace}
+                                  indicatorMode="compact"
+                                  showOriginBadge={false}
+                                  align="right"
+                                  className="w-full justify-end px-0 py-0"
+                                  valueClassName="value"
+                                />
                                 <span className="check">{checkText}</span>
                               </td>
                             );
@@ -1837,7 +2381,16 @@ const ForecastMatrix = ({ lang }: ForecastMatrixProps) => {
                           if (cell.type === 'future') {
                             return (
                               <td key={col.age} className={`future-cell${todayColClass}${hoveredClass}`}>
-                                <span className="value">{cell.value}</span>
+                                <TraceableValue
+                                  value={cell.value}
+                                  trace={buildMatrixCellTrace(row, col, cell)}
+                                  onOpenTrace={onOpenTrace}
+                                  indicatorMode="compact"
+                                  showOriginBadge={false}
+                                  align="right"
+                                  className="w-full justify-end px-0 py-0"
+                                  valueClassName="value"
+                                />
                                 <span className="label">{cell.label}</span>
                               </td>
                             );

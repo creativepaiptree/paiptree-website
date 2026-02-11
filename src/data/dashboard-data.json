@@ -70,5 +70,140 @@
       "medium": "#ffc107",
       "bad": "#f85149"
     }
+  },
+  "traceCatalog": {
+    "forecast:d1-avg-accuracy": {
+      "trace_id": "forecast:d1-avg-accuracy",
+      "display_value": "97.4%",
+      "logic_summary": "D-1 예측치와 실측치의 절대 오차율을 평균해 정확도를 계산했습니다.",
+      "logic_formula": "accuracy = 100 - avg(|predicted-actual|/actual × 100)",
+      "data_source": [
+        {
+          "source_id": "db:weight_predictions_d1:2026-02-07",
+          "type": "db",
+          "name": "weight_predictions_d1",
+          "url": "https://p-root.local/db/weight_predictions_d1?date=2026-02-07",
+          "row_id": "house=H01,date=2026-02-07",
+          "highlight_text": "avg_abs_error_pct=2.6",
+          "highlight_anchor": "metric=avg_abs_error_pct"
+        },
+        {
+          "source_id": "db:weight_actuals:2026-02-07",
+          "type": "db",
+          "name": "weight_actuals",
+          "url": "https://p-root.local/db/weight_actuals?date=2026-02-07",
+          "row_id": "house=H01,date=2026-02-07",
+          "highlight_text": "actual_weight_series",
+          "highlight_anchor": "series=daily_actual"
+        }
+      ],
+      "is_ai_generated": true,
+      "source_version": "model-2.4.1",
+      "snapshot_at": "2026-02-07 11:00:00",
+      "confidence": 0.86,
+      "version_history": [
+        {
+          "source_version": "model-2.4.0",
+          "snapshot_at": "2026-02-06 11:00:00",
+          "display_value": "97.1%",
+          "logic_summary": "이전 버전 정확도 평균",
+          "confidence": 0.83,
+          "data_source": [
+            {
+              "source_id": "db:weight_predictions_d1:2026-02-06",
+              "type": "db",
+              "name": "weight_predictions_d1",
+              "url": "https://p-root.local/db/weight_predictions_d1?date=2026-02-06",
+              "row_id": "house=H01,date=2026-02-06",
+              "highlight_text": "avg_abs_error_pct=2.9",
+              "highlight_anchor": "metric=avg_abs_error_pct"
+            }
+          ]
+        },
+        {
+          "source_version": "model-2.3.9",
+          "snapshot_at": "2026-02-05 11:00:00",
+          "display_value": "96.8%",
+          "logic_summary": "초기 버전 정확도 평균",
+          "confidence": 0.8,
+          "data_source": [
+            {
+              "source_id": "file:accuracy_rollup_20260205",
+              "type": "file",
+              "name": "accuracy_rollup_20260205.json",
+              "url": "https://p-root.local/files/accuracy_rollup_20260205.json",
+              "highlight_text": "d1_avg_accuracy=96.8",
+              "highlight_anchor": "$.accuracy.d1"
+            }
+          ]
+        }
+      ]
+    },
+    "forecast:matrix-today": {
+      "trace_id": "forecast:matrix-today",
+      "display_value": "2,180g",
+      "logic_summary": "오늘 셀은 CCTV 실측 체중 데이터와 D-1 예측 결과를 함께 표기합니다.",
+      "logic_formula": "cell = actual_weight(today) + error(pred_d1, actual)",
+      "data_source": [
+        {
+          "source_id": "db:cctv_weight_actual:2026-02-07",
+          "type": "db",
+          "name": "cctv_weight_actual",
+          "url": "https://p-root.local/db/cctv_weight_actual?date=2026-02-07",
+          "row_id": "house=H01,date=2026-02-07",
+          "highlight_text": "actual_weight=2180",
+          "highlight_anchor": "age=35"
+        },
+        {
+          "source_id": "file:forecast_rollup_20260207",
+          "type": "file",
+          "name": "forecast_rollup_20260207.json",
+          "url": "https://p-root.local/files/forecast_rollup_20260207.json",
+          "highlight_text": "d1_error_pct",
+          "highlight_anchor": "$.rollingForecast.d1"
+        }
+      ],
+      "is_ai_generated": true,
+      "source_version": "model-2.4.1",
+      "snapshot_at": "2026-02-07 11:00:00",
+      "confidence": 0.84,
+      "version_history": [
+        {
+          "source_version": "model-2.4.0",
+          "snapshot_at": "2026-02-06 11:00:00",
+          "display_value": "2,164g",
+          "logic_summary": "이전 버전 오늘 셀 예측값",
+          "confidence": 0.81,
+          "data_source": [
+            {
+              "source_id": "file:forecast_rollup_20260206",
+              "type": "file",
+              "name": "forecast_rollup_20260206.json",
+              "url": "https://p-root.local/files/forecast_rollup_20260206.json",
+              "highlight_text": "forecast_weight=2164",
+              "highlight_anchor": "$.rollingForecast.today"
+            }
+          ]
+        },
+        {
+          "source_version": "model-2.3.9",
+          "snapshot_at": "2026-02-05 11:00:00",
+          "display_value": "2,149g",
+          "logic_summary": "초기 버전 오늘 셀 예측값",
+          "confidence": 0.78,
+          "data_source": [
+            {
+              "source_id": "db:forecast_matrix_snapshot:2026-02-05",
+              "type": "db",
+              "name": "forecast_matrix_snapshot",
+              "url": "https://p-root.local/db/forecast_matrix_snapshot?date=2026-02-05",
+              "row_id": "house=H01,age=35",
+              "highlight_text": "predicted=2149",
+              "highlight_anchor": "house=H01,age=35"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

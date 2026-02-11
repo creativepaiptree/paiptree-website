@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import Navbar from './sections/Navbar';
 import LeftSidebar from './sections/LeftSidebar';
 import Header from './sections/Header';
@@ -8,6 +8,8 @@ import ForecastMatrix from './sections/ForecastMatrix';
 import WeightDistribution from './sections/WeightDistribution';
 import RightSidebar from './sections/RightSidebar';
 import CCTVMonitor from './sections/CCTVMonitor';
+import TracePanel from './components/trace/TracePanel';
+import type { TraceabilityPayload } from '@/types/traceability';
 import {
   feedbinBySensorSample,
   humidityBySensorSample,
@@ -16,7 +18,17 @@ import {
 
 export default function DashboardPage() {
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
+  const [activeTrace, setActiveTrace] = useState<TraceabilityPayload | null>(null);
+  const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
   const totalBirdCount = 20500;
+  const openTracePanel = useCallback((trace: TraceabilityPayload) => {
+    setActiveTrace(trace);
+    setIsTracePanelOpen(true);
+  }, []);
+
+  const closeTracePanel = useCallback(() => {
+    setIsTracePanelOpen(false);
+  }, []);
 
   return (
     <div className="h-screen bg-[#0d1117] text-gray-100 flex flex-col overflow-hidden">
@@ -36,13 +48,13 @@ export default function DashboardPage() {
             {/* Center Content - flexible, max 1100px */}
             <div className="flex-1 flex flex-col min-w-0 max-w-[1128px] space-y-4">
               {/* Header */}
-              <Header lang={lang} />
+              <Header lang={lang} onOpenTrace={openTracePanel} />
 
               {/* CCTV Weight Chart + Rolling Forecast Matrix */}
-              <ForecastMatrix lang={lang} />
+              <ForecastMatrix lang={lang} onOpenTrace={openTracePanel} />
 
               {/* Weight Distribution */}
-              <WeightDistribution lang={lang} />
+              <WeightDistribution lang={lang} onOpenTrace={openTracePanel} />
             </div>
 
             {/* Right Sidebar - 320px */}
@@ -53,14 +65,22 @@ export default function DashboardPage() {
                 temperatureBySensor={temperatureBySensorSample}
                 humidityBySensor={humidityBySensorSample}
                 totalBirdCount={totalBirdCount}
+                onOpenTrace={openTracePanel}
               />
             </div>
           </div>
 
           {/* CCTV Monitoring - full width */}
-          <CCTVMonitor lang={lang} />
+          <CCTVMonitor lang={lang} onOpenTrace={openTracePanel} />
         </div>
       </div>
+
+      <TracePanel
+        lang={lang}
+        open={isTracePanelOpen}
+        trace={activeTrace}
+        onClose={closeTracePanel}
+      />
     </div>
   );
 }
