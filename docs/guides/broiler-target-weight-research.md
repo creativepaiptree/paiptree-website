@@ -1,3 +1,9 @@
+---
+title: 브로일러 목표체중 범위 설정 리서치
+author: ZORO
+last_updated: 26.02.11
+---
+
 # 브로일러 목표체중 범위 설정 리서치
 
 > 작성일: 2026-02-07 | 적용 대상: WeightDistribution 패널 기본값

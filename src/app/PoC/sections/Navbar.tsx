@@ -29,6 +29,8 @@ type DevDoc = {
   id: string;
   title: string;
   path: string;
+  absolutePath: string;
+  editorUri: string;
   updatedAt: string;
   author: string;
   preview: string;
@@ -39,9 +41,15 @@ type DevDocsResponse = {
   docs: DevDoc[];
 };
 
-type SystemDocKey = 'index' | 'authoring' | 'template';
+type SystemDocKey = 'hub' | 'index' | 'authoring' | 'template';
 
 const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: string; labelEn: string }> = [
+  {
+    key: 'hub',
+    path: 'docs/admin/README.md',
+    labelKo: '문서 운영 허브',
+    labelEn: 'Docs Hub',
+  },
   {
     key: 'index',
     path: 'docs/README.md',
@@ -57,7 +65,7 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
   {
     key: 'template',
     path: 'docs/templates/component-spec.template.md',
-    labelKo: '컴포넌트네임 설계문서',
+    labelKo: '컴포넌트 템플릿',
     labelEn: 'Component Spec Template',
   },
 ];
@@ -76,7 +84,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [docsError, setDocsError] = useState<string | null>(null);
   const [selectedComponentDocId, setSelectedComponentDocId] = useState<string | null>(null);
   const [activeDocSource, setActiveDocSource] = useState<'system' | 'component'>('system');
-  const [activeSystemDocKey, setActiveSystemDocKey] = useState<SystemDocKey>('index');
+  const [activeSystemDocKey, setActiveSystemDocKey] = useState<SystemDocKey>('hub');
   const versionModalRef = useRef<HTMLDivElement>(null);
   const versionCloseButtonRef = useRef<HTMLButtonElement>(null);
   const docsModalRef = useRef<HTMLDivElement>(null);
@@ -157,7 +165,10 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
         setDevDocs(data.docs);
         const tocDocs = data.docs.filter((doc) => {
           const isTocGroup =
-            doc.path.startsWith('docs/components/') || doc.path.startsWith('docs/guides/');
+            doc.path.startsWith('docs/components/') ||
+            doc.path.startsWith('docs/guides/') ||
+            doc.path.startsWith('docs/pages/') ||
+            doc.path.startsWith('docs/admin/');
           return isTocGroup && !SYSTEM_DOC_PATHS.has(doc.path);
         });
         setSelectedComponentDocId((prev) => {
@@ -256,11 +267,15 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
 
   const docsByPath = useMemo(() => new Map(devDocs.map((doc) => [doc.path, doc])), [devDocs]);
   const componentDocs = useMemo(
-    () => devDocs.filter((doc) => {
-      const isTocGroup =
-        doc.path.startsWith('docs/components/') || doc.path.startsWith('docs/guides/');
-      return isTocGroup && !SYSTEM_DOC_PATHS.has(doc.path);
-    }),
+    () =>
+      devDocs.filter((doc) => {
+        const isTocGroup =
+          doc.path.startsWith('docs/components/') ||
+          doc.path.startsWith('docs/guides/') ||
+          doc.path.startsWith('docs/pages/') ||
+          doc.path.startsWith('docs/admin/');
+        return isTocGroup && !SYSTEM_DOC_PATHS.has(doc.path);
+      }),
     [devDocs],
   );
   const selectedSystemDoc = useMemo(
@@ -270,6 +285,16 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
   const selectedComponentDoc =
     componentDocs.find((doc) => doc.id === selectedComponentDocId) ?? componentDocs[0] ?? null;
   const selectedDoc = activeDocSource === 'system' ? selectedSystemDoc : selectedComponentDoc;
+  const openDocInEditor = useCallback((doc: DevDoc) => {
+    if (!doc.editorUri) {
+      return;
+    }
+
+    const opened = window.open(doc.editorUri, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      window.location.href = doc.editorUri;
+    }
+  }, []);
 
   return (
     <>
@@ -294,7 +319,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
               setIsVersionModalOpen(false);
               setIsDocsModalOpen(true);
               setActiveDocSource('system');
-              setActiveSystemDocKey('index');
+              setActiveSystemDocKey('hub');
             }}
             className="h-6 text-[10px] leading-none text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
           >
@@ -508,7 +533,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                   <div className="grid grid-cols-[280px_1fr] gap-4">
                     <aside className="max-h-[520px] overflow-y-auto border border-[#30363d]  p-2 bg-[#0d1117]">
                       <p className="text-xs text-gray-500 px-1 pb-2 border-b border-[#30363d] mb-2">
-                        {lang === 'ko' ? '설계/가이드 문서 목차' : 'Specs & Guides TOC'}
+                        {lang === 'ko' ? '페이지/컴포넌트/가이드 문서 목차' : 'Pages, Specs & Guides TOC'}
                       </p>
                       {componentDocs.map((doc) => {
                         const isActive = activeDocSource === 'component' && doc.id === selectedComponentDoc?.id;
@@ -547,7 +572,17 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
                       {selectedDoc ? (
                         <>
                           <div className="mb-3">
-                            <h4 className="text-base font-semibold text-gray-200">{selectedDoc.title}</h4>
+                            <div className="flex items-start justify-between gap-3">
+                              <h4 className="text-base font-semibold text-gray-200">{selectedDoc.title}</h4>
+                              <button
+                                type="button"
+                                onClick={() => openDocInEditor(selectedDoc)}
+                                className="shrink-0 border border-[#3fb950]/60 px-2 py-1 text-[11px] leading-none text-[#3fb950] hover:text-[#56d364] hover:border-[#56d364]/70 transition-colors"
+                                title={selectedDoc.absolutePath}
+                              >
+                                {lang === 'ko' ? '수정' : 'Edit'}
+                              </button>
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">
                               {selectedDoc.path} · {selectedDoc.updatedAt} · {lang === 'ko' ? `작성자 ${selectedDoc.author}` : `Author ${selectedDoc.author}`}
                             </p>

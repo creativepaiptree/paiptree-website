@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run docs:sync",
     "dev": "next dev -p 3002",
+    "docs:sync": "node scripts/docs-sync.mjs",
+    "docs:validate": "node scripts/docs-validate.mjs",
+    "docs:check": "npm run docs:sync && npm run docs:validate",
+    "docs:scaffold:page": "node scripts/docs-scaffold-page.mjs",
+    "prebuild": "npm run docs:check",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

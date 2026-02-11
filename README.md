@@ -21,7 +21,7 @@ npm run build
 ```
 
 ### Development
-- Development server: `http://localhost:3001`
+- Development server: `http://localhost:3002`
 - Auto-reload enabled
 - TypeScript support
 - Tailwind CSS ready
@@ -105,8 +105,9 @@ export const translations = mergeTranslations(
 - File naming: PascalCase for components, camelCase for utilities
 - Props interfaces: `ComponentNameProps` pattern
 - Custom hooks: Start with `use` prefix
-- Dashboard matrix source of truth: `/Users/zoro/projects/paiptree-website/src/app/dashboard/sections/ForecastMatrix.tsx`
-- Demo/experimental matrix page: `/Users/zoro/projects/paiptree-website/src/app/3d_matrix_js/page.tsx` (not used by `/dashboard`)
+- PoC forecast matrix source of truth: `/Users/zoro/projects/paiptree-website/src/app/PoC/sections/ForecastMatrix.tsx`
+- PoC dashboard entry page: `/Users/zoro/projects/paiptree-website/src/app/PoC/page.tsx`
+- Docs sync/validate: `npm run docs:check`
 
 ---
 *Built with ❤️ for better design workflows*

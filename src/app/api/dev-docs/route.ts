@@ -6,6 +6,8 @@ type DevDoc = {
   id: string;
   title: string;
   path: string;
+  absolutePath: string;
+  editorUri: string;
   updatedAt: string;
   author: string;
   preview: string;
@@ -13,6 +15,12 @@ type DevDoc = {
 };
 
 const DOCS_DIR = path.join(process.cwd(), 'docs');
+const DOC_EDITOR_URI_PREFIX = process.env.DEV_DOC_EDITOR_URI_PREFIX?.trim() || 'vscode://file';
+
+const buildEditorUri = (absolutePath: string) => {
+  const normalizedPath = absolutePath.split(path.sep).join('/');
+  return `${DOC_EDITOR_URI_PREFIX}${encodeURI(normalizedPath)}`;
+};
 
 const formatDate = (date: Date) => {
   const yy = String(date.getFullYear() % 100).padStart(2, '0');
@@ -132,6 +140,8 @@ export async function GET() {
           id: relativePath,
           title: meta.title?.trim() || extractTitle(body, fileName),
           path: relativePath,
+          absolutePath: absPath,
+          editorUri: buildEditorUri(absPath),
           updatedAt,
           author,
           preview: extractPreview(body),

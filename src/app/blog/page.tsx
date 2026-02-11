@@ -1,5 +1,6 @@
 import BlogHeader from '@/components/BlogHeader';
 import Footer from '@/components/Footer';
+import Image from 'next/image';
 
 const blogPosts = [
   {
@@ -116,9 +117,11 @@ export default function BlogPage() {
                       {/* Thumbnail - Right Side */}
                       <div className="thumbnail-section">
                         {post.thumbnail ? (
-                          <img
+                          <Image
                             src={post.thumbnail}
                             alt={`${post.title} 썸네일`}
+                            width={192}
+                            height={128}
                             className="w-48 h-32 rounded-lg object-cover flex-shrink-0"
                             style={{ border: '1px solid rgba(0, 0, 0, 0.6)' }}
                           />

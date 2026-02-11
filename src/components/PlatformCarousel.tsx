@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import Image from 'next/image';
 
 export default function PlatformCarousel() {
   const { t } = useTranslation();
@@ -92,9 +93,11 @@ export default function PlatformCarousel() {
                     className="xl:basis-[60%] basis-[100%] flex-[0_0_auto] min-w-0 px-3"
                   >
                     <div className="xl:h-[600px] h-[280px] w-full overflow-hidden rounded-lg shadow-[10px_10px_30px_0px_rgba(97,121,148,0.1)]">
-                      <img
+                      <Image
                         alt={t(`tms.platform.tabs.${tab.key}`)}
                         src={tab.image}
+                        width={1200}
+                        height={600}
                         className="w-full h-full object-cover"
                       />
                     </div>

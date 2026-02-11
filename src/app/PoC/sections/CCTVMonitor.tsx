@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Camera,
@@ -834,6 +835,7 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
            background: #0d1117;
            margin-bottom: 6px;
            overflow: hidden;
+           position: relative;
          }
          .thumb-image {
            width: 100%;
@@ -1080,11 +1082,12 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
              <div className="preview-pane">
                <div className="preview-canvas">
                  {selectedImage && selectedImage.status === 'ok' ? (
-                   <img
+                   <Image
                      className="preview-image"
                      src={selectedImage.processedImageUrl}
                      alt={`${selectedImage.capturedAt} ${statusLabel[selectedImage.status][lang]}`}
-                     loading="lazy"
+                     fill
+                     sizes="(max-width: 1350px) 100vw, 40vw"
                    />
                  ) : !selectedImage ? (
                    <span className="text-xs text-gray-500">{t.noFrame[lang]}</span>
@@ -1162,11 +1165,12 @@ const CCTVMonitor = ({ lang }: CCTVMonitorProps) => {
                      >
                        <div className="thumb-preview">
                          {compactOk ? (
-                           <img
+                           <Image
                              className="thumb-image"
                              src={img.processedImageUrl}
                              alt={`${img.capturedAt} thumbnail`}
-                             loading="lazy"
+                             fill
+                             sizes="(max-width: 640px) 50vw, (max-width: 1360px) 33vw, 20vw"
                            />
                          ) : null}
                        </div>

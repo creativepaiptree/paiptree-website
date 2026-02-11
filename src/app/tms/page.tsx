@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -55,7 +56,7 @@ export default function TmsPage() {
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo - Top Left */}
           <a href="/tms" className="flex items-center">
-            <img src="/logo_tms_nb.svg" alt="TMS Logo" className="h-5 w-auto" />
+            <Image src="/logo_tms_nb.svg" alt="TMS Logo" width={120} height={20} className="h-5 w-auto" />
           </a>
 
           {/* Right Side - Language Toggle & Hamburger Menu */}
@@ -101,9 +102,11 @@ export default function TmsPage() {
       <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20 relative overflow-hidden bg-white">
         {/* Background Image */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
-          <img
+          <Image
             src="/tms_1_web.png"
             alt="TMS Background"
+            width={1600}
+            height={900}
             className="max-w-full max-h-full object-contain opacity-80"
             style={{
               transform: 'scale(1.5)',
@@ -200,9 +203,11 @@ export default function TmsPage() {
                 >
                   {/* Image Container with Background */}
                   <div className="w-full aspect-[768/488] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <img
+                    <Image
                       alt={title}
                       src={image}
+                      width={768}
+                      height={488}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
@@ -284,9 +289,11 @@ export default function TmsPage() {
 
                 {/* Image */}
                 <div className="lg:w-[52%] w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center overflow-hidden">
-                  <img
+                  <Image
                     alt={t(`tms.features.blocks.${index}.keyword`)}
                     src={t(`tms.features.blocks.${index}.image`)}
+                    width={1200}
+                    height={900}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -372,9 +379,11 @@ export default function TmsPage() {
       <footer className="text-gray-300" style={{ backgroundColor: 'rgb(22, 22, 22)' }}>
         <div className="max-w-[1280px] px-6 pt-7 pb-10 flex flex-col gap-4">
           {/* Logo */}
-          <img 
-            src="/logo-primary-light.svg" 
-            alt="Paiptree Logo" 
+          <Image
+            src="/logo-primary-light.svg"
+            alt="Paiptree Logo"
+            width={132}
+            height={24}
             className="h-6 w-auto brightness-0 invert self-start"
           />
 
