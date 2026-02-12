@@ -1,7 +1,7 @@
 ---
 title: "/about 페이지 운영 문서"
 author: ZORO
-last_updated: 26.02.11
+last_updated: 26.02.12
 ---
 # /about 페이지 운영 문서
 
@@ -22,7 +22,7 @@ last_updated: 26.02.11
 ## 4. 데이터/상태
 - 페이지 자체 상태 없음
 - 번역/언어 컨텍스트 사용을 위해 `LanguageProvider`로 감싼 구성
-- 콘텐츠 데이터는 각 섹션 컴포넌트 내부에서 관리
+- `NewsSection`은 `NEXT_PUBLIC_PAIPTREE_NEWS_API_BASE_URL`을 통해 `paiptree_ds` 뉴스 API를 직접 호출해 렌더링
 
 ## 5. 인터랙션 규칙
 - 상단 내비게이션 동작은 `Header` 컴포넌트 규칙을 따른다.
