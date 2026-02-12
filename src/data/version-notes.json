@@ -1,5 +1,53 @@
 [
   {
+    "version": "1.8.0",
+    "date": "26.02.12",
+    "items": [
+      {
+        "titleKo": "뉴스 데이터 파이프라인을 Supabase 기반 API 구조로 전환",
+        "titleEn": "Migrated News Data Pipeline to Supabase-Backed API Flow",
+        "detailsKo": [
+          "`/about`의 `NewsSection` 데이터 소스를 Google Sheets 직접 조회에서 `paiptree_ds` 뉴스 API 호출로 전환",
+          "`src/lib/googleSheets.ts`에서 API 응답을 `NewsItem` 계약(`upload_date`, `download_count`, `original_url`)으로 정규화해 기존 UI를 유지",
+          "뉴스 조회 경로를 `https://paiptree-ds.vercel.app/api/news?tab=news&sortBy=date&sortOrder=desc` 기준으로 고정"
+        ],
+        "detailsEn": [
+          "Switched `/about` `NewsSection` data source from direct Google Sheets access to the `paiptree_ds` news API.",
+          "Normalized API responses in `src/lib/googleSheets.ts` to the existing `NewsItem` contract (`upload_date`, `download_count`, `original_url`) to keep UI behavior unchanged.",
+          "Fixed the news fetch path to `https://paiptree-ds.vercel.app/api/news?tab=news&sortBy=date&sortOrder=desc`."
+        ]
+      },
+      {
+        "titleKo": "교차 도메인 호출 안정화를 위한 News API CORS 대응",
+        "titleEn": "Added CORS Handling for Cross-Origin News API Requests",
+        "detailsKo": [
+          "`paiptree_ds`의 `/api/news` 라우트에 `Access-Control-Allow-*` 헤더를 추가해 웹사이트 직접 호출을 허용",
+          "브라우저 프리플라이트를 위해 `OPTIONS` 핸들러(204)와 허용 메서드(`GET,POST,OPTIONS`)를 반영",
+          "`Origin: http://localhost:3002` 조건에서 응답 헤더 포함 여부를 `curl -i`로 검증"
+        ],
+        "detailsEn": [
+          "Added `Access-Control-Allow-*` headers to the `paiptree_ds` `/api/news` route to support direct website requests.",
+          "Implemented an `OPTIONS` (204) handler with allowed methods (`GET,POST,OPTIONS`) for browser preflight requests.",
+          "Verified header presence with `curl -i` under `Origin: http://localhost:3002`."
+        ]
+      },
+      {
+        "titleKo": "운영 문서/환경설정 정리 및 회귀 검증 완료",
+        "titleEn": "Updated Operations Docs/Env Configuration and Completed Regression Checks",
+        "detailsKo": [
+          "Google Sheets 공개 키 의존을 제거하고 `NEXT_PUBLIC_PAIPTREE_NEWS_API_BASE_URL` 기반 구성으로 정리",
+          "`docs/pages/about.page.md`와 신규 진행 문서에서 전환 배경, 완료 범위, 점검 항목을 업데이트",
+          "`npm run lint` 및 `npm run build`를 재실행해 정적 export 빌드 회귀 여부를 확인"
+        ],
+        "detailsEn": [
+          "Removed dependency on public Google Sheets API keys and standardized configuration around `NEXT_PUBLIC_PAIPTREE_NEWS_API_BASE_URL`.",
+          "Updated `docs/pages/about.page.md` and added a migration status document with scope, rationale, and checks.",
+          "Re-ran `npm run lint` and `npm run build` to confirm no regressions in static export builds."
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.7.0",
     "date": "26.02.11",
     "items": [
