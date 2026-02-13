@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import versionNotes from '@/data/version-notes.json';
 import {
   type ReleaseNote,
   fetchReleaseNotesFromSupabase,
-  normalizeAndSortReleaseNotes,
 } from '@/lib/releaseNotes';
 
 type ReleaseNotesPayload = {
@@ -12,40 +10,52 @@ type ReleaseNotesPayload = {
     total: number;
     valid: number;
     invalid: number;
-    source: 'supabase' | 'json';
+    source: 'supabase';
   };
 };
 
 const SUPABASE_TIMEOUT_MS = 5000;
 
 export async function GET() {
-  const jsonRawNotes = Array.isArray(versionNotes) ? versionNotes : [];
-  const jsonResult = normalizeAndSortReleaseNotes(jsonRawNotes);
-  const supabaseResult = await fetchReleaseNotesFromSupabase({
-    timeoutMs: SUPABASE_TIMEOUT_MS,
-  });
+  try {
+    const supabaseResult = await fetchReleaseNotesFromSupabase({
+      timeoutMs: SUPABASE_TIMEOUT_MS,
+    });
+    if (!supabaseResult) {
+      throw new Error('Supabase version-notes fetch returned null');
+    }
 
-  const useSupabase = Boolean(
-    supabaseResult && (supabaseResult.valid > 0 || jsonResult.valid === 0),
-  );
-  const selected = useSupabase && supabaseResult ? supabaseResult : jsonResult;
-
-  const payload: ReleaseNotesPayload = {
-    notes: selected.notes,
-    meta: {
-      total: selected.total,
-      valid: selected.valid,
-      invalid: selected.invalid,
-      source: useSupabase ? 'supabase' : 'json',
-    },
-  };
-
-  return NextResponse.json(
-    payload,
-    {
-      headers: {
-        'Cache-Control': 'no-store',
+    const payload: ReleaseNotesPayload = {
+      notes: supabaseResult.notes,
+      meta: {
+        total: supabaseResult.total,
+        valid: supabaseResult.valid,
+        invalid: supabaseResult.invalid,
+        source: 'supabase',
       },
-    },
-  );
+    };
+
+    return NextResponse.json(
+      payload,
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      },
+    );
+  } catch (error) {
+    console.error('[release-notes] Supabase-only fetch failed', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Supabase 기반 버전 노트를 불러오지 못했습니다.',
+      },
+      {
+        status: 503,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      },
+    );
+  }
 }
