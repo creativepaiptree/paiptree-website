@@ -21,6 +21,12 @@ jobs:
       run: npm install
 
     - name: Build and Export
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        NEXT_PUBLIC_SUPABASE_PROJECT_ID: poc
+        NEXT_PUBLIC_SUPABASE_EXPORT_VIEW: project_release_notes_export_v1
       run: |
         npm run build
         mkdir -p out

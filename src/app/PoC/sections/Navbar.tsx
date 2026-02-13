@@ -21,10 +21,6 @@ type ReleaseNote = {
   items: ReleaseItem[];
 };
 
-type ReleaseNotesResponse = {
-  notes: ReleaseNote[];
-};
-
 type DevDoc = {
   id: string;
   title: string;
@@ -72,6 +68,11 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
 
 const SYSTEM_DOC_PATHS = new Set(SYSTEM_DOC_BUTTONS.map((button) => button.path));
 const SEMVER_LIKE_PATTERN = /^\d+\.\d+\.\d+$/;
+const NOTE_DATE_PATTERN = /^\d{2}\.\d{2}\.\d{2}$/;
+const SUPABASE_EXPORT_VIEW = process.env.NEXT_PUBLIC_SUPABASE_EXPORT_VIEW?.trim() || 'project_release_notes_export_v1';
+const SUPABASE_PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID?.trim() || 'poc';
+const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || '';
+const SUPABASE_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY?.trim() || '';
 
 const compareSemverDesc = (a: string, b: string): number => {
   const aParts = a.split('.').map(Number);
@@ -93,6 +94,117 @@ const getLatestVersion = (notes: ReleaseNote[]): string => {
     .sort(compareSemverDesc);
 
   return versions[0] ?? '0.0.0';
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const asNonEmptyStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+      .filter((line): line is string => typeof line === 'string' && line.trim().length > 0)
+      .map((line) => line.trim())
+    : [];
+
+const sanitizeReleaseItem = (value: unknown): ReleaseItem | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const titleKo = typeof value.titleKo === 'string' ? value.titleKo.trim() : '';
+  const titleEn = typeof value.titleEn === 'string' ? value.titleEn.trim() : '';
+  const detailsKo = asNonEmptyStringArray(value.detailsKo);
+  const detailsEn = asNonEmptyStringArray(value.detailsEn);
+
+  if (!titleKo || !titleEn) {
+    return null;
+  }
+
+  return { titleKo, titleEn, detailsKo, detailsEn };
+};
+
+const sanitizeReleaseNote = (value: unknown): ReleaseNote | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const version = typeof value.version === 'string' ? value.version.trim() : '';
+  const date = typeof value.date === 'string' ? value.date.trim() : '';
+  if (!SEMVER_LIKE_PATTERN.test(version) || !NOTE_DATE_PATTERN.test(date)) {
+    return null;
+  }
+
+  const items = Array.isArray(value.items)
+    ? value.items.map(sanitizeReleaseItem).filter((item): item is ReleaseItem => item !== null)
+    : [];
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return { version, date, items };
+};
+
+const compareDateDesc = (a: string, b: string): number => {
+  const toComparable = (value: string) => {
+    const [yy, mm, dd] = value.split('.').map(Number);
+    return (2000 + yy) * 10000 + mm * 100 + dd;
+  };
+
+  return toComparable(b) - toComparable(a);
+};
+
+const sanitizeAndSortReleaseNotes = (rawNotes: unknown): ReleaseNote[] => {
+  if (!Array.isArray(rawNotes)) {
+    throw new Error('Invalid version notes payload');
+  }
+
+  return rawNotes
+    .map(sanitizeReleaseNote)
+    .filter((note): note is ReleaseNote => note !== null)
+    .sort((a, b) => {
+      const byVersion = compareSemverDesc(a.version, b.version);
+      return byVersion !== 0 ? byVersion : compareDateDesc(a.date, b.date);
+    });
+};
+
+const fetchReleaseNotesFromSupabase = async (signal: AbortSignal): Promise<ReleaseNote[]> => {
+  if (!SUPABASE_PUBLIC_URL || !SUPABASE_PUBLIC_KEY) {
+    throw new Error('Supabase env is missing: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_KEY');
+  }
+
+  const endpoint = new URL(
+    `/rest/v1/${SUPABASE_EXPORT_VIEW}`,
+    SUPABASE_PUBLIC_URL.endsWith('/') ? SUPABASE_PUBLIC_URL : `${SUPABASE_PUBLIC_URL}/`,
+  );
+  endpoint.searchParams.set('project_id', `eq.${SUPABASE_PROJECT_ID}`);
+  endpoint.searchParams.set('select', 'version,date,items');
+  endpoint.searchParams.set('limit', '500');
+
+  try {
+    const response = await fetch(endpoint.toString(), {
+      method: 'GET',
+      headers: {
+        apikey: SUPABASE_PUBLIC_KEY,
+        Authorization: `Bearer ${SUPABASE_PUBLIC_KEY}`,
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Supabase request failed (${response.status})`);
+    }
+
+    return sanitizeAndSortReleaseNotes(await response.json());
+  } catch (error) {
+    if (signal.aborted) {
+      throw error;
+    }
+    console.error('[release-notes] failed to fetch from Supabase', error);
+    throw error;
+  }
 };
 
 const Navbar = ({ lang, setLang }: NavbarProps) => {
@@ -129,21 +241,9 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
       }
 
       try {
-        const response = await fetch('/api/version-notes', {
-          cache: 'no-store',
-          signal,
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to load version notes (${response.status})`);
-        }
-
-        const data = (await response.json()) as ReleaseNotesResponse;
-        if (!Array.isArray(data.notes)) {
-          throw new Error('Invalid version notes payload');
-        }
-
-        setReleaseNotes(data.notes);
-        setCurrentVersion(getLatestVersion(data.notes));
+        const notes = await fetchReleaseNotesFromSupabase(signal);
+        setReleaseNotes(notes);
+        setCurrentVersion(getLatestVersion(notes));
       } catch (error) {
         if (signal.aborted) {
           return;

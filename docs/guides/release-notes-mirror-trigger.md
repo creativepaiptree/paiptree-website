@@ -24,12 +24,15 @@ last_updated: 26.02.13
 - `RELEASE_MIRROR_TIMEOUT_MS`: 트리거 타임아웃(ms, 선택)
 
 ### `paiptree-website`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SERVICE_KEY`
 - `SUPABASE_PROJECT_ID=poc`
 - `SUPABASE_EXPORT_VIEW=project_release_notes_export_v1` (선택)
 - `RELEASE_MIRROR_TRIGGER_SECRET`
 - `RELEASE_MIRROR_TIMEOUT_MS` (선택)
+- `NEXT_PUBLIC_SUPABASE_URL` (버전 모달 런타임 조회용)
+- `NEXT_PUBLIC_SUPABASE_KEY` (버전 모달 런타임 조회용)
+- `NEXT_PUBLIC_SUPABASE_PROJECT_ID=poc` (선택)
+- `NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1` (선택)
 
 ## 4. 수동 호출 예시
 - `curl -sS -X POST "http://localhost:3002/api/admin/release-mirror-sync" -H "Content-Type: application/json" -H "x-release-mirror-secret: $RELEASE_MIRROR_TRIGGER_SECRET" -d '{"projectId":"poc"}'`
@@ -40,3 +43,7 @@ last_updated: 26.02.13
 - `502`: Supabase 조회 실패
 - `422`: 유효 릴리즈 노트 0건
 - `500`: JSON 미러 파일 쓰기 실패
+
+## 6. 런타임 표시 우선순위
+- PoC 상단 버전 모달은 **Supabase REST(`project_release_notes_export_v1`, `project_id=poc`)만 조회**한다.
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_KEY`가 없으면 버전 모달 조회는 실패 처리한다.

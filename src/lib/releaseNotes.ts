@@ -175,8 +175,8 @@ export const fetchReleaseNotesFromSupabase = async ({
   exportView = process.env.SUPABASE_EXPORT_VIEW?.trim() || 'project_release_notes_export_v1',
   timeoutMs = 5000,
 }: FetchReleaseNotesFromSupabaseParams = {}): Promise<NormalizedNotes | null> => {
-  const supabaseUrl = process.env.SUPABASE_URL?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_KEY?.trim();
 
   if (!supabaseUrl || !serviceRoleKey) {
     return null;
