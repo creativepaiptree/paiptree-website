@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.02.12
+last_updated: 26.02.13
 ---
 
 # 문서 운영 허브
@@ -23,7 +23,7 @@ last_updated: 26.02.12
 - 자동 신규 생성: **0**
 - 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
-- 전체 문서 수(`docs/**/*.md`): **24**
+- 전체 문서 수(`docs/**/*.md`): **27**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -43,20 +43,20 @@ last_updated: 26.02.12
 | Section | Count |
 | --- | --- |
 | admin | 1 |
-| guides | 6 |
+| guides | 8 |
 | old | 5 |
 | pages | 10 |
 | root | 1 |
-| templates | 1 |
+| templates | 2 |
 
 ## 6. 최근 수정 문서 (상위 10개)
+- `docs/admin/README.md` (26.02.13)
+- `docs/guides/release-notes-mirror-trigger.md` (26.02.13)
+- `docs/templates/change-expansion-template.md` (26.02.13)
+- `docs/guides/news-pipeline-migration-status.md` (26.02.12)
+- `docs/pages/about.page.md` (26.02.12)
 - `docs/guides/traceability-presentation-script.md` (26.02.12)
-- `docs/admin/README.md` (26.02.12)
 - `docs/pages/poc.page.md` (26.02.12)
 - `docs/guides/p-root-traceability-ui-plan.md` (26.02.12)
 - `docs/guides/p-root-traceability-youtube-blog-draft.md` (26.02.11)
 - `docs/README.md` (26.02.11)
-- `docs/pages/tms.page.md` (26.02.11)
-- `docs/pages/blog.page.md` (26.02.11)
-- `docs/pages/about.page.md` (26.02.11)
-- `docs/guides/document-authoring.md` (26.02.11)
