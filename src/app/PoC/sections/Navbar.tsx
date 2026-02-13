@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Settings, LogOut, User, Bell } from 'lucide-react';
-import versionNotes from '@/data/version-notes.json';
 
 interface NavbarProps {
   lang: 'ko' | 'en';
@@ -87,19 +86,20 @@ const compareSemverDesc = (a: string, b: string): number => {
   return 0;
 };
 
-const CURRENT_POC_VERSION = (() => {
-  const versions = (Array.isArray(versionNotes) ? versionNotes : [])
-    .map((note) => (typeof note?.version === 'string' ? note.version.trim() : ''))
+const getLatestVersion = (notes: ReleaseNote[]): string => {
+  const versions = notes
+    .map((note) => (typeof note.version === 'string' ? note.version.trim() : ''))
     .filter((version): version is string => SEMVER_LIKE_PATTERN.test(version))
     .sort(compareSemverDesc);
 
   return versions[0] ?? '0.0.0';
-})();
+};
 
 const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [releaseNotes, setReleaseNotes] = useState<ReleaseNote[]>([]);
+  const [currentVersion, setCurrentVersion] = useState('0.0.0');
   const [isNotesLoading, setIsNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
   const [devDocs, setDevDocs] = useState<DevDoc[]>([]);
@@ -121,20 +121,17 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
     setIsDocsModalOpen(false);
   }, []);
 
-  useEffect(() => {
-    if (!isVersionModalOpen) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const loadReleaseNotes = async () => {
-      setIsNotesLoading(true);
-      setNotesError(null);
+  const loadReleaseNotes = useCallback(
+    async ({ signal, showLoading, showError }: { signal: AbortSignal; showLoading: boolean; showError: boolean }) => {
+      if (showLoading) {
+        setIsNotesLoading(true);
+        setNotesError(null);
+      }
 
       try {
         const response = await fetch('/api/version-notes', {
           cache: 'no-store',
-          signal: controller.signal,
+          signal,
         });
         if (!response.ok) {
           throw new Error(`Failed to load version notes (${response.status})`);
@@ -144,22 +141,40 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
         if (!Array.isArray(data.notes)) {
           throw new Error('Invalid version notes payload');
         }
+
         setReleaseNotes(data.notes);
+        setCurrentVersion(getLatestVersion(data.notes));
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (signal.aborted) {
           return;
         }
-        setNotesError(lang === 'ko' ? '버전 정보를 불러오지 못했습니다.' : 'Unable to load version notes.');
+        if (showError) {
+          setNotesError(lang === 'ko' ? '버전 정보를 불러오지 못했습니다.' : 'Unable to load version notes.');
+        }
       } finally {
-        if (!controller.signal.aborted) {
+        if (showLoading && !signal.aborted) {
           setIsNotesLoading(false);
         }
       }
-    };
+    },
+    [lang],
+  );
 
-    void loadReleaseNotes();
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadReleaseNotes({ signal: controller.signal, showLoading: false, showError: false });
     return () => controller.abort();
-  }, [isVersionModalOpen, lang]);
+  }, [loadReleaseNotes]);
+
+  useEffect(() => {
+    if (!isVersionModalOpen) {
+      return;
+    }
+
+    const controller = new AbortController();
+    void loadReleaseNotes({ signal: controller.signal, showLoading: true, showError: true });
+    return () => controller.abort();
+  }, [isVersionModalOpen, loadReleaseNotes]);
 
   useEffect(() => {
     if (!isDocsModalOpen) {
@@ -325,7 +340,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
           <span className="text-gray-400 font-semibold text-2xl">Farmers_Mind</span>
-          <span className="text-[#3fb950] font-semibold ml-2 text-base">PoC (Ver.{CURRENT_POC_VERSION})</span>
+          <span className="text-[#3fb950] font-semibold ml-2 text-base">PoC (Ver.{currentVersion})</span>
           <button
             type="button"
             onClick={() => {
