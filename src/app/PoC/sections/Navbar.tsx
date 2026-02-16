@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Settings, LogOut, User, Bell } from 'lucide-react';
+import { Menu, Settings, LogOut, User, Bell, X } from 'lucide-react';
 
 interface NavbarProps {
   lang: 'ko' | 'en';
@@ -210,6 +210,7 @@ const fetchReleaseNotesFromSupabase = async (signal: AbortSignal): Promise<Relea
 const Navbar = ({ lang, setLang }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [releaseNotes, setReleaseNotes] = useState<ReleaseNote[]>([]);
   const [currentVersion, setCurrentVersion] = useState('0.0.0');
   const [isNotesLoading, setIsNotesLoading] = useState(false);
@@ -231,6 +232,9 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
 
   const closeDocsModal = useCallback(() => {
     setIsDocsModalOpen(false);
+  }, []);
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
   }, []);
 
   const loadReleaseNotes = useCallback(
@@ -330,6 +334,26 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
     void loadDevDocs();
     return () => controller.abort();
   }, [isDocsModalOpen, lang]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const closeMenu = () => {
+      if (mediaQuery.matches) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    mediaQuery.addEventListener('change', closeMenu);
+    closeMenu();
+
+    return () => {
+      mediaQuery.removeEventListener('change', closeMenu);
+    };
+  }, []);
 
   useEffect(() => {
     const isAnyModalOpen = isVersionModalOpen || isDocsModalOpen;
@@ -436,7 +460,7 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
 
   return (
     <>
-      <div className="bg-[#161b22] border-b border-[#30363d] px-6 py-3 flex items-center justify-between">
+      <div className="relative bg-[#161b22] border-b border-[#30363d] px-6 py-3 flex items-center justify-between">
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
           <span className="text-gray-400 font-semibold text-2xl">Farmers_Mind</span>
@@ -444,47 +468,49 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
           <button
             type="button"
             onClick={() => {
+              closeMobileMenu();
               setIsDocsModalOpen(false);
               setIsVersionModalOpen(true);
             }}
-            className="h-6 text-[10px] leading-none text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
+            className="hidden lg:inline-flex h-6 items-center text-[10px] leading-relaxed text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
           >
             {lang === 'ko' ? '업데이트 정보' : 'Updates'}
           </button>
           <button
             type="button"
             onClick={() => {
+              closeMobileMenu();
               setIsVersionModalOpen(false);
               setIsDocsModalOpen(true);
               setActiveDocSource('system');
               setActiveSystemDocKey('hub');
             }}
-            className="h-6 text-[10px] leading-none text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
+            className="hidden lg:inline-flex h-6 items-center text-[10px] leading-relaxed text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
           >
             {lang === 'ko' ? '개발문서' : 'Dev Docs'}
           </button>
         </div>
 
         {/* Right - User & Actions */}
-        <div className="flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-4">
           {/* Language, Notifications, Settings Group */}
-          <div className="flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {/* Language Switch */}
             <div className="flex items-center border border-[#30363d]">
-              <span
-                className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${lang === 'ko' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
-                onClick={() => setLang('ko')}
-              >
-                KO
+            <span
+              className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${lang === 'ko' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
+              onClick={() => setLang('ko')}
+            >
+              KO
               </span>
               <span className="text-gray-600">|</span>
               <span
                 className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${lang === 'en' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
                 onClick={() => setLang('en')}
-              >
-                EN
-              </span>
-            </div>
+            >
+              EN
+            </span>
+          </div>
 
             {/* Notifications */}
             <button className="ml-2 p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] transition-colors">
@@ -495,7 +521,6 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
             <button className="p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] transition-colors">
               <Settings className="w-5 h-5" />
             </button>
-
           </div>
 
           {/* Divider */}
@@ -518,6 +543,121 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
             <span className="text-sm">Logout</span>
           </button>
         </div>
+
+        <div className="lg:hidden flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className="p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] transition-colors"
+            aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        {isMobileMenuOpen && (
+          <div className="lg:hidden absolute left-0 right-0 top-full mt-2 z-20 border-t border-[#30363d] bg-[#161b22]">
+            <div className="px-4 py-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  closeMobileMenu();
+                  setIsDocsModalOpen(false);
+                  setIsVersionModalOpen(true);
+                }}
+                className="w-full h-8 text-left text-[11px] text-[#3fb950] border border-[#3fb950]/40 px-3 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
+              >
+                {lang === 'ko' ? '업데이트 정보' : 'Updates'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMobileMenu();
+                  setIsVersionModalOpen(false);
+                  setIsDocsModalOpen(true);
+                  setActiveDocSource('system');
+                  setActiveSystemDocKey('hub');
+                }}
+                className="w-full h-8 text-left text-[11px] text-[#3fb950] border border-[#3fb950]/40 px-3 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
+              >
+                {lang === 'ko' ? '개발문서' : 'Dev Docs'}
+              </button>
+              <div className="w-fit flex items-center border border-[#30363d]">
+                <button
+                  type="button"
+                  className={`px-2.5 py-1 text-xs font-medium transition-all ${lang === 'ko' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
+                  onClick={() => {
+                    setLang('ko');
+                    closeMobileMenu();
+                  }}
+                >
+                  KO
+                </button>
+                <span className="text-gray-600">|</span>
+                <button
+                  type="button"
+                  className={`px-2.5 py-1 text-xs font-medium transition-all ${lang === 'en' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
+                  onClick={() => {
+                    setLang('en');
+                    closeMobileMenu();
+                  }}
+                >
+                  EN
+                </button>
+              </div>
+              <div className="border-t border-[#30363d] pt-2 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    closeVersionModal();
+                    closeDocsModal();
+                  }}
+                  className="w-full h-8 text-left flex items-center justify-center text-[11px] text-gray-300 border border-[#30363d] px-3 hover:text-gray-100 hover:border-[#56d364]/50 transition-colors"
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  {lang === 'ko' ? '알림' : 'Notifications'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    closeVersionModal();
+                    closeDocsModal();
+                  }}
+                  className="w-full h-8 text-left flex items-center justify-center text-[11px] text-gray-300 border border-[#30363d] px-3 hover:text-gray-100 hover:border-[#56d364]/50 transition-colors"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  {lang === 'ko' ? '설정' : 'Settings'}
+                </button>
+              </div>
+              <div className="border-t border-[#30363d] pt-2">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="w-8 h-8 bg-[#21262d] border border-[#30363d] flex items-center justify-center">
+                    <User className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="text-gray-400">C.P.Group</p>
+                    <p className="text-gray-500 text-xs">ChampaHomFarm</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    closeVersionModal();
+                    closeDocsModal();
+                  }}
+                  className="mt-2 w-full h-8 flex items-center justify-center gap-2 px-3 border border-[#30363d] text-gray-400 hover:text-red-400 hover:bg-[#21262d] transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {isVersionModalOpen && (
