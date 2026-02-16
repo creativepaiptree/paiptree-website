@@ -550,6 +550,8 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
           padding: 12px 16px;
           border-bottom: 1px solid #30363d;
         }
@@ -1055,9 +1057,12 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
             overflow-y: hidden;
             padding-bottom: 2px;
           }
-           .camera-btn {
-             min-width: 380px;
-           }
+          .camera-btn {
+            min-width: 280px;
+          }
+          .camera-mini-live {
+            width: 104px;
+          }
           .ops-bar {
             grid-template-columns: 1fr 1fr;
           }
@@ -1076,12 +1081,35 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
           }
         }
         @media (max-width: 640px) {
+         .cctv-right {
+            min-width: 0;
+          }
           .live-frame {
             width: calc(100% - 20px);
             margin: 10px;
           }
+          .camera-btn {
+            min-width: 220px;
+          }
+          .camera-mini-live {
+            width: 88px;
+          }
           .thumb-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+          .archive-header {
+            align-items: flex-start;
+          }
+          .live-footer {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+          }
+          .live-footer .stream-url {
+            width: 100%;
+          }
+          .live-footer p {
+            line-height: 1.2;
           }
         }
        `}</style>
@@ -1221,30 +1249,30 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
                </div>
              </div>
 
-	             <div className="live-footer">
-	               <div>
-	                 <p className="text-xs text-gray-500">{t.liveFeed[lang]}</p>
-	                 <p className="text-sm text-gray-300 font-semibold">
-	                   {CAMERAS.find((camera) => camera.id === activeCamera)?.name[lang]}
-	                 </p>
-	               </div>
+             <div className="live-footer">
+               <div className="min-w-0">
+                 <p className="text-xs text-gray-500">{t.liveFeed[lang]}</p>
+                 <p className="text-sm text-gray-300 font-semibold min-w-0 truncate">
+                   {CAMERAS.find((camera) => camera.id === activeCamera)?.name[lang]}
+                 </p>
+               </div>
 	               {liveStreamTrace ? (
 	                 <TraceableValue
 	                   value={liveState?.streamUrl ?? 'webrtc://-'}
 	                   trace={liveStreamTrace}
 	                   onOpenTrace={onOpenTrace}
-	                   indicatorMode="compact"
-	                   showOriginBadge={false}
-	                   align="right"
-	                   className="stream-url !w-auto !px-0 !py-0"
-	                   valueClassName="truncate"
-	                 />
-	               ) : (
-	                 <span className="stream-url" title={liveState?.streamUrl ?? ''}>
-	                   {liveState?.streamUrl ?? 'webrtc://-'}
-	                 </span>
-	               )}
-	             </div>
+                   indicatorMode="compact"
+                    showOriginBadge={false}
+                    align="right"
+                    className="stream-url !w-auto !px-0 !py-0 max-w-full"
+                    valueClassName="truncate"
+                  />
+                ) : (
+                 <span className="stream-url max-w-full" title={liveState?.streamUrl ?? ''}>
+                   {liveState?.streamUrl ?? 'webrtc://-'}
+                 </span>
+               )}
+             </div>
 	            </section>
           </div>
 

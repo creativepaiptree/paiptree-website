@@ -36,17 +36,17 @@ export default function DashboardPage() {
       <Navbar lang={lang} setLang={setLang} />
 
       {/* Main content area */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="max-w-[1760px] mx-auto space-y-4">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto p-4">
+        <div className="max-w-[1760px] w-full mx-auto space-y-4">
           {/* 3-column layout */}
-          <div className="flex gap-4 w-full">
+          <div className="flex flex-col 2xl:flex-row gap-4 w-full">
             {/* Left Sidebar - 280px */}
-            <div className="w-[280px] flex-shrink-0">
+            <div className="hidden 2xl:block w-[280px] flex-shrink-0">
               <LeftSidebar lang={lang} />
             </div>
 
             {/* Center Content - flexible, max 1100px */}
-            <div className="flex-1 flex flex-col min-w-0 max-w-[1128px] space-y-4">
+            <div className="w-full flex-1 flex flex-col min-w-0 space-y-4">
               {/* Header */}
               <Header lang={lang} onOpenTrace={openTracePanel} />
 
@@ -58,7 +58,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Right Sidebar - 320px */}
-            <div className="w-[320px] flex-shrink-0">
+            <div className="hidden 2xl:block w-[320px] flex-shrink-0">
               <RightSidebar
                 lang={lang}
                 feedbinBySensor={feedbinBySensorSample}

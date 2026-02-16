@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.02.13
+last_updated: 26.02.15
 ---
 
 # 문서 운영 허브
@@ -18,12 +18,12 @@ last_updated: 26.02.13
 - 레거시 문서 위치: `docs/old/**/*.md`
 
 ## 3. 요약
-- 총 라우트 페이지: **10**
-- 페이지 문서 생성됨: **10**
+- 총 라우트 페이지: **11**
+- 페이지 문서 생성됨: **11**
 - 자동 신규 생성: **0**
 - 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
-- 전체 문서 수(`docs/**/*.md`): **27**
+- 전체 문서 수(`docs/**/*.md`): **29**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -33,6 +33,7 @@ last_updated: 26.02.13
 | `/blog` | `src/app/blog/page.tsx` | `docs/pages/blog.page.md` | OK |
 | `/careers` | `src/app/careers/page.tsx` | `docs/pages/careers.page.md` | OK |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
+| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
 | `/newsroom` | `src/app/newsroom/page.tsx` | `docs/pages/newsroom.page.md` | OK |
 | `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | OK |
@@ -43,14 +44,17 @@ last_updated: 26.02.13
 | Section | Count |
 | --- | --- |
 | admin | 1 |
+| decisions | 1 |
 | guides | 8 |
 | old | 5 |
-| pages | 10 |
+| pages | 11 |
 | root | 1 |
 | templates | 2 |
 
 ## 6. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.02.13)
+- `docs/admin/README.md` (26.02.15)
+- `docs/pages/dash.page.md` (26.02.15)
+- `docs/decisions/_adr-template.md` (26.02.14)
 - `docs/guides/release-notes-mirror-trigger.md` (26.02.13)
 - `docs/templates/change-expansion-template.md` (26.02.13)
 - `docs/guides/news-pipeline-migration-status.md` (26.02.12)
@@ -58,5 +62,3 @@ last_updated: 26.02.13
 - `docs/guides/traceability-presentation-script.md` (26.02.12)
 - `docs/pages/poc.page.md` (26.02.12)
 - `docs/guides/p-root-traceability-ui-plan.md` (26.02.12)
-- `docs/guides/p-root-traceability-youtube-blog-draft.md` (26.02.11)
-- `docs/README.md` (26.02.11)

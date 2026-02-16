@@ -774,30 +774,32 @@ const WeightDistribution = ({ lang, onOpenTrace }: WeightDistributionProps) => {
   return (
     <div className="bg-[#161b22] p-4 border border-gray-800">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 mb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-2 flex-wrap">
           <h3 className="text-gray-400 font-medium">{t.title[lang]}</h3>
-          <span className="text-[11px] text-gray-500 bg-[#0d1117] border border-[#30363d] px-2 py-0.5">
+          <span className="text-[10px] text-gray-500 bg-[#0d1117] border border-[#30363d] px-2 py-0.5 whitespace-nowrap lg:text-[11px]">
             N={formatCount(model.totalCount)} ({lang === 'ko' ? '총 측정 마릿수' : 'Total birds weighed'})
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <div className="border border-[#30363d] min-h-[30px] pl-[8px] pr-[4px] py-[4px] flex items-center gap-1.5">
-            <span className="text-gray-400 text-[12px] font-bold mr-1">{t.targetRange[lang]}</span>
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+          <div className="border border-[#30363d] min-h-[30px] pl-[8px] pr-[4px] py-[4px] flex min-w-0 items-center gap-1.5 flex-1 sm:flex-none">
+            <span className="text-gray-400 text-[11px] sm:text-[12px] font-bold mr-1 whitespace-nowrap">
+              {t.targetRange[lang]}
+            </span>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-14 h-5 bg-[#0d1117] px-1 text-gray-300 border-0 outline-none text-center"
+              className="w-12 sm:w-14 h-5 bg-[#0d1117] px-1 text-gray-300 border-0 outline-none text-center text-[10px] sm:text-[12px]"
               value={targetMinInput}
               onChange={(e) => setTargetMinInput(Number(e.target.value) || 0)}
             />
-            <span className="text-gray-500">~</span>
+            <span className="text-gray-500 text-[11px] sm:text-[12px]">~</span>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-14 h-5 bg-[#0d1117] px-1 text-gray-300 border-0 outline-none text-center"
+              className="w-12 sm:w-14 h-5 bg-[#0d1117] px-1 text-gray-300 border-0 outline-none text-center text-[10px] sm:text-[12px]"
               value={targetMaxInput}
               onChange={(e) => setTargetMaxInput(Number(e.target.value) || 0)}
             />
@@ -805,7 +807,7 @@ const WeightDistribution = ({ lang, onOpenTrace }: WeightDistributionProps) => {
           <button
             type="button"
             onClick={() => setShowComparison((v) => !v)}
-            className={`border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center gap-1 border-[#30363d] ${
+            className={`w-full sm:w-auto border min-h-[30px] px-[10px] py-[4px] text-[11px] sm:text-[12px] font-bold transition-colors flex items-center justify-center gap-1 border-[#30363d] ${
               showComparison ? 'text-[#3fb950]' : 'text-gray-400'
             }`}
           >

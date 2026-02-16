@@ -231,33 +231,33 @@ const Header = ({ lang, onOpenTrace }: HeaderProps) => {
   ];
 
   return (
-    <div className="flex gap-4">
+    <div className="flex flex-col xl:flex-row gap-4">
       {/* Left Card - Weather Info */}
-      <div className="basis-[35%] flex-shrink-0 bg-[#161b22] p-3 border border-[#30363d]">
+      <div className="xl:basis-[35%] flex-shrink-0 bg-[#161b22] p-3 border border-[#30363d]">
         <div className="h-full flex items-center justify-center">
-          <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold text-[#3fb950]">33.2°</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
+            <div className="flex items-center gap-3">
+            <span className="text-2xl sm:text-3xl font-bold text-[#3fb950]">33.2°</span>
             <div className="flex items-center gap-1 text-[#3fb950]">
               <Sun className="w-4 h-4" />
               <span className="text-sm font-bold">{t.sunny[lang]}</span>
             </div>
           </div>
 
-            <div className="h-9 w-px bg-gray-700" />
+            <div className="h-px w-full sm:h-9 sm:w-px bg-gray-700" />
 
-            <div className="space-y-1 min-w-[120px] text-left">
-              <div className="flex items-center justify-between text-sm text-gray-300 font-medium">
-                <span>{lang === 'ko' ? '02/05(목)' : 'Thu, 02/05'}</span>
-                <span className="text-gray-400">18:24</span>
+            <div className="space-y-1 min-w-0 sm:min-w-[120px] text-left">
+              <div className="flex items-center justify-between gap-2 text-[11px] sm:text-sm text-gray-300 font-medium">
+                <span className="min-w-0 text-left truncate">{lang === 'ko' ? '02/05(목)' : 'Thu, 02/05'}</span>
+                <span className="text-gray-400 min-w-0 text-right">18:24</span>
               </div>
-              <div className="text-sm flex items-center justify-between">
-                <span className="text-gray-400">{t.humidity[lang]}</span>
-                <span className="text-[#3fb950]">32%</span>
+              <div className="text-[11px] sm:text-sm flex items-center justify-between gap-2">
+                <span className="text-gray-400 min-w-0 truncate">{t.humidity[lang]}</span>
+                <span className="text-[#3fb950] min-w-0 text-right">32%</span>
               </div>
-              <div className="text-sm flex items-center justify-between">
-                <span className="text-gray-400">{t.rain[lang]}</span>
-                <span className="text-[#3fb950]">0% 0mm</span>
+              <div className="text-[11px] sm:text-sm flex items-center justify-between gap-2">
+                <span className="text-gray-400 min-w-0 truncate">{t.rain[lang]}</span>
+                <span className="text-[#3fb950] min-w-0 text-right">0% 0mm</span>
               </div>
             </div>
           </div>
@@ -267,18 +267,18 @@ const Header = ({ lang, onOpenTrace }: HeaderProps) => {
       {/* Right Card - Cycle Status */}
       <div className="flex-1 bg-[#161b22] p-3 border border-[#30363d] flex items-center justify-center">
         <div className="w-full">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-2">
             <div className="flex items-center gap-2">
               <h2 className="text-gray-400 font-medium">OVERVIEW</h2>
               <span className="px-1 py-[1px] text-[10px] font-semibold text-[#3fb950] bg-[#3fb950]/15 border border-[#3fb950]">Growing</span>
             </div>
-            <div className="flex items-center gap-3 text-[10px] text-gray-500">
+            <div className="flex items-center flex-wrap gap-2 text-[10px] text-gray-500">
               <span>Sensors | 02.07 20:00</span>
               <span>Weight | 02.07 11:00</span>
             </div>
             </div>
 
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
             {overviewMetrics.map((metric) => (
               <div key={metric.label} className="text-center">
                 <p className="text-sm text-[#3fb950] font-semibold mb-1">{metric.label}</p>

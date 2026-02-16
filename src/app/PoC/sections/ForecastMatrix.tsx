@@ -1666,9 +1666,23 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           padding: 12px;
         }
         .chart-container {
-          height: 250px;
           margin-bottom: 0;
           position: relative;
+        }
+        .chart-frame {
+          position: relative;
+          width: 100%;
+          height: 250px;
+        }
+        .chart-frame canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+        .chart-measurement-time {
+          margin-top: 6px;
+          display: flex;
+          justify-content: flex-end;
         }
         .chart-legend-overlay {
           position: absolute;
@@ -1725,6 +1739,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           background: rgba(63, 185, 80, 0.15);
           color: #3fb950;
           border-color: #3fb950;
+        }
+        .rolling-details-toggle {
+          white-space: nowrap;
+          flex-shrink: 0;
         }
         .table-wrapper {
           overflow-x: auto;
@@ -1935,6 +1953,12 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           font-weight: 700;
           color: #8b949e;
         }
+        .prediction-card-label {
+          min-width: 38px;
+        }
+        .prediction-card-day {
+          font-size: 12px;
+        }
         .accuracy-segments {
           display: flex;
           gap: 3px;
@@ -2041,17 +2065,111 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           color: #3fb950;
           border-color: #3fb950;
         }
+        .forecast-header-line {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+        .forecast-header-title {
+          display: flex;
+          align-items: center;
+          min-width: 0;
+        }
+        .forecast-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        .forecast-matrix-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .forecast-matrix-title {
+          min-width: 0;
+        }
+        .forecast-matrix-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        @media (max-width: 840px) {
+          .forecast-header-line {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .forecast-header-actions {
+            width: 100%;
+            justify-content: stretch;
+            align-items: stretch;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .accuracy-indicators {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+          .accuracy-item {
+            min-width: 0;
+            flex: 1 1 auto;
+            width: 100%;
+          }
+          .forecast-matrix-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .forecast-matrix-actions {
+            width: 100%;
+            justify-content: space-between;
+            align-items: stretch;
+          }
+          .prediction-card-label {
+            min-width: 0;
+          }
+          .prediction-card-day {
+            font-size: 10px;
+          }
+          .prediction-main {
+            font-size: 10px;
+          }
+          .accuracy-value {
+            font-size: 10px;
+          }
+          .chart-mode-switch {
+            width: 100%;
+            justify-content: center;
+          }
+          .chart-frame {
+            height: 220px;
+          }
+          .rolling-details-toggle {
+            font-size: 10px;
+            padding-left: 8px;
+            padding-right: 8px;
+            min-height: 28px;
+            width: auto;
+            flex-shrink: 0;
+          }
+        }
       `}</style>
 
       <div className="space-y-0">
         <div className="forecast-group">
         <div className="forecast-card pt-3">
           {/* Header */}
-          <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center min-w-0">
+          <div className="forecast-header-line">
+          <div className="forecast-header-title">
             <h3 className="text-gray-400 font-medium">{lang === 'ko' ? 'CCTV 무게예측' : 'CCTV WEIGHT'}</h3>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="forecast-header-actions">
             <div className="accuracy-indicators">
               <div className={`accuracy-item ${getAccuracyTone(Number(avgAccuracy.d1))}`}>
                 <div className="accuracy-label">
@@ -2154,7 +2272,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
               </div>
             </div>
             <button
-              className={`chart-mode-switch ${chartMode === 'accuracy' ? 'active' : ''}`}
+              className={`chart-mode-switch w-full sm:w-auto ${chartMode === 'accuracy' ? 'active' : ''}`}
               onClick={() => setChartMode(m => m === 'main' ? 'accuracy' : 'main')}
             >
               <span>⇄</span>
@@ -2165,70 +2283,72 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
 
           {/* Chart */}
           <div className="chart-container">
-          <canvas ref={chartRef} style={{ display: chartMode === 'main' ? 'block' : 'none' }} />
-          <canvas ref={accuracyChartRef} style={{ display: chartMode === 'accuracy' ? 'block' : 'none' }} />
-          {/* Chart Legend Overlay */}
-          <div className="chart-legend-overlay">
-            {chartMode === 'main' ? (
-              <>
+            <div className="chart-frame">
+              <canvas ref={chartRef} style={{ display: chartMode === 'main' ? 'block' : 'none' }} />
+              <canvas ref={accuracyChartRef} style={{ display: chartMode === 'accuracy' ? 'block' : 'none' }} />
+              {/* Chart Legend Overlay */}
+              <div className="chart-legend-overlay">
+                {chartMode === 'main' ? (
+                  <>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#3fb950] " />
+                      <span>{lang === 'ko' ? '3일 예측 구간' : '3-day Forecast'}</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#4da3ff] " />
+                      <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#808080] " />
+                      <span>{lang === 'ko' ? '예측무게' : 'Predicted'}</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#ffc107] " />
+                      <span>{lang === 'ko' ? '3일예측' : 'Forecast'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#4da3ff] " />
+                      <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#c9d1d9] " />
+                      <span>{lang === 'ko' ? '실측값' : 'Actual'}</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#3fb950] " />
+                      <span>D-1</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#ff7700] " />
+                      <span>D-2</span>
+                    </div>
+                    <div className="legend-row">
+                      <div className="w-2 h-2 bg-[#f85149] " />
+                      <span>D-3</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* Error Range Legend - Top Right */}
+              <div className="chart-error-legend">
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#3fb950] " />
-                  <span>{lang === 'ko' ? '3일 예측 구간' : '3-day Forecast'}</span>
+                  <span className="legend-dot good"></span>
+                  <span>±3%</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#4da3ff] " />
-                  <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
+                  <span className="legend-dot medium"></span>
+                  <span>±5%</span>
                 </div>
                 <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#808080] " />
-                  <span>{lang === 'ko' ? '예측무게' : 'Predicted'}</span>
+                  <span className="legend-dot bad"></span>
+                  <span>{'>'}±5%</span>
                 </div>
-                <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#ffc107] " />
-                  <span>{lang === 'ko' ? '3일예측' : 'Forecast'}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#4da3ff] " />
-                  <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
-                </div>
-                <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#c9d1d9] " />
-                  <span>{lang === 'ko' ? '실측값' : 'Actual'}</span>
-                </div>
-                <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#3fb950] " />
-                  <span>D-1</span>
-                </div>
-                <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#ff7700] " />
-                  <span>D-2</span>
-                </div>
-                <div className="legend-row">
-                  <div className="w-2 h-2 bg-[#f85149] " />
-                  <span>D-3</span>
-                </div>
-              </>
-            )}
-          </div>
-          {/* Error Range Legend - Top Right */}
-          <div className="chart-error-legend">
-            <div className="legend-row">
-              <span className="legend-dot good"></span>
-              <span>±3%</span>
+              </div>
             </div>
-            <div className="legend-row">
-              <span className="legend-dot medium"></span>
-              <span>±5%</span>
-            </div>
-            <div className="legend-row">
-              <span className="legend-dot bad"></span>
-              <span>{'>'}±5%</span>
-            </div>
-          </div>
-          <div className="mt-1 flex justify-end">
+            <div className="chart-measurement-time">
             <p className="text-[10px] text-gray-500">
               {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
             </p>
@@ -2239,14 +2359,16 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         <div className="forecast-card">
           {/* Table Title & Header */}
           <div className="mt-1 border-t border-[#30363d] pt-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '3일 예측 매트릭스' : 'ROLLING FORECAST MATRIX'}</h3>
-            <div className="flex items-center gap-3">
+          <div className="forecast-matrix-header">
+            <div className="forecast-matrix-title">
+              <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '3일 예측 매트릭스' : 'ROLLING FORECAST MATRIX'}</h3>
+            </div>
+            <div className="forecast-matrix-actions">
               <div className="accuracy-indicators">
                 {predictionCards.map((card) => (
                   <div key={card.key} className="accuracy-item prediction-item">
-                    <div className="accuracy-label">
-                      <span className="day">{card.label}</span>
+                    <div className="accuracy-label prediction-card-label">
+                      <span className="day prediction-card-day">{card.label}</span>
                     </div>
                     <div className="accuracy-segments prediction-placeholder">
                       {[0, 1, 2].map((i) => (
@@ -2254,17 +2376,19 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                       ))}
                     </div>
                     <span className="accuracy-value prediction-value">
-                      <TraceableValue
-                        value={<span className={`prediction-main ${card.tone}`}>{card.value}</span>}
-                        trace={card.trace}
-                        onOpenTrace={onOpenTrace}
-                        indicatorMode="compact"
-                        align="center"
-                        className="w-auto justify-center px-0 py-0"
-                      />
-                      {card.isToday && <span className={`prediction-error ${card.tone}`}>{card.errorText}</span>}
-                    </span>
-                  </div>
+                                  <TraceableValue
+                                    value={<span className={`prediction-main ${card.tone}`}>{card.value}</span>}
+                                    trace={card.trace}
+                                    onOpenTrace={onOpenTrace}
+                                    indicatorMode="compact"
+                                    align="center"
+                                    className="w-auto justify-center px-0 py-0"
+                                  />
+                                  {card.isToday && (
+                                    <span className={`prediction-error ${card.tone} hidden lg:inline`}>{card.errorText}</span>
+                                  )}
+                                </span>
+                              </div>
                 ))}
               </div>
               {!isRollingCollapsed && (
@@ -2284,7 +2408,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
               )}
               <button
                 type="button"
-                className={`border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center gap-1 ${
+                className={`rolling-details-toggle border min-h-[30px] px-[10px] py-[4px] text-[11px] md:text-[12px] font-bold transition-colors flex items-center gap-1 ${
                   isRollingCollapsed
                     ? 'border-[#30363d] text-gray-400 hover:text-gray-200'
                     : 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'

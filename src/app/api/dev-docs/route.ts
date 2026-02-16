@@ -104,6 +104,29 @@ const parseFrontmatter = (content: string): { meta: Record<string, string>; body
   return { meta, body: body.replace(/^\n+/, '') };
 };
 
+const dateToSortableNumber = (value: string | null): number => {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const [yy, mm, dd] = value.split('.').map(Number);
+  if ([yy, mm, dd].some(Number.isNaN)) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const fullYear = yy < 100 ? 2000 + yy : yy;
+  const date = new Date(Date.UTC(fullYear, mm - 1, dd));
+  if (
+    date.getUTCFullYear() !== fullYear ||
+    date.getUTCMonth() !== mm - 1 ||
+    date.getUTCDate() !== dd
+  ) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  return date.getTime();
+};
+
 const collectMarkdownFiles = async (dir: string): Promise<string[]> => {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files = await Promise.all(
@@ -150,7 +173,14 @@ export async function GET() {
       }),
     );
 
-    docs.sort((a, b) => a.path.localeCompare(b.path));
+    docs.sort((a, b) => {
+      const aDate = dateToSortableNumber(a.updatedAt);
+      const bDate = dateToSortableNumber(b.updatedAt);
+      if (aDate !== bDate) {
+        return bDate - aDate;
+      }
+      return a.path.localeCompare(b.path);
+    });
 
     return NextResponse.json(
       { docs },
