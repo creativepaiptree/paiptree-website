@@ -47,10 +47,10 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
       <div className={`w-20 h-20 bg-gradient-to-br ${gradient} rounded-3xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform duration-300`}>
         <span className="text-3xl">{icon}</span>
       </div>
-      <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-white/90 transition-colors">
+      <h3 className="text-2xl font-bold mb-4 text-[var(--surface-text)] group-hover:opacity-90 transition-colors">
         {title}
       </h3>
-      <p className="text-gray-400 text-lg leading-relaxed group-hover:text-gray-300 transition-colors">
+      <p className="text-[var(--surface-text-muted)] text-lg leading-relaxed group-hover:opacity-90 transition-colors">
         {description}
       </p>
     </div>
@@ -82,10 +82,10 @@ export const PersonCard: React.FC<PersonCardProps> = ({
         </div>
       </div>
       <div className="absolute bottom-8 left-8 right-8">
-        <h3 className="text-white font-bold text-lg mb-2 group-hover:text-white/90 transition-colors">
+        <h3 className="text-[var(--surface-text)] font-bold text-lg mb-2 group-hover:opacity-90 transition-colors">
           {title}
         </h3>
-        <p className="text-gray-300 text-sm leading-relaxed group-hover:text-gray-200 transition-colors">
+        <p className="text-[var(--surface-text-muted)] text-sm leading-relaxed group-hover:opacity-90 transition-colors">
           {description}
         </p>
       </div>
@@ -105,7 +105,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   return (
     <div 
-      className={`glass-card group cursor-pointer hover:bg-white/10 transition-all duration-300 ${className}`}
+      className={`glass-card group cursor-pointer hover:bg-[var(--glass-bg)] transition-all duration-300 ${className}`}
       onClick={onClick}
     >
       {image ? (
@@ -118,10 +118,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       )}
       
-      <h3 className="text-xl font-bold text-white mb-3 group-hover:text-white/90 transition-colors">
+      <h3 className="text-xl font-bold text-[var(--surface-text)] mb-3 group-hover:opacity-90 transition-colors">
         {name}
       </h3>
-      <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
+      <p className="text-[var(--surface-text-muted)] leading-relaxed group-hover:opacity-90 transition-colors">
         {description}
       </p>
     </div>
