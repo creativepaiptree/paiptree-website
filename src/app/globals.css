@@ -16,32 +16,69 @@
   src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff');
 }
 
-/* Palantir-style CSS Variables */
+/*
+  Theme Foundation (conservative rollout)
+  - :root keeps existing visual defaults
+  - [data-theme] layers allow incremental surface split (marketing/showcase)
+*/
 :root {
   /* Background Colors */
   --bg-primary: #0A0A0A;
   --bg-secondary: #1A1A1A;
   --bg-tertiary: #2A2A2A;
-  
+
   /* Text Colors */
   --text-primary: #FFFFFF;
   --text-secondary: #A1A1AA;
   --text-muted: #6B7280;
-  
+
   /* Accent Colors (Purple-Blue Gradient) */
   --accent-from: #8B5CF6;
   --accent-to: #3B82F6;
-  
+
   /* Border & Effects */
   --border-subtle: rgba(255, 255, 255, 0.1);
   --border-hover: rgba(255, 255, 255, 0.2);
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
-  
+
   /* Shadows */
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 10px 25px rgba(139, 92, 246, 0.3);
+
+  /* Semantic design tokens (foundation) */
+  --surface-bg: var(--bg-primary);
+  --surface-bg-elevated: var(--bg-secondary);
+  --surface-bg-soft: var(--bg-tertiary);
+  --surface-text: var(--text-primary);
+  --surface-text-muted: var(--text-secondary);
+  --surface-border: var(--border-subtle);
+  --surface-border-strong: var(--border-hover);
+}
+
+/* Corporate / marketing surface (current default visuals) */
+[data-theme='marketing'] {
+  --surface-bg: var(--bg-primary);
+  --surface-bg-elevated: var(--bg-secondary);
+  --surface-bg-soft: var(--bg-tertiary);
+  --surface-text: var(--text-primary);
+  --surface-text-muted: var(--text-secondary);
+  --surface-border: var(--border-subtle);
+  --surface-border-strong: var(--border-hover);
+}
+
+/* Product / showcase surface (reserved for PoC/TMS split) */
+[data-theme='showcase'] {
+  --accent-from: #6366F1;
+  --accent-to: #22D3EE;
+  --surface-bg: #070B14;
+  --surface-bg-elevated: #0E1524;
+  --surface-bg-soft: #111B2E;
+  --surface-text: #F8FAFC;
+  --surface-text-muted: #CBD5E1;
+  --surface-border: rgba(148, 163, 184, 0.25);
+  --surface-border-strong: rgba(148, 163, 184, 0.45);
 }
 
 * {

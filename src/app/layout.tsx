@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>
+      <body className={inter.className} data-theme="marketing" data-surface="corp">
         <LanguageProvider>
           {children}
         </LanguageProvider>
