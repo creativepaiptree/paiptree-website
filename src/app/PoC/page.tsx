@@ -31,7 +31,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="h-screen bg-[#0d1117] text-gray-100 flex flex-col overflow-hidden">
+    <div data-theme="showcase" data-surface="product" className="h-screen bg-[#0d1117] text-gray-100 flex flex-col overflow-hidden">
       {/* Top Navbar */}
       <Navbar lang={lang} setLang={setLang} />
 

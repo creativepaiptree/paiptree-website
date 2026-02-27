@@ -50,7 +50,7 @@ export default function TmsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div data-theme="showcase" data-surface="product" className="min-h-screen bg-white">
       {/* Header - Logo and Language Toggle */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-4">
