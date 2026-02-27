@@ -97,8 +97,8 @@ body {
 }
 
 body {
-  color: var(--text-primary);
-  background: var(--bg-primary);
+  color: var(--surface-text);
+  background: var(--surface-bg);
 }
 
 a {

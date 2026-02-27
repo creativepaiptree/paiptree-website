@@ -24,8 +24,8 @@ const Section: React.FC<SectionProps> = ({
   const baseStyles = 'relative overflow-hidden';
   
   const backgrounds = {
-    dark: 'bg-stability-dark',
-    darker: 'bg-stability-darker',
+    dark: 'bg-[var(--surface-bg)]',
+    darker: 'bg-[var(--surface-bg-elevated)]',
     transparent: 'bg-transparent'
   };
 

@@ -20,9 +20,9 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'font-medium rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black';
   
   const variants = {
-    primary: 'bg-white text-black hover:bg-gray-100 focus:ring-gray-300',
-    secondary: 'border border-gray-600 text-white hover:border-gray-400 hover:bg-white/5 focus:ring-gray-500',
-    outline: 'border border-white/20 text-white hover:bg-white/5 focus:ring-white/50'
+    primary: 'bg-[var(--surface-text)] text-[var(--surface-bg)] hover:opacity-90 focus:ring-gray-300',
+    secondary: 'border border-[var(--surface-border)] text-[var(--surface-text)] hover:border-[var(--surface-border-strong)] hover:bg-[var(--glass-bg)] focus:ring-gray-500',
+    outline: 'border border-[var(--surface-border)] text-[var(--surface-text)] hover:bg-[var(--glass-bg)] focus:ring-white/50'
   };
 
   const sizes = {
