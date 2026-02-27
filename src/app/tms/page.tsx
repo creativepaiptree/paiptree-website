@@ -52,7 +52,7 @@ export default function TmsPage() {
   return (
     <div data-theme="showcase" data-surface="product" className="min-h-screen bg-[var(--surface-bg)] text-[var(--surface-text)]">
       {/* Header - Logo and Language Toggle */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-[color:color-mix(in_oklab,var(--surface-bg)_80%,transparent)] backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo - Top Left */}
           <a href="/tms" className="flex items-center">
@@ -63,7 +63,7 @@ export default function TmsPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleLanguage}
-              className="px-5 py-1 bg-transparent text-black border border-black rounded text-sm font-medium hover:bg-black hover:text-white transition-all"
+              className="px-5 py-1 bg-transparent text-[var(--surface-text)] border border-[var(--surface-border-strong)] rounded text-sm font-medium hover:bg-[var(--surface-text)] hover:text-[var(--surface-bg)] transition-all"
             >
               {language === 'ko' ? 'KO' : 'EN'}
             </button>
@@ -81,12 +81,12 @@ export default function TmsPage() {
               
               {/* Dropdown Menu */}
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[160px]">
+                <div className="absolute right-0 top-full mt-2 bg-[var(--surface-bg-elevated)] rounded-lg shadow-lg border border-[var(--surface-border)] py-2 min-w-[160px]">
                   <a
                     href="https://drive.google.com/file/d/1UQfjyRRMhnVtp395De5Q3V9yCUriRlH7/view?usp=drive_link"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="block px-4 py-2 text-sm text-[var(--surface-text-muted)] hover:bg-[var(--surface-bg-soft)] transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
                     {language === 'ko' ? '📖 메뉴얼 보기' : '📖 View Manual'}
@@ -99,7 +99,7 @@ export default function TmsPage() {
       </div>
 
       {/* Hero Section - Full Screen */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20 relative overflow-hidden bg-white">
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20 relative overflow-hidden bg-[var(--surface-bg)]">
         {/* Background Image */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
           <Image
@@ -117,13 +117,13 @@ export default function TmsPage() {
         </div>
 
         <div className="max-w-2xl mx-auto text-center relative z-10">
-          <div className="mb-8 text-base font-bold tracking-wide uppercase text-gray-500">
+          <div className="mb-8 text-base font-bold tracking-wide uppercase text-[var(--surface-text-muted)]">
             {t('tms.hero.badge')}
           </div>
-          <h1 className="lg:text-[40px] text-[28px] font-bold text-gray-900 mb-6 leading-[140%] whitespace-pre-line">
+          <h1 className="lg:text-[40px] text-[28px] font-bold text-[var(--surface-text)] mb-6 leading-[140%] whitespace-pre-line">
             {t('tms.hero.title').replace(', ', ',\n')}
           </h1>
-          <p className="text-base md:text-lg text-gray-600 leading-relaxed whitespace-pre-line">
+          <p className="text-base md:text-lg text-[var(--surface-text-muted)] leading-relaxed whitespace-pre-line">
             {t('tms.hero.subtitle')}
           </p>
 
@@ -136,13 +136,13 @@ export default function TmsPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
             <button
               onClick={handleDownload}
-              className="flex-1 sm:max-w-[300px] px-8 py-4 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl cursor-pointer whitespace-nowrap"
+              className="flex-1 sm:max-w-[300px] px-8 py-4 bg-[var(--surface-text)] text-[var(--surface-bg)] font-semibold rounded-full hover:opacity-90 transition-all shadow-lg hover:shadow-xl cursor-pointer whitespace-nowrap"
             >
               {t('tms.download.buttons.android')}
             </button>
             <a
               href="#features"
-              className="flex-1 sm:max-w-[300px] px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all text-center whitespace-nowrap"
+              className="flex-1 sm:max-w-[300px] px-8 py-4 bg-[var(--surface-bg-elevated)] text-[var(--surface-text)] font-semibold rounded-full border-2 border-[var(--surface-border)] hover:border-[var(--surface-border-strong)] transition-all text-center whitespace-nowrap"
             >
               {t('tms.download.buttons.learnMore')}
             </a>
@@ -151,7 +151,7 @@ export default function TmsPage() {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce z-10">
-          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-[var(--surface-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
