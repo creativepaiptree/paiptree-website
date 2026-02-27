@@ -160,14 +160,14 @@ export default function TmsPage() {
 
 
       {/* Enterprise Features Section - Grid Cards */}
-      <section className="bg-white">
+      <section className="bg-[var(--surface-bg)]">
         <div className="lg:pt-[140px] lg:pb-[160px] pt-[40px] pb-[60px] flex flex-col items-center px-5">
           {/* Header */}
           <div className="text-center mb-8 lg:mb-[60px]">
-            <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
+            <p className="text-sm font-bold tracking-wide uppercase text-[var(--surface-text-muted)] mb-4">
               {t('tms.enterprise.badge')}
             </p>
-            <h2 className="lg:text-[40px] text-[28px] font-bold text-gray-900 leading-[140%]">
+            <h2 className="lg:text-[40px] text-[28px] font-bold text-[var(--surface-text)] leading-[140%]">
               {t('tms.enterprise.title')}
             </h2>
           </div>
@@ -183,7 +183,7 @@ export default function TmsPage() {
               return (
                 <div
                   key={index}
-                  className={`rounded-xl shadow-[1px_1px_18px_0px_rgba(97,121,148,0.12)] bg-white overflow-hidden hover:shadow-[1px_1px_24px_0px_rgba(97,121,148,0.18)] transition-shadow ${
+                  className={`rounded-xl shadow-[1px_1px_18px_0px_rgba(97,121,148,0.12)] bg-[var(--surface-bg-elevated)] border border-[var(--surface-border)] overflow-hidden hover:shadow-[1px_1px_24px_0px_rgba(97,121,148,0.18)] transition-shadow ${
                     isDataInsightsCard ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black' : ''
                   }`}
                   onClick={isDataInsightsCard ? openDataInsights : undefined}
@@ -215,10 +215,10 @@ export default function TmsPage() {
                     />
                   </div>
                   <div className="lg:p-5 lg:pb-8 p-4 pb-5 flex flex-col gap-2">
-                    <h3 className="lg:text-2xl text-base font-semibold text-[#222] leading-[150%]">
+                    <h3 className="lg:text-2xl text-base font-semibold text-[var(--surface-text)] leading-[150%]">
                       {title}
                     </h3>
-                    <p className="lg:text-lg text-sm font-medium leading-[140%] text-[#4E5968]">
+                    <p className="lg:text-lg text-sm font-medium leading-[140%] text-[var(--surface-text-muted)]">
                       {description}
                     </p>
                   </div>
