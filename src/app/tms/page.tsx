@@ -230,14 +230,14 @@ export default function TmsPage() {
       </section>
 
       {/* Key Features Section - TMS 사용법 */}
-      <section id="features" className="bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <section id="features" className="bg-gradient-to-br from-[var(--surface-bg-soft)] via-[var(--surface-bg)] to-[var(--surface-bg-soft)]">
         <div className="lg:pt-[140px] lg:pb-[160px] pt-[40px] pb-[60px] flex flex-col items-center px-5">
           {/* Header */}
           <div className="text-center mb-8 lg:mb-[60px]">
-            <p className="text-sm font-bold tracking-wide uppercase text-gray-500 mb-4">
+            <p className="text-sm font-bold tracking-wide uppercase text-[var(--surface-text-muted)] mb-4">
               {t('tms.features.badge')}
             </p>
-            <h2 className="lg:text-[40px] text-[28px] font-bold text-gray-900 leading-[140%]">
+            <h2 className="lg:text-[40px] text-[28px] font-bold text-[var(--surface-text)] leading-[140%]">
               {t('tms.features.title')}
             </h2>
           </div>
@@ -254,11 +254,11 @@ export default function TmsPage() {
                 {/* Text Content */}
                 <div className="flex flex-col lg:gap-[60px] gap-[20px]">
                   <div className={`flex flex-col lg:gap-5 gap-2.5 ${index % 2 === 1 ? 'lg:items-end lg:text-end' : 'lg:items-start lg:text-start'} items-start text-start`}>
-                    <h3 className="lg:text-[36px] text-[24px] font-bold leading-[140%] text-black">
-                      <span className="text-black">{t(`tms.features.blocks.${index}.keyword`)}</span> {t(`tms.features.blocks.${index}.title`)}
+                    <h3 className="lg:text-[36px] text-[24px] font-bold leading-[140%] text-[var(--surface-text)]">
+                      <span className="text-[var(--surface-text)]">{t(`tms.features.blocks.${index}.keyword`)}</span> {t(`tms.features.blocks.${index}.title`)}
                     </h3>
-                    <div className="h-[3px] w-full bg-black"></div>
-                    <p className="lg:text-xl text-base font-medium leading-[140%] text-[#4E5968] whitespace-pre-line">
+                    <div className="h-[3px] w-full bg-[var(--surface-text)]"></div>
+                    <p className="lg:text-xl text-base font-medium leading-[140%] text-[var(--surface-text-muted)] whitespace-pre-line">
                       {t(`tms.features.blocks.${index}.description`)}
                     </p>
                   </div>
@@ -269,16 +269,16 @@ export default function TmsPage() {
                       const iconKey = t(`tms.features.blocks.${index}.cards.${cardIndex}.icon`);
                       const IconComponent = featureIcons[iconKey];
                       return (
-                        <div key={cardIndex} className="lg:w-[452px] w-full lg:rounded-xl rounded-lg border border-[#D8DDEA] lg:py-4 lg:px-5 py-3 px-4 bg-white flex flex-col justify-center">
+                        <div key={cardIndex} className="lg:w-[452px] w-full lg:rounded-xl rounded-lg border border-[var(--surface-border)] lg:py-4 lg:px-5 py-3 px-4 bg-[var(--surface-bg-elevated)] flex flex-col justify-center">
                           <div className="flex lg:gap-3 gap-2 items-center">
                             <div className="w-6 h-6 flex-shrink-0">
                               {IconComponent ? <IconComponent /> : <span className="text-2xl">{iconKey}</span>}
                             </div>
-                            <h4 className="lg:text-lg text-base font-semibold leading-[35px] text-[#2B2C2E]">
+                            <h4 className="lg:text-lg text-base font-semibold leading-[35px] text-[var(--surface-text)]">
                               {t(`tms.features.blocks.${index}.cards.${cardIndex}.title`)}
                             </h4>
                           </div>
-                          <p className="lg:text-base text-sm font-normal leading-[24px] text-[#494949] mt-1 lg:ml-[36px] whitespace-pre-line">
+                          <p className="lg:text-base text-sm font-normal leading-[24px] text-[var(--surface-text-muted)] mt-1 lg:ml-[36px] whitespace-pre-line">
                             {t(`tms.features.blocks.${index}.cards.${cardIndex}.description`)}
                           </p>
                         </div>
