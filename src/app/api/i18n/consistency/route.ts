@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readI18nConsistencyData, type FlatTranslation, type I18nConsistencyData, type Lang, type Service } from '@/app/i18n/consistency.server';
 
-export const dynamic = 'force-dynamic';
-
 const isObjectLike = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
