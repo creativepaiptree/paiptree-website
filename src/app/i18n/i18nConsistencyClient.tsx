@@ -42,6 +42,8 @@ type SaveApiResponse = {
   error?: string;
 };
 
+const SAVE_PASSWORD = 'creative';
+
 const buildRows = (
   data: ServiceConsistency,
   query: string,
@@ -303,6 +305,16 @@ export default function I18nConsistencyClient({ initialData }: Props) {
   };
 
   const onSave = async () => {
+    const password = window.prompt('저장하려면 비밀번호를 입력하세요.');
+    if (password === null) {
+      return;
+    }
+
+    if (password !== SAVE_PASSWORD) {
+      setMessage('비밀번호가 올바르지 않습니다.');
+      return;
+    }
+
     setSaving(true);
     setMessage('저장 요청 중...');
     try {
