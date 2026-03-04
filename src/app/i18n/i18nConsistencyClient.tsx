@@ -62,7 +62,7 @@ const buildRows = (
     for (const lang of activeLangs) {
       const map = data.languages[lang] ?? {};
       const hasKey = Object.prototype.hasOwnProperty.call(map, key);
-      const value = hasKey ? map[key] : null;
+      const value = hasKey ? map[key] ?? '' : '';
 
       let type: 'missing' | 'empty' | 'ok' = 'ok';
       if (!hasKey || map === undefined) {
@@ -72,8 +72,7 @@ const buildRows = (
         if (stat) {
           stat.missing += 1;
         }
-      } else if (value === '')
-       {
+      } else if (value === '') {
         type = 'empty';
         hasIssue = true;
         const stat = issueSummary.find((item) => item.lang === lang);
@@ -85,7 +84,7 @@ const buildRows = (
       cells.push({
         lang,
         type,
-        text: hasKey ? value : '',
+        text: value,
         hasKey,
       });
     }
