@@ -1,3 +1,9 @@
+---
+title: i18n Supabase Bootstrap 가이드
+author: ZORO
+last_updated: 26.03.05
+---
+
 # i18n Supabase Bootstrap (Public)
 
 ## 실행할 SQL
@@ -25,7 +31,7 @@ ORDER BY service, lang;
 
 예시
 
-```
+```bash
 SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_SERVICE_KEY=<service_role_key>
 ```

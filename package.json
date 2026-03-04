@@ -9,6 +9,8 @@
     "docs:validate": "node scripts/docs-validate.mjs",
     "docs:check": "npm run docs:sync && npm run docs:validate",
     "docs:scaffold:page": "node scripts/docs-scaffold-page.mjs",
+    "storybook": "npx --yes storybook dev -p 6006",
+    "build-storybook": "npx --yes storybook build",
     "prebuild": "npm run docs:check",
     "build": "next build",
     "start": "next start",
@@ -23,17 +25,23 @@
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
+    "react-is": "^19.2.4",
     "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
+    "@storybook/addon-links": "^10.2.10",
+    "@storybook/nextjs": "^10.2.10",
+    "@storybook/react": "^10.2.10",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "ajv": "^8.18.0",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
     "postcss": "^8",
+    "storybook": "^10.2.10",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }

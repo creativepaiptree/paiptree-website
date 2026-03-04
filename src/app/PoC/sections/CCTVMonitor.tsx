@@ -17,7 +17,10 @@ import type { TraceabilityPayload } from '@/types/traceability';
 interface CCTVMonitorProps {
   lang: 'ko' | 'en';
   onOpenTrace: (trace: TraceabilityPayload) => void;
+  state?: 'default' | 'loading' | 'empty' | 'error';
 }
+
+export type CCTVMonitorState = 'default' | 'loading' | 'empty' | 'error';
 
 type ImageStatus = 'ok' | 'failed' | 'missing';
 type EventType = 'person' | 'vehicle' | 'intrusion' | 'none';
@@ -111,6 +114,8 @@ const t = {
   imageUrl: { ko: '가공 이미지 URL', en: 'Processed image URL' },
   loadingLive: { ko: '라이브 상태 로딩 중...', en: 'Loading live state...' },
   loadingArchive: { ko: '보관 배치 로딩 중...', en: 'Loading archived batches...' },
+  liveError: { ko: '라이브 상태 조회 실패', en: 'Live status request failed' },
+  archiveError: { ko: '보관 분석 조회 실패', en: 'Archive image request failed' },
 };
 
 const statusLabel: Record<ImageStatus, { ko: string; en: string }> = {
@@ -273,7 +278,7 @@ const getStatusCounts = (images: ProcessedArchiveImage[]) => {
   };
 };
 
-const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
+const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps) => {
   const [activeCamera, setActiveCamera] = useState<string>('CT01');
   const [activeBatchId, setActiveBatchId] = useState<string>('CT01-latest');
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
@@ -284,14 +289,75 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
   const [archiveBatches, setArchiveBatches] = useState<ArchiveBatch[]>([]);
   const [loadingLive, setLoadingLive] = useState(false);
   const [loadingArchive, setLoadingArchive] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (state === 'default') {
+      setLoadingLive(false);
+      setLoadingArchive(false);
+      setArchiveBatches([]);
+      setLiveState(null);
+      setLiveError(null);
+      setArchiveError(null);
+      return;
+    }
+
+    if (state === 'loading') {
+      setLoadingLive(true);
+      setLoadingArchive(true);
+      setLiveState(null);
+      setArchiveBatches([]);
+      setLiveError(null);
+      setArchiveError(null);
+      return;
+    }
+
+    if (state === 'empty') {
+      setLoadingLive(false);
+      setLoadingArchive(false);
+      setLiveState(mockLiveStateMap[activeCamera] ?? null);
+      setArchiveBatches([]);
+      setLiveError(null);
+      setArchiveError(null);
+      return;
+    }
+
+    if (state === 'error') {
+      setLoadingLive(false);
+      setLoadingArchive(false);
+      setArchiveBatches([]);
+      setLiveState(mockLiveStateMap[activeCamera] ?? null);
+      setLiveError(
+        lang === 'ko'
+          ? '실시간 스트림 상태 조회에 실패했습니다. 나중에 다시 시도하세요.'
+          : 'Failed to load live stream state.'
+      );
+      setArchiveError(
+        lang === 'ko'
+          ? '보관 분석 배치 조회에 실패했습니다. 나중에 다시 시도하세요.'
+          : 'Failed to load archive data.'
+      );
+      return;
+    }
+  }, [activeCamera, lang, state]);
+
+  useEffect(() => {
+    if (state !== 'default') {
+      return;
+    }
+
     let cancelled = false;
     setLoadingLive(true);
     void fetchLiveStreamState(activeCamera)
       .then((result) => {
         if (!cancelled) {
           setLiveState(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLiveError(lang === 'ko' ? '실시간 상태 조회 실패' : 'Failed to load live state');
         }
       })
       .finally(() => {
@@ -303,15 +369,24 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
     return () => {
       cancelled = true;
     };
-  }, [activeCamera]);
+  }, [activeCamera, lang, state]);
 
   useEffect(() => {
+    if (state !== 'default') {
+      return;
+    }
+
     let cancelled = false;
     setLoadingArchive(true);
     void fetchArchiveBatches(activeCamera)
       .then((result) => {
         if (!cancelled) {
           setArchiveBatches(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setArchiveError(lang === 'ko' ? '보관 배치 조회 실패' : 'Failed to load archive batches');
         }
       })
       .finally(() => {
@@ -323,7 +398,7 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
     return () => {
       cancelled = true;
     };
-  }, [activeCamera]);
+  }, [activeCamera, lang, state]);
 
   useEffect(() => {
     setActiveBatchId(`${activeCamera}-latest`);
@@ -1206,22 +1281,22 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
                    <WifiOff className="w-3.5 h-3.5 text-[#f85149]" />
                  )}
                  <span>
-                   {t.streamStatus[lang]}: {loadingLive ? t.loadingLive[lang] : liveState?.online ? t.online[lang] : t.offline[lang]}
+                   {t.streamStatus[lang]}: {liveError ? t.liveError[lang] : loadingLive ? t.loadingLive[lang] : liveState?.online ? t.online[lang] : t.offline[lang]}
                  </span>
-               </div>
-               <div className="ops-item">
+                </div>
+                <div className="ops-item">
                  <Clock3 className="w-3.5 h-3.5 text-[#58a6ff]" />
                  <span>
-                   {t.latency[lang]}: {loadingLive ? '-' : liveState?.online ? `${liveState.latencyMs}ms` : '-'}
+                   {t.latency[lang]}: {liveError || loadingLive ? '-' : liveState?.online ? `${liveState.latencyMs}ms` : '-'}
                  </span>
-               </div>
-               <div className="ops-item">
+                </div>
+                <div className="ops-item">
                  <Camera className="w-3.5 h-3.5 text-gray-400" />
                  <span>
-                   {t.lastHeartbeat[lang]}: {loadingLive ? '--:--' : liveState?.lastHeartbeat ?? '--:--'}
+                   {t.lastHeartbeat[lang]}: {liveError || loadingLive ? '--:--' : liveState?.lastHeartbeat ?? '--:--'}
                  </span>
-               </div>
-               <button type="button" className="retry-btn" onClick={reconnectStream} disabled={retrying}>
+                </div>
+                <button type="button" className="retry-btn" onClick={reconnectStream} disabled={retrying}>
                  <RefreshCw className={`w-3.5 h-3.5${retrying ? ' spin' : ''}`} />
                  {retrying ? t.retrying[lang] : t.retry[lang]}
                </button>
@@ -1240,9 +1315,9 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
                  />
                )}
                <div className="live-overlay">
-                 <span className="badge">
-                   <span className="live-pulse" />
-                   {liveState?.online ? 'LIVE' : 'OFF'}
+               <span className="badge">
+                 <span className="live-pulse" />
+                   {liveError ? 'ERR' : liveState?.online ? 'LIVE' : 'OFF'}
                  </span>
                  <span className="badge">{activeCamera}</span>
                  <span className="badge">SRC 920x720</span>
@@ -1284,6 +1359,7 @@ const CCTVMonitor = ({ lang, onOpenTrace }: CCTVMonitorProps) => {
              </div>
 
              <div className="archive-content">
+            {archiveError && <div className="text-[11px] text-[#f85149]">{archiveError}</div>}
              {loadingArchive && (
                <div className="text-[11px] text-gray-500">{t.loadingArchive[lang]}</div>
              )}

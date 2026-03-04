@@ -9,6 +9,8 @@ type TracePanelProps = {
   open: boolean;
   trace: TraceabilityPayload | null;
   onClose: () => void;
+  state?: 'default' | 'loading' | 'empty' | 'error';
+  stateMessage?: string;
 };
 
 type TraceTab = 'summary' | 'logic' | 'sources' | 'history' | 'cctv';
@@ -79,6 +81,10 @@ const t = {
   frameInfo: { ko: '프레임 정보', en: 'Frame info' },
   pipelineInfo: { ko: '파이프라인 정보', en: 'Pipeline info' },
   rawInfo: { ko: '원본 링크', en: 'Raw links' },
+  loading: { ko: '로딩 중', en: 'Loading' },
+  loadingHint: { ko: '추적 데이터를 로딩하고 있습니다.', en: 'Loading trace data.' },
+  empty: { ko: '표시할 추적 데이터가 없습니다.', en: 'No trace data available.' },
+  error: { ko: '추적 데이터 조회 실패', en: 'Failed to load trace data.' },
 };
 
 const BASE_TAB_ORDER: TraceTab[] = ['summary', 'logic', 'sources'];
@@ -98,7 +104,14 @@ const getDeltaClassName = (delta: number | null): string => {
   return 'text-gray-100';
 };
 
-const TracePanel = ({ lang, open, trace, onClose }: TracePanelProps) => {
+const TracePanel = ({
+  lang,
+  open,
+  trace,
+  onClose,
+  state = 'default',
+  stateMessage,
+}: TracePanelProps) => {
   const [tab, setTab] = useState<TraceTab>('summary');
   const [selectedSourceIndex, setSelectedSourceIndex] = useState(0);
   const [sourceContext, setSourceContext] = useState<SourceContext>('current');
@@ -303,7 +316,122 @@ const TracePanel = ({ lang, open, trace, onClose }: TracePanelProps) => {
     }
   };
 
-  if (!open || !trace) {
+  if (!open) {
+    return null;
+  }
+
+  if (state === 'loading') {
+    return (
+      <>
+        <button
+          type="button"
+          aria-label="trace overlay"
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={onClose}
+        />
+        <aside className="fixed right-0 top-0 z-50 h-full w-full max-w-[760px] border-l border-[#30363d] bg-[#0d1117] text-gray-200 shadow-2xl">
+          <div className="flex h-full flex-col">
+            <div className="flex items-start justify-between border-b border-[#30363d] px-4 py-3">
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold">{t.title[lang]}</h2>
+                <p className="text-xs text-gray-500">{t.loading[lang]}</p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 border border-[#30363d] px-2 py-1 text-xs text-gray-300 hover:bg-[#21262d]"
+                onClick={onClose}
+              >
+                <X className="h-3.5 w-3.5" />
+                Close
+              </button>
+            </div>
+            <div className="flex-1 px-4 py-3">
+              <div className="h-full w-full rounded border border-[#30363d] bg-[#11161d] p-4 text-sm text-gray-400">
+                <p>{stateMessage ?? t.loadingHint[lang]}</p>
+                <div className="mt-3 h-2 w-full overflow-hidden rounded bg-[#0d1117]">
+                  <div className="h-full w-2/5 animate-pulse bg-[#58a6ff]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </>
+    );
+  }
+
+  if (state === 'empty') {
+    return (
+      <>
+        <button
+          type="button"
+          aria-label="trace overlay"
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={onClose}
+        />
+        <aside className="fixed right-0 top-0 z-50 h-full w-full max-w-[760px] border-l border-[#30363d] bg-[#0d1117] text-gray-200 shadow-2xl">
+          <div className="flex h-full flex-col">
+            <div className="flex items-start justify-between border-b border-[#30363d] px-4 py-3">
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold">{t.title[lang]}</h2>
+                <p className="text-xs text-gray-500">{t.empty[lang]}</p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 border border-[#30363d] px-2 py-1 text-xs text-gray-300 hover:bg-[#21262d]"
+                onClick={onClose}
+              >
+                <X className="h-3.5 w-3.5" />
+                Close
+              </button>
+            </div>
+            <div className="flex-1 px-4 py-3">
+              <div className="h-full w-full rounded border border-[#30363d] bg-[#11161d] p-4 text-sm text-gray-400">
+                <p>{stateMessage ?? t.empty[lang]}</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </>
+    );
+  }
+
+  if (state === 'error') {
+    return (
+      <>
+        <button
+          type="button"
+          aria-label="trace overlay"
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={onClose}
+        />
+        <aside className="fixed right-0 top-0 z-50 h-full w-full max-w-[760px] border-l border-[#30363d] bg-[#0d1117] text-gray-200 shadow-2xl">
+          <div className="flex h-full flex-col">
+            <div className="flex items-start justify-between border-b border-[#30363d] px-4 py-3">
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold">{t.title[lang]}</h2>
+                <p className="text-xs text-[#f85149]">{t.error[lang]}</p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 border border-[#30363d] px-2 py-1 text-xs text-gray-300 hover:bg-[#21262d]"
+                onClick={onClose}
+              >
+                <X className="h-3.5 w-3.5" />
+                Close
+              </button>
+            </div>
+            <div className="flex-1 px-4 py-3">
+              <div className="h-full w-full rounded border border-[#30363d] bg-[#11161d] p-4 text-sm text-[#f85149]">
+                <p>{stateMessage ?? t.error[lang]}</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </>
+    );
+  }
+
+  if (!trace) {
     return null;
   }
 

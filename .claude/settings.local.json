@@ -14,7 +14,27 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(rm:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run lint:*)",
+      "WebSearch",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:www.palantir.com)",
+      "WebFetch(domain:carbondesignsystem.com)",
+      "WebFetch(domain:www.uxmatters.com)",
+      "WebFetch(domain:docs.snowflake.com)",
+      "WebFetch(domain:help.qlik.com)",
+      "WebFetch(domain:stripe.com)",
+      "WebFetch(domain:linear.app)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:notion.so)",
+      "WebFetch(domain:figma.com)",
+      "WebFetch(domain:openai.com)",
+      "WebFetch(domain:anthropic.com)",
+      "WebFetch(domain:datadog.com)",
+      "WebFetch(domain:snowflake.com)",
+      "WebFetch(domain:palantir.com)",
+      "Bash(npx next dev:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
