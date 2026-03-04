@@ -106,15 +106,14 @@ const fetchLanguageOverrides = async (service: Service): Promise<{
   endpoint.searchParams.set('limit', '100000');
 
   try {
-    const response = await fetch(endpoint.toString(), {
-      method: 'GET',
-      headers: {
-        apikey: config.supabaseKey,
-        Authorization: `Bearer ${config.supabaseKey}`,
-        Accept: 'application/json',
-      },
-      cache: 'no-store',
-    });
+      const response = await fetch(endpoint.toString(), {
+        method: 'GET',
+        headers: {
+          apikey: config.supabaseKey,
+          Authorization: `Bearer ${config.supabaseKey}`,
+          Accept: 'application/json',
+        },
+      });
 
     if (!response.ok) {
       const body = await response.text();
