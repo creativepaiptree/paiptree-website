@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  ...(process.env.NODE_ENV === 'production' && process.env.I18N_STATIC_EXPORT !== '0'
+    ? {
+        output: 'export',
+      }
+    : {}),
   trailingSlash: true,
   images: {
     unoptimized: true,

@@ -23,6 +23,13 @@ export const FILE_PREFIX: Record<Service, string> = {
   'FM-EMS and PoC': 'ems',
 };
 
+type SupabaseOverridePayload = {
+  service: string;
+  lang: string;
+  key: string;
+  value: string | null;
+};
+
 const isObjectLike = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
@@ -58,6 +65,97 @@ const flattenTranslations = (
   return out;
 };
 
+const getSupabaseConfig = () => {
+  const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_KEY?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  return {
+    supabaseUrl: supabaseUrl.endsWith('/') ? supabaseUrl : `${supabaseUrl}/`,
+    supabaseKey,
+  };
+};
+
+const normalizeValue = (value: unknown): string => {
+  if (typeof value === 'undefined' || value === null) {
+    return '';
+  }
+
+  return String(value);
+};
+
+const fetchLanguageOverrides = async (service: Service): Promise<{
+  data: Partial<Record<Lang, FlatTranslation>>;
+  error: string | null;
+}> => {
+  const config = getSupabaseConfig();
+  if (!config) {
+    return { data: {}, error: null };
+  }
+
+  const endpoint = new URL(`/rest/v1/i18n_translation_overrides`, config.supabaseUrl);
+  endpoint.searchParams.set('select', 'service,lang,key,value');
+  endpoint.searchParams.set('service', `eq.${service}`);
+  endpoint.searchParams.set('order', 'lang.asc,key.asc');
+  endpoint.searchParams.set('limit', '100000');
+
+  try {
+    const response = await fetch(endpoint.toString(), {
+      method: 'GET',
+      headers: {
+        apikey: config.supabaseKey,
+        Authorization: `Bearer ${config.supabaseKey}`,
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      return {
+        data: {},
+        error: `Supabase 번역 데이터 조회 실패 (${response.status}): ${body}`,
+      };
+    }
+
+    const rows = (await response.json()) as unknown[];
+    if (!Array.isArray(rows)) {
+      return { data: {}, error: 'Supabase 응답이 배열이 아닙니다.' };
+    }
+
+    const data: Partial<Record<Lang, FlatTranslation>> = {};
+    for (const row of rows) {
+      if (!isObjectLike(row)) {
+        continue;
+      }
+      const payload = row as SupabaseOverridePayload;
+      const lang = payload.lang as Lang;
+      if (!LANGS.includes(lang as Lang)) {
+        continue;
+      }
+
+      const current = data[lang] ?? {};
+      if (typeof payload.key === 'string') {
+        current[payload.key] = normalizeValue(payload.value);
+      }
+      data[lang] = current;
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    return {
+      data: {},
+      error: error instanceof Error ? error.message : 'Supabase 조회 중 알 수 없는 오류',
+    };
+  }
+};
+
 const readServiceData = async (service: Service): Promise<ServiceConsistency> => {
   const filenamePrefix = FILE_PREFIX[service];
   const serviceDir = path.join(I18N_ROOT_DIR, service);
@@ -81,6 +179,33 @@ const readServiceData = async (service: Service): Promise<ServiceConsistency> =>
     } catch (error) {
       errors[lang] = error instanceof Error ? error.message : '알 수 없는 오류';
       languages[lang] = {};
+    }
+  }
+
+  const overrideResult = await fetchLanguageOverrides(service);
+  if (overrideResult.error) {
+    for (const lang of LANGS) {
+      const existed = errors[lang];
+      errors[lang] = existed
+        ? `${existed} / Supabase: ${overrideResult.error}`
+        : `Supabase: ${overrideResult.error}`;
+    }
+  } else {
+    for (const lang of LANGS) {
+      const overrideMap = overrideResult.data[lang];
+      if (!overrideMap) {
+        continue;
+      }
+
+      const merged = {
+        ...(languages[lang] ?? {}),
+        ...overrideMap,
+      };
+      languages[lang] = merged;
+
+      for (const key of Object.keys(overrideMap)) {
+        keys.add(key);
+      }
     }
   }
 

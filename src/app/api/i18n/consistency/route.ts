@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server';
-import {
-  FILE_PREFIX,
-  readI18nConsistencyData,
-  type FlatTranslation,
-  type I18nConsistencyData,
-  type Lang,
-  type Service,
-} from '@/app/i18n/consistency.server';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
+import { readI18nConsistencyData, type FlatTranslation, type I18nConsistencyData, type Lang, type Service } from '@/app/i18n/consistency.server';
 
-const I18N_ROOT_DIR = path.join(process.cwd(), 'i18n', 'FM-i18n');
+export const dynamic = 'force-dynamic';
 
 const isObjectLike = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -89,6 +80,66 @@ const buildTsContent = (flat: FlatTranslation, keys: string[]): string => {
   return `export default ${serializeValue(nested, 0)};\n`;
 };
 
+const getSupabaseConfig = () => {
+  const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_KEY?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  return {
+    supabaseUrl: supabaseUrl.endsWith('/') ? supabaseUrl : `${supabaseUrl}/`,
+    supabaseKey,
+  };
+};
+
+const upsertOverrides = async (service: Service, payload: Partial<Record<Lang, FlatTranslation>>) => {
+  const config = getSupabaseConfig();
+  if (!config) {
+    throw new Error(
+      'Supabase 설정이 없습니다. SUPABASE_URL 또는 NEXT_PUBLIC_SUPABASE_URL, 그리고 SUPABASE_SERVICE_KEY/SUPABASE_SERVICE_ROLE_KEY 또는 NEXT_PUBLIC_SUPABASE_KEY가 필요합니다.',
+    );
+  }
+
+  const rows = Object.entries(payload)
+    .filter((entry): entry is [Lang, FlatTranslation] => entry[1] !== undefined)
+    .flatMap(([lang, translations]) =>
+      Object.entries(translations).map(([key, value]) => ({
+        service,
+        lang,
+        key,
+        value,
+      })),
+    );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const endpoint = new URL('/rest/v1/i18n_translation_overrides', config.supabaseUrl);
+  endpoint.searchParams.set('on_conflict', 'service,lang,key');
+
+  const response = await fetch(endpoint.toString(), {
+    method: 'POST',
+    headers: {
+      apikey: config.supabaseKey,
+      Authorization: `Bearer ${config.supabaseKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates',
+    },
+    body: JSON.stringify(rows),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Supabase 저장 실패 (${response.status}): ${body}`);
+  }
+};
+
 type SavePayload = {
   service: Service;
   keys: string[];
@@ -140,8 +191,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const serviceDir = path.join(I18N_ROOT_DIR, payload.service);
     const keys = Array.from(new Set(payload.keys)).sort((a, b) => a.localeCompare(b));
+    const toSave: Partial<Record<Lang, FlatTranslation>> = {};
 
     for (const lang of ['en', 'ko', 'th', 'tw', 'jp'] as const) {
       const map = payload.languages?.[lang] ?? {};
@@ -152,11 +203,10 @@ export async function POST(req: Request) {
         flat[key] = typeof value === 'string' ? value : '';
       }
 
-      const content = buildTsContent(flat, keys);
-      const filename = `${FILE_PREFIX[payload.service]}_${lang}.ts`;
-      const filePath = path.join(serviceDir, filename);
-      await fs.writeFile(filePath, content, 'utf-8');
+      toSave[lang] = flat;
     }
+
+    await upsertOverrides(payload.service, toSave);
 
     return NextResponse.json(
       {
