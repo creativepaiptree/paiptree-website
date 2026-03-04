@@ -1,7 +1,7 @@
 ---
 title: "/tms 페이지 운영 문서"
 author: ZORO
-last_updated: 26.02.11
+last_updated: 26.03.05
 ---
 # /tms 페이지 운영 문서
 

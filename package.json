@@ -12,7 +12,7 @@
     "storybook": "npx --yes storybook dev -p 6006",
     "build-storybook": "npx --yes storybook build",
     "prebuild": "npm run docs:check",
-    "build": "next build",
+    "build": "I18N_STATIC_EXPORT=0 next build",
     "start": "next start",
     "lint": "next lint",
     "export": "next build && next export"
