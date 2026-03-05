@@ -42,6 +42,13 @@ type SaveApiResponse = {
   error?: string;
 };
 
+type ChangeItem = {
+  key: string;
+  lang: Lang;
+  oldVal: string;
+  newVal: string;
+};
+
 const SAVE_PASSWORD = 'creative';
 
 const buildRows = (
@@ -229,6 +236,10 @@ export default function I18nConsistencyClient({ initialData }: Props) {
   const [workingData, setWorkingData] = useState<I18nConsistencyData>(() => cloneInitialData(initialData));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<ChangeItem[]>([]);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const activeData = workingData[service];
   const visibleLangs = LANGS.filter((lang) => activeLangs.includes(lang));
@@ -303,17 +314,43 @@ export default function I18nConsistencyClient({ initialData }: Props) {
     }
   };
 
-  const onSave = async () => {
-    const password = window.prompt('저장하려면 비밀번호를 입력하세요.');
-    if (password === null) {
+  const computeChanges = (): ChangeItem[] => {
+    const initial = initialData[service];
+    const working = workingData[service];
+    const changes: ChangeItem[] = [];
+
+    for (const key of working.keys) {
+      for (const lang of LANGS) {
+        const oldVal = initial.languages[lang]?.[key] ?? '';
+        const newVal = working.languages[lang]?.[key] ?? '';
+        if (oldVal !== newVal) {
+          changes.push({ key, lang, oldVal, newVal });
+        }
+      }
+    }
+
+    return changes;
+  };
+
+  const onSave = () => {
+    const changes = computeChanges();
+    if (changes.length === 0) {
+      setMessage('변경된 내용이 없습니다.');
+      return;
+    }
+    setPendingChanges(changes);
+    setConfirmPassword('');
+    setConfirmPasswordError('');
+    setConfirmOpen(true);
+  };
+
+  const onConfirmSave = async () => {
+    if (confirmPassword !== SAVE_PASSWORD) {
+      setConfirmPasswordError('비밀번호가 올바르지 않습니다.');
       return;
     }
 
-    if (password !== SAVE_PASSWORD) {
-      setMessage('비밀번호가 올바르지 않습니다.');
-      return;
-    }
-
+    setConfirmOpen(false);
     setSaving(true);
     setMessage('저장 요청 중...');
     try {
@@ -518,6 +555,88 @@ export default function I18nConsistencyClient({ initialData }: Props) {
           </tbody>
         </table>
       </div>
+
+      {/* Confirm save modal */}
+      {confirmOpen ? (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="max-w-[560px] w-full mx-4 bg-[#161b22] border border-[#30363d]">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
+              <span className="text-xs font-semibold text-[#c9d1d9]">
+                변경 내용 확인 ({pendingChanges.length}개)
+              </span>
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                className="text-[#8b949e] hover:text-[#c9d1d9] text-xs transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Changes list */}
+            <div className="max-h-[320px] overflow-y-auto">
+              <table className="w-full border-collapse text-[11px]">
+                <thead className="sticky top-0 bg-[#0d1117]">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-[#8b949e] font-semibold border-b border-[#30363d] w-[40%]">key</th>
+                    <th className="px-3 py-2 text-left text-[#8b949e] font-semibold border-b border-[#30363d] w-[8%]">lang</th>
+                    <th className="px-3 py-2 text-left text-[#8b949e] font-semibold border-b border-[#30363d] w-[26%]">이전</th>
+                    <th className="px-3 py-2 text-left text-[#8b949e] font-semibold border-b border-[#30363d] w-[26%]">이후</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingChanges.map((item) => (
+                    <tr key={`${item.key}-${item.lang}`} className="border-b border-[#30363d]/50">
+                      <td className="px-3 py-2 text-[#8b949e] break-all font-mono">{item.key}</td>
+                      <td className="px-3 py-2">
+                        <span className="text-[#8b949e] bg-[#11161d] border border-[#30363d] px-1 py-[1px] text-[10px]">{item.lang}</span>
+                      </td>
+                      <td className="px-3 py-2 text-[#f85149] break-all">{item.oldVal || <span className="text-[#6e7681]">(없음)</span>}</td>
+                      <td className="px-3 py-2 text-[#3fb950] break-all">{item.newVal || <span className="text-[#6e7681]">(비움)</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Password + actions */}
+            <div className="px-4 py-3 border-t border-[#30363d] space-y-3">
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-[#8b949e] shrink-0">비밀번호</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setConfirmPasswordError(''); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') onConfirmSave(); }}
+                  placeholder="입력 후 Enter"
+                  className="flex-1 bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] placeholder-[#6e7681] px-2 py-1 text-xs outline-none focus:border-[#58a6ff]"
+                  autoFocus
+                />
+              </div>
+              {confirmPasswordError ? (
+                <p className="text-[11px] text-[#f85149]">{confirmPasswordError}</p>
+              ) : null}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmOpen(false)}
+                  className="border border-[#30363d] text-[#8b949e] hover:text-[#c9d1d9] px-3 py-1.5 text-xs transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={onConfirmSave}
+                  className="border border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10 px-3 py-1.5 text-xs"
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
