@@ -310,7 +310,7 @@ export default function DashPage() {
       <main className="flex-1 overflow-y-auto flex flex-col">
 
         {/* Member identity — 상단 고정 */}
-        <div className="shrink-0 flex flex-col items-center gap-2 px-4 pt-5 pb-4 border-b border-[#30363d]">
+        <div className="shrink-0 flex flex-col items-center gap-2 px-4 pt-5 pb-4">
           <span
             className="text-[10px] font-mono border px-2 py-[1px] uppercase tracking-widest"
             style={{ color: MEMBER.color, borderColor: MEMBER.color }}
