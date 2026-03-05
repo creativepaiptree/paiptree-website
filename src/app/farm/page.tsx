@@ -192,10 +192,10 @@ export default function FarmPage() {
       </header>
 
       {/* ─ Body ───────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-row overflow-hidden">
+      <div className="flex-1 flex flex-row overflow-hidden p-3 gap-3">
 
         {/* ─ Left Sidebar ─ */}
-        <aside className="w-56 shrink-0 bg-[#161b22] border-r border-[#30363d] flex flex-col overflow-hidden">
+        <aside className="w-56 shrink-0 bg-[#161b22] border border-[#30363d] flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-[#30363d]">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#58a6ff] font-mono">Farm Explorer</span>
           </div>
@@ -242,7 +242,7 @@ export default function FarmPage() {
         </aside>
 
         {/* ─ Main Content ─ */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden border border-[#30363d]">
           {/* Breadcrumb bar */}
           <div className="shrink-0 flex items-center px-4 py-2 border-b border-[#30363d] bg-[#0d1117]">
             <span className="text-xs font-mono text-[#8b949e]">Farm</span>
@@ -416,7 +416,7 @@ export default function FarmPage() {
         </main>
 
         {/* ─ Right Inspector ─ */}
-        <aside className="w-64 shrink-0 bg-[#161b22] border-l border-[#30363d] flex flex-col overflow-hidden">
+        <aside className="w-64 shrink-0 bg-[#161b22] border border-[#30363d] flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-[#30363d]">
             <span className="text-xs font-bold uppercase tracking-wider text-[#c9d1d9]">Camera Inspector</span>
           </div>

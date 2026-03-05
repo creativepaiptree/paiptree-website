@@ -494,7 +494,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto px-4 py-3">
         <table className="w-full border-collapse text-xs">
           <thead className="sticky top-0 z-10 bg-[#161b22]">
             <tr>

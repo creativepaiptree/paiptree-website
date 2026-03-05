@@ -218,10 +218,10 @@ export default function TmsSchedulePage() {
       </div>
 
       {/* Main */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden p-3 gap-3">
 
         {/* Left sidebar */}
-        <aside className="w-72 flex-shrink-0 border-r border-[#30363d] bg-[#161b22] flex flex-col">
+        <aside className="w-72 flex-shrink-0 border border-[#30363d] bg-[#161b22] flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-[#c9d1d9]">배차 목록</span>
@@ -257,7 +257,7 @@ export default function TmsSchedulePage() {
         </aside>
 
         {/* Right detail */}
-        <section className="flex-1 flex flex-col overflow-hidden">
+        <section className="flex-1 flex flex-col overflow-hidden border border-[#30363d]">
           <div className="flex-shrink-0 flex items-start justify-between px-5 py-4 border-b border-[#30363d] bg-[#161b22]">
             <div>
               <div className="flex items-center gap-2 mb-2">
