@@ -48,6 +48,12 @@ const TOOLS: { href: string; name: string; badge: string; badgeColor: string; ex
     badgeColor: '#ff7700',
   },
   {
+    href: '/storybook',
+    name: 'Storybook(3.0)',
+    badge: 'DOCS',
+    badgeColor: '#e91e8c',
+  },
+  {
     href: '/i18n',
     name: 'i18n(ai,ems/PoC)',
     badge: 'TOOL',
