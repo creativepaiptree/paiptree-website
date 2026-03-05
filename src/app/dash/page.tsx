@@ -307,10 +307,10 @@ export default function DashPage() {
       </div>
 
       {/* ─ Main ───────────────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto flex flex-col items-center justify-center py-6 px-4 gap-5">
+      <main className="flex-1 overflow-y-auto flex flex-col">
 
-        {/* Member identity */}
-        <div className="flex flex-col items-center gap-2 shrink-0">
+        {/* Member identity — 상단 고정 */}
+        <div className="shrink-0 flex flex-col items-center gap-2 px-4 pt-5 pb-4 border-b border-[#30363d]">
           <span
             className="text-[10px] font-mono border px-2 py-[1px] uppercase tracking-widest"
             style={{ color: MEMBER.color, borderColor: MEMBER.color }}
@@ -322,6 +322,9 @@ export default function DashPage() {
           </p>
           <p className="text-[11px] text-[#8b949e] font-mono">{MEMBER.desc}</p>
         </div>
+
+        {/* Service Architecture Map — 나머지 공간 가운데 */}
+        <div className="flex-1 flex items-center justify-center px-4 py-6">
 
         {/* Service Architecture Map */}
         <div className="w-full max-w-3xl flex flex-col gap-2 shrink-0">
@@ -405,6 +408,7 @@ export default function DashPage() {
             </svg>
           </div>
         </div>
+        </div>{/* flex-1 center wrapper */}
       </main>
 
       {/* ─ Footer ─────────────────────────────────────────────────────────── */}
