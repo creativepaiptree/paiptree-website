@@ -354,10 +354,11 @@ export default function DashPage() {
               <p className="text-[10px] font-mono text-[#6e7681] uppercase tracking-widest">Service Architecture</p>
               <p className="text-[9px] font-mono text-[#30363d]">Farmers-Mind Platform · v1.0</p>
             </div>
-            <div className="flex gap-3 items-start">
+            {/* relative: inspector를 absolute로 올려놓기 위한 기준 */}
+            <div className="relative">
 
-              {/* Diagram */}
-              <div className="flex-1 border border-[#30363d] bg-[#0d1117] min-w-0">
+              {/* Diagram — inspector 표시 여부와 무관하게 항상 full-width 유지 */}
+              <div className="border border-[#30363d] bg-[#0d1117]">
                 <svg viewBox="0 0 900 460" className="w-full h-auto">
                   <defs>
                     <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -422,9 +423,9 @@ export default function DashPage() {
                 </svg>
               </div>
 
-              {/* Inspector */}
+              {/* Inspector — diagram 위에 오른쪽 끝에 absolute 오버레이 */}
               {selectedArchNode && (
-                <div className="w-52 shrink-0 bg-[#161b22] border border-[#30363d] p-4 flex flex-col gap-3">
+                <div className="absolute right-0 top-0 bottom-0 w-52 bg-[#161b22]/[0.97] border-l border-[#30363d] p-4 flex flex-col gap-3 overflow-y-auto">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1 min-w-0">
                       <span
