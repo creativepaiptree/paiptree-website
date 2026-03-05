@@ -235,7 +235,7 @@ const Header = ({ lang, onOpenTrace }: HeaderProps) => {
       {/* Left Card - Weather Info */}
       <div className="xl:basis-[35%] flex-shrink-0 bg-[#161b22] p-3 border border-[#30363d]">
         <div className="h-full flex items-center justify-center">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
+          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-3">
             <span className="text-2xl sm:text-3xl font-bold text-[#3fb950]">33.2°</span>
             <div className="flex items-center gap-1 text-[#3fb950]">
