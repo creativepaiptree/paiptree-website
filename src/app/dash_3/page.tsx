@@ -1,14 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import DashFloatingNav from '@/components/dash/DashFloatingNav';
+import MemberFloatingNav from '@/components/dash/MemberFloatingNav';
 
 const MEMBER = {
-  spaceName: 'zoro_LAB',
-  descShort: '영연님의 테스트 및 연구 개발공간입니다.',
-  desc: '크리에이티브팀 영연님의 테스트 및 연구 개발공간입니다.',
-  role: 'Planner / PM',
-  color: '#58a6ff',
+  spaceName: 'HK_LAB',
+  descShort: '현국님의 테스트 및 연구 개발공간입니다.',
+  desc: '크리에이티브팀 현국님의 테스트 및 연구 개발공간입니다.',
+  role: 'Dev / AI Research',
+  color: '#8b5cf6',
 };
 
 const MEMBER_SELECT = [
@@ -17,7 +17,7 @@ const MEMBER_SELECT = [
   { key: 'hk',   label: 'HK(강현국)',   href: '/dash_3' },
 ];
 
-export default function DashPage() {
+export default function Dash3Page() {
   const router = useRouter();
 
   return (
@@ -35,7 +35,7 @@ export default function DashPage() {
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <select
-            value="zoro"
+            value="hk"
             onChange={(e) => {
               const item = MEMBER_SELECT.find((m) => m.key === e.target.value);
               if (item) router.push(item.href);
@@ -77,7 +77,7 @@ export default function DashPage() {
         </span>
       </footer>
 
-      <DashFloatingNav current="/dash" />
+      <MemberFloatingNav labName="HK_LAB" />
     </div>
   );
 }
