@@ -42,6 +42,12 @@ const TOOLS: { href: string; name: string; badge: string; badgeColor: string; ex
     badgeColor: '#ff7700',
   },
   {
+    href: '/farm',
+    name: 'Farm Camera Ops',
+    badge: 'PROTOTYPE',
+    badgeColor: '#ff7700',
+  },
+  {
     href: '/i18n',
     name: 'i18n(ai,ems/PoC)',
     badge: 'TOOL',
