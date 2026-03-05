@@ -493,8 +493,9 @@ export default function I18nConsistencyClient({ initialData }: Props) {
         ) : null}
       </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto px-4 py-3">
+      {/* Table — bordered panel */}
+      <div className="flex-1 overflow-hidden p-3">
+        <div className="h-full overflow-auto border border-[#30363d]">
         <table className="w-full border-collapse text-xs">
           <thead className="sticky top-0 z-10 bg-[#161b22]">
             <tr>
@@ -555,6 +556,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Confirm save modal */}
