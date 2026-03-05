@@ -22,11 +22,34 @@ const MEMBER_SELECT = [
 type ArchLayer  = 'edge' | 'service' | 'core' | 'backend';
 type NodeStatus = 'live' | 'dev' | 'inactive' | 'planned';
 type ArchNode = {
-  id: string; name: string; sub: string;
-  layer: ArchLayer; status: NodeStatus;
-  color: string; href: string | null;
-  cx: number; cy: number; w: number; h: number;
-  desc: string; connects: string[];
+  id: string;
+  name: string;
+  sub: string;
+  layer: ArchLayer;
+  status: NodeStatus;
+  color: string;
+  href: string | null;
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+  summary: string;
+  modules: string[];
+  endpoints: string[];
+  dataFlow: string[];
+  risks: string[];
+};
+
+type ArchLink = {
+  id: string;
+  from: string;
+  to: string;
+  path: string;
+  label: string;
+  tone: 'edge' | 'core' | 'backend' | 'neutral' | 'planned';
+  dashed?: boolean;
+  lx?: number; // label box center x
+  ly?: number; // label box center y
 };
 
 const STATUS_CFG: Record<NodeStatus, { label: string; color: string }> = {
@@ -38,23 +61,313 @@ const STATUS_CFG: Record<NodeStatus, { label: string; color: string }> = {
 
 const ARCH_NODES: ArchNode[] = [
   // ── Farm Edge ────────────────────────────────────────────────────────────────
-  { id: 'sensor',  name: 'Farm Sensor',      sub: '센서 / 체중계',        layer: 'edge',    status: 'live',     color: '#ff7700', href: null,    cx: 230, cy: 55,  w: 155, h: 44, desc: '현장 체중계·환경 센서 수집기. sensorCollector, fileCollector가 데이터를 수집해 Data Collection으로 전송', connects: ['Data Collection'] },
-  { id: 'cctv',    name: 'CCTV / Camera',    sub: 'CCTV 관제',            layer: 'edge',    status: 'live',     color: '#ff7700', href: '/farm', cx: 670, cy: 55,  w: 155, h: 44, desc: '현장 CCTV 및 AI 카메라. cctvManager, imageTransfer로 영상·이미지 수집. nvrManager를 통해 NVR에 저장', connects: ['NVR / NAS'] },
+  {
+    id: 'sensor',
+    name: '온습도계',
+    sub: '온도 / 습도 / 체중계',
+    layer: 'edge',
+    status: 'live',
+    color: '#ff7700',
+    href: null,
+    cx: 230,
+    cy: 60,
+    w: 155,
+    h: 44,
+    summary: '현장 온습도계·체중계의 1차 수집 포인트. sensorCollector/fileCollector가 데이터를 받아 Data Collection으로 전달.',
+    modules: ['온습도계 (환경센서)', '체중계 (중량 측정)', 'sensorCollector', 'fileCollector'],
+    endpoints: ['현장 장치 수집 채널', '센서 업로드 배치/이벤트'],
+    dataFlow: ['온습도·체중 데이터 → Data Collection'],
+    risks: ['센서 동기화 실패 시 재시도/백필 필요', '네트워크 불안정 시 수집 누락 가능'],
+  },
+  {
+    id: 'cctv',
+    name: 'CCTV / Camera',
+    sub: 'CCTV 관제',
+    layer: 'edge',
+    status: 'live',
+    color: '#ff7700',
+    href: '/farm',
+    cx: 670,
+    cy: 60,
+    w: 155,
+    h: 44,
+    summary: '현장 영상/이미지 수집 소스. cctvManager 및 imageTransfer 계열이 처리.',
+    modules: ['cctvManager', 'imageTransfer', '영상/알람 이벤트'],
+    endpoints: ['현장 카메라 RTSP/스냅샷', 'NVR 저장 연계'],
+    dataFlow: ['영상·이미지 이벤트 → NVR / NAS'],
+    risks: ['스트림 동시성 증가 시 지연', '저장소 용량 정책 미정으로 과거 이력 관리 불안정'],
+  },
   // ── Service ──────────────────────────────────────────────────────────────────
-  { id: 'ems',     name: 'Farmers-Mind_ems', sub: '기업 모니터링',        layer: 'service', status: 'live',     color: '#3fb950', href: '/PoC',  cx: 134, cy: 158, w: 155, h: 52, desc: 'fms.farmers-mind.com 운영 중. Vue3/Quasar + Spring Boot. 전체 농장 통계, 출하 예측, 기업 운영자 대시보드', connects: ['API Gateway'] },
-  { id: 'aiapp',   name: 'Farmers-Mind_ai',  sub: '농장주 모바일',        layer: 'service', status: 'inactive', color: '#8b5cf6', href: null,    cx: 345, cy: 158, w: 155, h: 52, desc: 'platform/notused. FM-mobile / FM-back. 개별 농장주가 자신의 농장 현황·체중 예측을 확인하는 모바일 서비스', connects: ['API Gateway'] },
-  { id: 'tms',     name: 'Farmers-Mind_tms', sub: '차량 관제',            layer: 'service', status: 'dev',      color: '#f0883e', href: '/tms',  cx: 556, cy: 158, w: 155, h: 52, desc: 'Nuxt3 + Spring Boot. 농장→도축장→유통 차량 배차·위치 추적·정산. TMS, TMS-back, TMS-location', connects: ['API Gateway'] },
-  { id: 'vms',     name: 'Farmers-Mind_vms', sub: '영상 관제',            layer: 'service', status: 'planned',  color: '#6e7681', href: null,    cx: 767, cy: 158, w: 155, h: 52, desc: '계획 단계. VMS-back, VMS-service 리포 존재. 현장 영상 관제 전용 서비스', connects: ['API Gateway'] },
+  {
+    id: 'ems',
+    name: 'Farmers-Mind_ems',
+    sub: '기업 모니터링',
+    layer: 'service',
+    status: 'live',
+    color: '#3fb950',
+    href: '/PoC',
+    cx: 134,
+    cy: 189,
+    w: 155,
+    h: 52,
+    summary: '현재 운영중인 EMS. fms.farmers-mind.com에서 동작하며 API Gateway 경유로 백엔드 호출 수행.',
+    modules: ['FMS(front)', '대시보드 라우팅', 'Pinia 상태관리'],
+    endpoints: ['https://fms.farmers-mind.com', 'FMS-back: 6300(운영), 8080(개발)'],
+    dataFlow: ['브라우저 요청 → API Gateway', '데이터 조회/조작 API'],
+    risks: ['SPA fallback으로 외부에서 Swagger 직접 호출 제한'],
+  },
+  {
+    id: 'aiapp',
+    name: 'Farmers-Mind_ai',
+    sub: '농장주 모바일',
+    layer: 'service',
+    status: 'inactive',
+    color: '#8b5cf6',
+    href: null,
+    cx: 556,
+    cy: 189,
+    w: 155,
+    h: 52,
+    summary: 'platform/notused에 존재한 FM-mobile / FM-back 라인. 현재 미활성으로 점검 대상.',
+    modules: ['FM-mobile', 'FM-back', '농장주 화면'],
+    endpoints: ['platform/service/FM-mobile', 'platform/service/FM-back'],
+    dataFlow: ['기존 API 재사용 가능성 확보 중'],
+    risks: ['권한 체계/UX 동기화 미정'],
+  },
+  {
+    id: 'tms',
+    name: 'Farmers-Mind_tms',
+    sub: '차량 관제',
+    layer: 'service',
+    status: 'dev',
+    color: '#f0883e',
+    href: '/tms',
+    cx: 767,
+    cy: 189,
+    w: 155,
+    h: 52,
+    summary: 'Nuxt3/TMS-back/location 조합으로 운영 중인 물류 관제 축. 차량/운송/정산 맥락이 겹침.',
+    modules: ['TMS(front)', 'TMS-back', 'TMS-location'],
+    endpoints: ['TMS API', 'TMS 위치 이벤트'],
+    dataFlow: ['실시간 위치 조회', '운송 상태 업데이트'],
+    risks: ['라우팅 정책 분산 정합성'],
+  },
+  {
+    id: 'vms',
+    name: 'Farmers-Mind_vms',
+    sub: '영상 관제',
+    layer: 'service',
+    status: 'dev',
+    color: '#f0883e',
+    href: '/farm',
+    cx: 345,
+    cy: 189,
+    w: 155,
+    h: 52,
+    summary: 'EMS와 별도 독립 앱(Quasar + Spring Boot). CCTV 관제·스냅샷·Control Center 전담. VMS-back이 /fms/dash/ 경로를 포함해 FMS 데이터도 직접 서빙.',
+    modules: ['VMS-service (Quasar/Vue3, 48 commits)', 'VMS-back (Spring Boot, 28 commits)', 'cctvManager', 'ControlCenterPage', 'ExternalVmsPage', 'SnapshotPage'],
+    endpoints: ['VmsController: /vms/{token}', 'DashboardController: /fms/dash/', 'DiaryController: /fms/diary/', 'MapController'],
+    dataFlow: ['CCTV 스트림 → Control Center 표시', 'FMS DB 직접 조회 (/fms/* 경유)', '영상 → NVR/NAS 아카이브'],
+    risks: ['FMS-back과 /fms/* 라우트 중복 → API 정합성 리스크', '미배포 상태로 운영 도메인 미확정', '알람 규칙 및 보관 기간 정책 미정'],
+  },
   // ── AI Core ──────────────────────────────────────────────────────────────────
-  { id: 'datacol', name: 'Data Collection',  sub: '수집 / 정제 / 통계',   layer: 'core',    status: 'live',     color: '#58a6ff', href: null,    cx: 200, cy: 275, w: 175, h: 52, desc: 'sensorCollector · fileCollector · dataConsumer · dataStatistic · farmDiaryManager · eventEngine. 현장 데이터 수집·정제·통계 처리', connects: ['AI / ML Engine', 'MariaDB', 'AWS S3'] },
-  { id: 'aiml',    name: 'AI / ML Engine',   sub: '체중예측 추론',         layer: 'core',    status: 'dev',      color: '#58a6ff', href: null,    cx: 450, cy: 275, w: 175, h: 52, desc: 'dataAnalysis + newWeightModule2 (platform/temp 개발 중). AI 체중예측 모델 학습 및 실시간 추론. 핵심 Core-Engine', connects: ['API Gateway', 'MariaDB'] },
-  { id: 'apigw',   name: 'API Gateway',      sub: '요청 라우팅',           layer: 'core',    status: 'live',     color: '#58a6ff', href: null,    cx: 700, cy: 275, w: 175, h: 52, desc: 'apiGateway (운영: 172.31.55.157:8100 / 개발: 3.36.42.219:8100). 모든 서비스 요청 라우팅 및 인증 처리', connects: ['Redis', 'MariaDB'] },
+  {
+    id: 'datacol',
+    name: 'Data Collection',
+    sub: '수집 / 정제 / 통계',
+    layer: 'core',
+    status: 'live',
+    color: '#58a6ff',
+    href: null,
+    cx: 205,
+    cy: 319,
+    w: 155,
+    h: 52,
+    summary: '센서·파일 수집 데이터를 정제하고 통계/이벤트로 정돈하는 파이프라인 코어.',
+    modules: ['sensorCollector', 'fileCollector', 'dataConsumer', 'dataStatistic', 'eventEngine', 'farmDiaryManager'],
+    endpoints: ['core 모듈 내부 연동'],
+    dataFlow: ['Raw 데이터 정합', 'DB 반영', 'AI 피처 입력'],
+    risks: ['수집 실패 시 지연, 중복 처리 리스크'],
+  },
+  {
+    id: 'farmDiary',
+    name: 'farmDiaryManager',
+    sub: '사육일지 처리',
+    layer: 'core',
+    status: 'dev',
+    color: '#58a6ff',
+    href: null,
+    cx: 390,
+    cy: 319,
+    w: 165,
+    h: 52,
+    summary: 'farmDiaryManager 기반으로 농장 일지/이벤트를 관리하는 독립 코어.',
+    modules: ['farmDiaryManager', '일지 이벤트 동기화'],
+    endpoints: ['farmDiaryManager: 172.31.55.157:8200'],
+    dataFlow: ['사육일지 연동', 'Core 피처 보강'],
+    risks: ['다른 DB 계층과의 키 정합성'],
+  },
+  {
+    id: 'aiml',
+    name: 'AI / ML Engine',
+    sub: '체중예측 추론',
+    layer: 'core',
+    status: 'dev',
+    color: '#58a6ff',
+    href: null,
+    cx: 595,
+    cy: 319,
+    w: 165,
+    h: 52,
+    summary: 'dataAnalysis 및 newWeightModule2 계열로 체중 예측/이력 추론 수행.',
+    modules: ['dataAnalysis', 'newWeightModule2'],
+    endpoints: ['AI 분석 API', '학습/추론 파이프라인'],
+    dataFlow: ['feature 변환', '예측값 반환'],
+    risks: ['모델 버전 관리 미정의'],
+  },
+  {
+    id: 'apigw',
+    name: 'API Gateway',
+    sub: '요청 라우팅',
+    layer: 'core',
+    status: 'live',
+    color: '#58a6ff',
+    href: null,
+    cx: 780,
+    cy: 319,
+    w: 130,
+    h: 52,
+    summary: '운영 172.31.55.157:8100, 개발 3.36.42.219:8100. 인증·라우팅·세션 게이트웨이.',
+    modules: ['apiGateway', '라우팅 정책', '인증 위임'],
+    endpoints: ['http://172.31.55.157:8100/apiv1', 'http://3.36.42.219:8100/apiv1'],
+    dataFlow: ['서비스 요청 집약', '백엔드/저장소 호출'],
+    risks: ['라우팅 오류 영향 범위 큼', 'timeout 정책이 전체 품질에 영향'],
+  },
   // ── Backend ──────────────────────────────────────────────────────────────────
-  { id: 'mariadb', name: 'MariaDB',          sub: '주 데이터베이스',       layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 170, cy: 392, w: 140, h: 52, desc: 'MariaDB (172.31.33.100:6241/fms). FMS·TMS 모든 서비스 주 데이터베이스. 농장·파스·출하·정산 데이터 저장', connects: [] },
-  { id: 'redis',   name: 'Redis',            sub: '세션 캐시',             layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 370, cy: 392, w: 140, h: 52, desc: 'Redis. FMS-back 세션 캐시 및 임시 데이터 저장', connects: [] },
-  { id: 's3',      name: 'AWS S3',           sub: '파일 저장소',           layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 560, cy: 392, w: 140, h: 52, desc: 'AWS S3. 이미지·엑셀·첨부파일 등 정적 파일 저장. FMS-back에서 직접 업로드', connects: [] },
-  { id: 'nvr',     name: 'NVR / NAS',        sub: '영상 저장소',           layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 750, cy: 392, w: 140, h: 52, desc: 'nvrManager · nasTransfer. 현장 CCTV 영상·AI 분석 이미지 저장. 고용량 정적 스토리지', connects: [] },
+  {
+    id: 'mariadb',
+    name: 'MariaDB',
+    sub: '주 데이터베이스',
+    layer: 'backend',
+    status: 'live',
+    color: '#8b949e',
+    href: null,
+    cx: 170,
+    cy: 449,
+    w: 140,
+    h: 52,
+    summary: '운영 데이터 저장의 중추 DB. FMS/TMS 공통으로 사용되는 영속 계층.',
+    modules: ['MyBatis Mapper', '도메인 테이블'],
+    endpoints: ['15.164.212.104:6241/fms(개발)', '172.31.33.100:6241/fms(운영)'],
+    dataFlow: ['CRUD/분석 쿼리', '이력 저장'],
+    risks: ['쿼리 성능 병목', '파티셔닝·보존 정책 미정'],
+  },
+  {
+    id: 'redis',
+    name: 'Redis',
+    sub: '세션 캐시',
+    layer: 'backend',
+    status: 'live',
+    color: '#8b949e',
+    href: null,
+    cx: 370,
+    cy: 449,
+    w: 140,
+    h: 52,
+    summary: '세션, 캐시 데이터 처리에 사용되는 빠른 보조 저장소.',
+    modules: ['세션 저장소', '임시 캐시'],
+    endpoints: ['RedisConfig'],
+    dataFlow: ['로그인 세션', '빈번 조회 캐시'],
+    risks: ['TTL/캐시 갱신 정책 불일치'],
+  },
+  {
+    id: 's3',
+    name: 'AWS S3',
+    sub: '파일 저장소',
+    layer: 'backend',
+    status: 'live',
+    color: '#8b949e',
+    href: null,
+    cx: 560,
+    cy: 449,
+    w: 140,
+    h: 52,
+    summary: '이미지·엑셀·첨부파일 등 비정형 정적 자산 저장.',
+    modules: ['S3Config', '미디어 업로드'],
+    endpoints: ['AWS S3 버킷'],
+    dataFlow: ['미디어 업로드', '기록 보관'],
+    risks: ['버킷 정책 변경 위험', '메타데이터 정합'],
+  },
+  {
+    id: 'nvr',
+    name: 'NVR / NAS',
+    sub: '영상 저장소',
+    layer: 'backend',
+    status: 'live',
+    color: '#8b949e',
+    href: null,
+    cx: 750,
+    cy: 449,
+    w: 140,
+    h: 52,
+    summary: '영상 및 이미지 보관형 스토리지. CCTV 파이프라인의 하단 저장 지점.',
+    modules: ['nvrManager', 'nasTransfer'],
+    endpoints: ['NVR / NAS 네트워크 경로'],
+    dataFlow: ['영상 아카이브', 'AI 분석 참조'],
+    risks: ['보관기간/용량 관리 미정'],
+  },
 ];
+
+const ARCH_LINKS: ArchLink[] = [
+  // ── Farm Edge ─────────────────────────────────────────────────────────────
+  // sensor bottom-center(230,82) → datacol top-center(205,293); bus y=254 in SERVICE-CORE gap
+  { id: 'sensor->datacol', from: 'sensor', to: 'datacol', label: '온습도/체중 수집', tone: 'edge',
+    path: 'M230,82 L230,254 L205,254 L205,293', lx: 217, ly: 248 },
+  // cctv right-center(748,60) → nvr top-center(750,423); right bypass x=885
+  { id: 'cctv->nvr',       from: 'cctv',   to: 'nvr',    label: '영상 아카이빙', tone: 'edge',
+    path: 'M748,60 L885,60 L885,423 L750,423',  lx: 817, ly: 53  },
+  // ── Service → API Gateway — bottom-center → top-center (bus y=244~259) ───
+  { id: 'ems->apigw',   from: 'ems',   to: 'apigw', label: '운영 서비스 라우팅', tone: 'core',
+    path: 'M134,215 L134,244 L780,244 L780,293', lx: 457, ly: 238 },
+  { id: 'vms->apigw',   from: 'vms',   to: 'apigw', label: 'VMS API 경유',      tone: 'core',
+    path: 'M345,215 L345,249 L780,249 L780,293', lx: 562, ly: 243 },
+  { id: 'aiapp->apigw', from: 'aiapp', to: 'apigw', label: '미사용/추적',       tone: 'neutral', dashed: true,
+    path: 'M556,215 L556,254 L780,254 L780,293', lx: 668, ly: 248 },
+  { id: 'tms->apigw',   from: 'tms',   to: 'apigw', label: 'TMS API 경유',      tone: 'core',
+    path: 'M767,215 L767,259 L780,259 L780,293', lx: 752, ly: 233 },
+  // ── AI Core horizontal chain — right/left face centers ────────────────────
+  // datacol right-center(288,319) → farmDiary left-center(308,319)
+  { id: 'datacol->farmDiary', from: 'datacol',  to: 'farmDiary', label: '수집 이력 반영', tone: 'core',
+    path: 'M288,319 L308,319', lx: 298, ly: 312 },
+  // farmDiary right-center(473,319) → aiml left-center(513,319)
+  { id: 'farmDiary->aiml',    from: 'farmDiary', to: 'aiml',      label: '피처 제공',     tone: 'core',
+    path: 'M473,319 L513,319', lx: 493, ly: 312 },
+  // aiml right-center(678,319) → apigw left-center(715,319)
+  { id: 'aiml->apigw',        from: 'aiml',      to: 'apigw',     label: '추론 결과',     tone: 'core',
+    path: 'M678,319 L715,319', lx: 696, ly: 312 },
+  // ── Core/Edge → Backend — bottom-center → top-center (bus y=372~400) ─────
+  { id: 'datacol->mariadb', from: 'datacol',  to: 'mariadb', label: '운영 데이터',  tone: 'backend',
+    path: 'M205,345 L205,372 L170,372 L170,423', lx: 187, ly: 366 },
+  { id: 'farmDiary->nvr',   from: 'farmDiary', to: 'nvr',     label: '이벤트 참조',  tone: 'backend',
+    path: 'M390,345 L390,379 L750,379 L750,423', lx: 570, ly: 373 },
+  { id: 'apigw->s3',        from: 'apigw',     to: 's3',      label: '파일 업로드',  tone: 'backend',
+    path: 'M780,345 L780,386 L560,386 L560,423', lx: 670, ly: 380 },
+  { id: 'apigw->redis',     from: 'apigw',     to: 'redis',   label: '세션/캐시',    tone: 'backend',
+    path: 'M780,345 L780,393 L370,393 L370,423', lx: 575, ly: 387 },
+  { id: 'apigw->mariadb',   from: 'apigw',     to: 'mariadb', label: '트랜잭션 DB',  tone: 'backend',
+    path: 'M780,345 L780,400 L170,400 L170,423', lx: 475, ly: 394 },
+];
+
+const ARCH_LINK_STYLE: Record<
+  ArchLink['tone'],
+  { stroke: string; marker: string; opacity?: number; label: string }
+> = {
+  edge: { stroke: '#ff7700', marker: 'arr-edge', opacity: 0.5, label: 'Edge' },
+  core: { stroke: '#58a6ff', marker: 'arr-core', opacity: 0.5, label: 'Core' },
+  backend: { stroke: '#6e7681', marker: 'arr-backend', opacity: 0.6, label: 'Backend' },
+  neutral: { stroke: '#30363d', marker: 'arr', opacity: 0.7, label: 'Service' },
+  planned: { stroke: '#6e7681', marker: 'arr-dim', opacity: 0.8, label: 'Planned' },
+};
 
 const SYSTEM_DOC_BUTTONS = [
   { key: 'hub',       path: 'docs/admin/README.md',                          label: '문서 운영 허브'    },
@@ -307,6 +620,16 @@ export default function DashPage() {
   }, []);
 
   const selectedArchNode = selectedNode ? (ARCH_NODES.find(n => n.id === selectedNode) ?? null) : null;
+  const selectedIncomingLinks = useMemo(() => {
+    if (!selectedArchNode) return [];
+    return ARCH_LINKS.filter(link => link.to === selectedArchNode.id);
+  }, [selectedArchNode]);
+  const selectedOutgoingLinks = useMemo(() => {
+    if (!selectedArchNode) return [];
+    return ARCH_LINKS.filter(link => link.from === selectedArchNode.id);
+  }, [selectedArchNode]);
+
+  const archNodeById = useMemo(() => new Map(ARCH_NODES.map(n => [n.id, n])), []);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#0d1117] text-gray-100" data-poc-theme="dark">
@@ -375,7 +698,7 @@ export default function DashPage() {
             </div>
             {/* Diagram — 항상 full-width */}
             <div className="border border-[#30363d] bg-[#0d1117]">
-                <svg viewBox="0 0 900 482" className="w-full h-auto">
+                <svg viewBox="0 0 900 550" className="w-full h-auto">
                   <defs>
                     <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
                       <circle cx="1" cy="1" r="0.8" fill="#30363d" opacity="0.4" />
@@ -392,42 +715,73 @@ export default function DashPage() {
                     <marker id="arr-core" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                       <polygon points="0 0, 8 3, 0 6" fill="#58a6ff" fillOpacity="0.5" />
                     </marker>
+                    <marker id="arr-backend" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#6e7681" />
+                    </marker>
                   </defs>
 
                   {/* Background */}
-                  <rect x="0" y="0" width="900" height="482" fill="url(#grid-dots)" />
+                  <rect x="0" y="0" width="900" height="550" fill="url(#grid-dots)" />
 
                   {/* ── Layer bands ── */}
-                  <rect x="8" y="14"  width="884" height="78"  fill="#161b22" fillOpacity="0.5"  rx="2" stroke="#ff7700" strokeOpacity="0.2" strokeWidth="1" />
-                  <text x="18" y="27"  fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">FARM EDGE</text>
+                  <rect x="8" y="16"  width="884" height="88"  fill="#161b22" fillOpacity="0.5"  rx="2" stroke="#ff7700" strokeOpacity="0.2" strokeWidth="1" />
+                  <text x="18" y="30"  fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">FARM EDGE</text>
 
-                  <rect x="8" y="108" width="884" height="92"  fill="#161b22" fillOpacity="0.6"  rx="2" />
-                  <text x="18" y="121" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">SERVICE</text>
+                  <rect x="8" y="144" width="884" height="90"  fill="#161b22" fillOpacity="0.6"  rx="2" />
+                  <text x="18" y="158" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">SERVICE</text>
 
-                  <rect x="8" y="216" width="884" height="94"  fill="#161b22" fillOpacity="0.85" rx="2" stroke="#58a6ff" strokeOpacity="0.25" strokeWidth="1" />
-                  <text x="18" y="229" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">AI CORE</text>
+                  <rect x="8" y="274" width="884" height="90"  fill="#161b22" fillOpacity="0.85" rx="2" stroke="#58a6ff" strokeOpacity="0.25" strokeWidth="1" />
+                  <text x="18" y="288" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">AI CORE</text>
 
-                  <rect x="8" y="326" width="884" height="112" fill="#161b22" fillOpacity="0.6"  rx="2" />
-                  <text x="18" y="339" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">BACKEND</text>
+                  <rect x="8" y="404" width="884" height="90"  fill="#161b22" fillOpacity="0.6"  rx="2" />
+                  <text x="18" y="418" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">BACKEND</text>
 
-                  {/* ── Connections ── */}
-                  {/* Farm Sensor → Data Collection */}
-                  <path d="M230,77 C230,163 200,163 200,249" stroke="#ff7700" strokeOpacity="0.35" strokeWidth="1" fill="none" markerEnd="url(#arr-edge)" />
-                  {/* CCTV → NVR (right-edge bypass) */}
-                  <path d="M748,55 C892,55 892,392 820,392" stroke="#ff7700" strokeOpacity="0.35" strokeWidth="1" fill="none" markerEnd="url(#arr-edge)" />
-                  {/* Service → API GW */}
-                  <path d="M134,184 C134,208 665,208 665,249" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M345,184 C345,208 682,208 682,249" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M556,184 C556,208 700,208 700,249" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  {/* VMS → API GW (planned, dashed) */}
-                  <path d="M767,184 C767,208 728,208 728,249" stroke="#6e7681" strokeWidth="1" strokeDasharray="4 3" fill="none" markerEnd="url(#arr-dim)" />
-                  {/* Core horizontal: Data Collection → AI/ML → API GW */}
-                  <path d="M288,275 L362,275" stroke="#58a6ff" strokeOpacity="0.4" strokeWidth="1" fill="none" markerEnd="url(#arr-core)" />
-                  <path d="M538,275 L612,275" stroke="#58a6ff" strokeOpacity="0.4" strokeWidth="1" fill="none" markerEnd="url(#arr-core)" />
-                  {/* Core → Backend */}
-                  <path d="M185,301 C185,318 160,318 160,366" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M215,301 C215,318 560,318 560,366" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M700,301 C700,318 370,318 370,366" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  {/* ── Connections (data-driven) ── */}
+                  {ARCH_LINKS.map(link => {
+                    const style = ARCH_LINK_STYLE[link.tone];
+                    const lx = link.lx ?? null;
+                    const ly = link.ly ?? null;
+                    const labelW = Math.max(36, link.label.length * 7 + 10);
+                    return (
+                      <g key={link.id}>
+                        <path
+                          d={link.path}
+                          stroke={style.stroke}
+                          strokeOpacity={style.opacity}
+                          strokeWidth="1"
+                          strokeDasharray={link.dashed ? '4 3' : undefined}
+                          fill="none"
+                          markerEnd={`url(#${style.marker})`}
+                        />
+                        {lx !== null && ly !== null && (
+                          <g>
+                            <rect
+                              x={lx - labelW / 2}
+                              y={ly - 7}
+                              width={labelW}
+                              height={14}
+                              fill="#0b0f14"
+                              stroke={style.stroke}
+                              strokeOpacity={0.45}
+                              strokeWidth="0.5"
+                              rx="1"
+                            />
+                            <text
+                              x={lx}
+                              y={ly + 4}
+                              textAnchor="middle"
+                              fontSize="7"
+                              fill={style.stroke}
+                              fillOpacity={0.9}
+                              fontFamily="ui-monospace,SFMono-Regular,monospace"
+                            >
+                              {link.label}
+                            </text>
+                          </g>
+                        )}
+                      </g>
+                    );
+                  })}
 
                   {/* ── Nodes ── */}
                   {ARCH_NODES.map(node => {
@@ -455,24 +809,24 @@ export default function DashPage() {
                   })}
 
                   {/* ── Legend — Layer ── */}
-                  <rect x="18"  y="457" width="7" height="7" fill="none" stroke="#ff7700" strokeWidth="1" />
-                  <text x="29"  y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">FARM EDGE</text>
-                  <rect x="103" y="457" width="7" height="7" fill="none" stroke="#3fb950" strokeWidth="1" />
-                  <text x="114" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">SERVICE</text>
-                  <rect x="168" y="457" width="7" height="7" fill="none" stroke="#58a6ff" strokeWidth="1" />
-                  <text x="179" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">AI CORE</text>
-                  <rect x="233" y="457" width="7" height="7" fill="none" stroke="#8b949e" strokeWidth="1" />
-                  <text x="244" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">BACKEND</text>
+                  <rect x="18"  y="511" width="7" height="7" fill="none" stroke="#ff7700" strokeWidth="1" />
+                  <text x="29"  y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">FARM EDGE</text>
+                  <rect x="103" y="511" width="7" height="7" fill="none" stroke="#3fb950" strokeWidth="1" />
+                  <text x="114" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">SERVICE</text>
+                  <rect x="168" y="511" width="7" height="7" fill="none" stroke="#58a6ff" strokeWidth="1" />
+                  <text x="179" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">AI CORE</text>
+                  <rect x="233" y="511" width="7" height="7" fill="none" stroke="#8b949e" strokeWidth="1" />
+                  <text x="244" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">BACKEND</text>
                   {/* ── Legend — Status ── */}
-                  <circle cx="314" cy="461" r="3" fill="#3fb950" />
-                  <text x="321" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">LIVE</text>
-                  <circle cx="354" cy="461" r="3" fill="#f0883e" />
-                  <text x="361" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">DEV</text>
-                  <circle cx="393" cy="461" r="3" fill="#8b949e" />
-                  <text x="400" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">INACTIVE</text>
-                  <line x1="456" y1="458" x2="470" y2="458" stroke="#6e7681" strokeWidth="1" strokeDasharray="3 2" />
-                  <text x="474" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">PLANNED</text>
-                  <text x="630" y="464" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">click node for details →</text>
+                  <circle cx="314" cy="515" r="3" fill="#3fb950" />
+                  <text x="321" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">LIVE</text>
+                  <circle cx="354" cy="515" r="3" fill="#f0883e" />
+                  <text x="361" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">DEV</text>
+                  <circle cx="393" cy="515" r="3" fill="#8b949e" />
+                  <text x="400" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">INACTIVE</text>
+                  <line x1="456" y1="512" x2="470" y2="512" stroke="#6e7681" strokeWidth="1" strokeDasharray="3 2" />
+                  <text x="474" y="518" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">PLANNED</text>
+                  <text x="630" y="518" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">click node for details →</text>
                 </svg>
               </div>
 
@@ -518,25 +872,96 @@ export default function DashPage() {
                   </div>
                   {/* Body */}
                   <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                    <p className="text-[12px] text-[#c9d1d9] leading-relaxed">{selectedArchNode.desc}</p>
-                    {selectedArchNode.connects.length > 0 && (
-                      <div>
-                        <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Connections</p>
-                        <div className="flex flex-col gap-1.5">
-                          {selectedArchNode.connects.map(c => (
-                            <span key={c} className="text-[11px] font-mono text-[#8b949e] border-l-2 border-[#30363d] pl-3">{c}</span>
-                          ))}
-                        </div>
+                    <section>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Summary</p>
+                      <p className="text-[12px] text-[#c9d1d9] leading-relaxed">{selectedArchNode.summary}</p>
+                    </section>
+                    <section>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Modules</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {selectedArchNode.modules.map(item => (
+                          <li key={item} className="text-[11px] font-mono text-[#8b949e] border-l-2 border-[#30363d] pl-3">{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Endpoints</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {selectedArchNode.endpoints.map(item => (
+                          <li key={item} className="text-[11px] font-mono text-[#8b949e] border-l-2 border-[#30363d] pl-3">{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Data Flow</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {selectedArchNode.dataFlow.map(item => (
+                          <li key={item} className="text-[11px] font-mono text-[#8b949e] border-l-2 border-[#30363d] pl-3">{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Risk</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {selectedArchNode.risks.map(item => (
+                          <li key={item} className="text-[11px] font-mono text-[#8b949e] border-l-2 border-[#ff7b72] pl-3">{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Inbound / Outbound</p>
+                      <div className="flex flex-col gap-2 text-[11px] font-mono">
+                        {selectedIncomingLinks.length > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[#8b949e]">◀ Incoming</span>
+                            {selectedIncomingLinks.map(link => {
+                              const from = ARCH_NODES.find(n => n.id === link.from);
+                              return (
+                                <span key={`in-${link.id}`} className="pl-3 text-[#8b949e] border-l-2 border-[#30363d]">
+                                  {from?.name ?? link.from} → {link.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {selectedOutgoingLinks.length > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[#8b949e]">Outgoing →</span>
+                            {selectedOutgoingLinks.map(link => {
+                              const to = ARCH_NODES.find(n => n.id === link.to);
+                              return (
+                                <span key={`out-${link.id}`} className="pl-3 text-[#8b949e] border-l-2 border-[#30363d]">
+                                  {link.label} → {to?.name ?? link.to}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
+                    </section>
+                    {selectedIncomingLinks.length === 0 && selectedOutgoingLinks.length === 0 && (
+                      <p className="text-[11px] text-[#30363d]">연결 정보가 없습니다.</p>
                     )}
-                    {selectedArchNode.href && (
-                      <a
-                        href={selectedArchNode.href}
-                        className="text-[11px] font-mono border border-[#30363d] px-3 py-2 text-[#58a6ff] hover:bg-[#21262d] transition-colors text-center block"
+                    {(selectedIncomingLinks.length > 0 || selectedOutgoingLinks.length > 0) && (
+                      <p className="text-[10px] text-[#30363d]">※ 토글한 항목은 실제 연결 라인 라벨/방향을 기준으로 표시됩니다.</p>
+                    )}
+                    <div className="mt-auto border-t border-[#30363d] pt-2">
+                      {selectedArchNode.href && (
+                        <a
+                          href={selectedArchNode.href}
+                          className="text-[11px] font-mono border border-[#30363d] px-3 py-2 text-[#58a6ff] hover:bg-[#21262d] transition-colors text-center block"
+                        >
+                          → 페이지로 이동
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedNode(null)}
+                        className="mt-2 text-[11px] w-full border border-[#30363d] px-3 py-2 text-[#8b949e] hover:bg-[#21262d] transition-colors"
                       >
-                        → 페이지로 이동
-                      </a>
-                    )}
+                        닫기
+                      </button>
+                    </div>
                   </div>
                 </aside>
               </>

@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.03.05
+last_updated: 26.03.06
 ---
 
 # 문서 운영 허브
@@ -18,12 +18,12 @@ last_updated: 26.03.05
 - 레거시 문서 위치: `docs/old/**/*.md`
 
 ## 3. 요약
-- 총 라우트 페이지: **12**
-- 페이지 문서 생성됨: **12**
+- 총 라우트 페이지: **17**
+- 페이지 문서 생성됨: **16**
 - 자동 신규 생성: **0**
-- 자동 메타 갱신(SYNCED): **0**
+- 자동 메타 갱신(SYNCED): **1**
 - 업데이트 필요(STALE): **0**
-- 전체 문서 수(`docs/**/*.md`): **37**
+- 전체 문서 수(`docs/**/*.md`): **41**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -33,6 +33,10 @@ last_updated: 26.03.05
 | `/blog` | `src/app/blog/page.tsx` | `docs/pages/blog.page.md` | OK |
 | `/careers` | `src/app/careers/page.tsx` | `docs/pages/careers.page.md` | OK |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
+| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | SYNCED |
+| `/dash_2` | `src/app/dash_2/page.tsx` | `docs/pages/dash_2.page.md` | OK |
+| `/dash_3` | `src/app/dash_3/page.tsx` | `docs/pages/dash_3.page.md` | OK |
+| `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
 | `/i18n` | `src/app/i18n/page.tsx` | `docs/pages/i18n.page.md` | OK |
 | `/main` | `src/app/main/page.tsx` | `docs/pages/main.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
@@ -40,6 +44,7 @@ last_updated: 26.03.05
 | `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | OK |
 | `/services` | `src/app/services/page.tsx` | `docs/pages/services.page.md` | OK |
 | `/tms` | `src/app/tms/page.tsx` | `docs/pages/tms.page.md` | OK |
+| `/tms/main` | `src/app/tms/main/page.tsx` | `docs/pages/tms-main.page.md` | OK |
 
 ## 5. 문서 디렉토리 통계
 | Section | Count |
@@ -48,18 +53,18 @@ last_updated: 26.03.05
 | decisions | 1 |
 | guides | 13 |
 | old | 5 |
-| pages | 13 |
+| pages | 17 |
 | root | 2 |
 | templates | 2 |
 
 ## 6. 최근 수정 문서 (상위 10개)
-- `docs/3.0-design-system.md` (26.03.07)
-- `docs/admin/README.md` (26.03.05)
-- `docs/pages/poc.page.md` (26.03.05)
-- `docs/pages/i18n.page.md` (26.03.05)
-- `docs/guides/poc-operations-playbook-kr.md` (26.03.05)
-- `docs/guides/poc-blockkit-kakao-style-guide.md` (26.03.05)
-- `docs/guides/i18n-supabase-bootstrap.md` (26.03.05)
-- `docs/pages/tms.page.md` (26.03.05)
-- `docs/pages/main.page.md` (26.02.27)
-- `docs/guides/poc-mobile-layout-dev-doc-2026-02-16.md` (26.02.16)
+- `docs/pages/dash.page.md` (26.03.06)
+- `docs/admin/README.md` (26.03.06)
+- `docs/pages/tms-main.page.md` (26.03.06)
+- `docs/pages/tms.page.md` (26.03.06)
+- `docs/pages/poc.page.md` (26.03.06)
+- `docs/pages/farm.page.md` (26.03.06)
+- `docs/pages/dash_3.page.md` (26.03.06)
+- `docs/pages/dash_2.page.md` (26.03.06)
+- `docs/README.md` (26.03.05)
+- `docs/3.0-design-system.md` (26.03.05)
