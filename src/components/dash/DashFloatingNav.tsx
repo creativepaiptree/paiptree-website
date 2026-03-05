@@ -11,8 +11,26 @@ const TOOLS = [
     badgeColor: '#8b949e',
   },
   {
+    href: '/about',
+    name: '파이프트리 홈페이지',
+    badge: 'SITE',
+    badgeColor: '#3fb950',
+  },
+  {
+    href: '/tms',
+    name: 'TMS 랜딩페이지',
+    badge: 'SITE',
+    badgeColor: '#3fb950',
+  },
+  {
     href: '/PoC',
     name: 'PoC Dashboard',
+    badge: 'PROTOTYPE',
+    badgeColor: '#ff7700',
+  },
+  {
+    href: '/tms/main',
+    name: 'TMS Schedule',
     badge: 'PROTOTYPE',
     badgeColor: '#ff7700',
   },
@@ -21,12 +39,6 @@ const TOOLS = [
     name: 'i18n 정합성',
     badge: 'TOOL',
     badgeColor: '#58a6ff',
-  },
-  {
-    href: '/tms/main',
-    name: 'TMS Schedule',
-    badge: 'PROTOTYPE',
-    badgeColor: '#ff7700',
   },
 ];
 
