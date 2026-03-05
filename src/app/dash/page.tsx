@@ -354,11 +354,8 @@ export default function DashPage() {
               <p className="text-[10px] font-mono text-[#6e7681] uppercase tracking-widest">Service Architecture</p>
               <p className="text-[9px] font-mono text-[#30363d]">Farmers-Mind Platform · v1.0</p>
             </div>
-            {/* relative: inspector를 absolute로 올려놓기 위한 기준 */}
-            <div className="relative">
-
-              {/* Diagram — inspector 표시 여부와 무관하게 항상 full-width 유지 */}
-              <div className="border border-[#30363d] bg-[#0d1117]">
+            {/* Diagram — 항상 full-width */}
+            <div className="border border-[#30363d] bg-[#0d1117]">
                 <svg viewBox="0 0 900 460" className="w-full h-auto">
                   <defs>
                     <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -423,18 +420,26 @@ export default function DashPage() {
                 </svg>
               </div>
 
-              {/* Inspector — diagram 위에 오른쪽 끝에 absolute 오버레이 */}
-              {selectedArchNode && (
-                <div className="absolute right-0 top-0 bottom-0 w-52 bg-[#161b22]/[0.97] border-l border-[#30363d] p-4 flex flex-col gap-3 overflow-y-auto">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1 min-w-0">
+            {/* Inspector — TracePanel 패턴: fixed 사이드 드로어 + backdrop */}
+            {selectedArchNode && (
+              <>
+                <button
+                  type="button"
+                  aria-label="close inspector"
+                  className="fixed inset-0 z-40 bg-black/50"
+                  onClick={() => setSelectedNode(null)}
+                />
+                <aside className="fixed right-0 top-0 z-50 h-full w-80 border-l border-[#30363d] bg-[#161b22] shadow-2xl flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-start justify-between px-4 py-3 border-b border-[#30363d] shrink-0">
+                    <div className="flex flex-col gap-1.5 min-w-0">
                       <span
                         className="text-[9px] font-mono border px-1 py-[1px] uppercase tracking-widest self-start"
                         style={{ color: selectedArchNode.color, borderColor: selectedArchNode.color }}
                       >
                         {selectedArchNode.layer}
                       </span>
-                      <p className="text-sm font-bold font-mono truncate" style={{ color: selectedArchNode.color }}>
+                      <p className="text-sm font-bold font-mono" style={{ color: selectedArchNode.color }}>
                         {selectedArchNode.name}
                       </p>
                       <p className="text-[10px] text-[#8b949e] font-mono">{selectedArchNode.sub}</p>
@@ -442,34 +447,36 @@ export default function DashPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedNode(null)}
-                      className="text-[#6e7681] hover:text-[#c9d1d9] text-xs shrink-0 mt-1 transition-colors"
+                      className="inline-flex items-center border border-[#30363d] px-2 py-1 text-xs text-[#8b949e] hover:bg-[#21262d] transition-colors shrink-0 ml-3 mt-0.5"
                     >
                       ✕
                     </button>
                   </div>
-                  <p className="text-[11px] text-[#c9d1d9] leading-relaxed">{selectedArchNode.desc}</p>
-                  {selectedArchNode.connects.length > 0 && (
-                    <div>
-                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Connections</p>
-                      <div className="flex flex-col gap-1">
-                        {selectedArchNode.connects.map(c => (
-                          <span key={c} className="text-[10px] font-mono text-[#8b949e] border-l border-[#30363d] pl-2">{c}</span>
-                        ))}
+                  {/* Body */}
+                  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                    <p className="text-[12px] text-[#c9d1d9] leading-relaxed">{selectedArchNode.desc}</p>
+                    {selectedArchNode.connects.length > 0 && (
+                      <div>
+                        <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Connections</p>
+                        <div className="flex flex-col gap-1.5">
+                          {selectedArchNode.connects.map(c => (
+                            <span key={c} className="text-[11px] font-mono text-[#8b949e] border-l-2 border-[#30363d] pl-3">{c}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {selectedArchNode.href && (
-                    <a
-                      href={selectedArchNode.href}
-                      className="mt-auto text-[10px] font-mono border border-[#30363d] px-2 py-1.5 text-[#58a6ff] hover:bg-[#21262d] transition-colors text-center block"
-                    >
-                      → 페이지로 이동
-                    </a>
-                  )}
-                </div>
-              )}
-
-            </div>
+                    )}
+                    {selectedArchNode.href && (
+                      <a
+                        href={selectedArchNode.href}
+                        className="text-[11px] font-mono border border-[#30363d] px-3 py-2 text-[#58a6ff] hover:bg-[#21262d] transition-colors text-center block"
+                      >
+                        → 페이지로 이동
+                      </a>
+                    )}
+                  </div>
+                </aside>
+              </>
+            )}
           </div>
         </div>
       </main>
