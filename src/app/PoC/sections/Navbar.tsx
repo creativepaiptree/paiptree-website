@@ -499,32 +499,35 @@ const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
           <div className="hidden lg:flex items-center gap-1">
             {/* Language Switch */}
             <div className={`flex items-center border ${themeMode === 'dark' ? 'border-[#30363d]' : 'border-[#cbd5e1]'}`}>
-            <span
-              className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${themeMode === 'dark'
-                  ? lang === 'ko'
-                    ? 'text-[#c9d1d9]'
-                    : 'text-[#6e7681] hover:text-[#c9d1d9]'
-                  : lang === 'ko'
-                    ? 'text-[#0f172a]'
-                    : 'text-[#64748b] hover:text-[#334155]'}`}
-              onClick={() => setLang('ko')}
-            >
-              KO
+              <span
+                className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${themeMode === 'dark'
+                    ? lang === 'ko'
+                      ? 'text-[#c9d1d9]'
+                      : 'text-[#6e7681] hover:text-[#c9d1d9]'
+                    : lang === 'ko'
+                      ? 'text-[#0f172a]'
+                      : 'text-[#64748b] hover:text-[#334155]'}`}
+                onClick={() => setLang('ko')}
+              >
+                KO
               </span>
-            <span className={themeMode === 'dark' ? 'text-[#6e7681]' : 'text-[#94a3b8]'}>|</span>
-            <span
-              className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${themeMode === 'dark'
-                  ? lang === 'en'
-                    ? 'text-[#c9d1d9]'
-                    : 'text-[#6e7681] hover:text-[#c9d1d9]'
-                  : lang === 'en'
-                    ? 'text-[#0f172a]'
-                    : 'text-[#64748b] hover:text-[#334155]'}`}
-              onClick={() => setLang('en')}
-            >
-              EN
-            </span>
-            <div className={`ml-1 flex items-center border ${themeMode === 'dark' ? 'border-[#30363d]' : 'border-[#cbd5e1]'}`}>
+              <span className={themeMode === 'dark' ? 'text-[#6e7681]' : 'text-[#94a3b8]'}>|</span>
+              <span
+                className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${themeMode === 'dark'
+                    ? lang === 'en'
+                      ? 'text-[#c9d1d9]'
+                      : 'text-[#6e7681] hover:text-[#c9d1d9]'
+                    : lang === 'en'
+                      ? 'text-[#0f172a]'
+                      : 'text-[#64748b] hover:text-[#334155]'}`}
+                onClick={() => setLang('en')}
+              >
+                EN
+              </span>
+            </div>
+
+          {/* Theme Switch */}
+            <div className={`flex items-center border ${themeMode === 'dark' ? 'border-[#30363d]' : 'border-[#cbd5e1]'}`}>
               <button
                 type="button"
                 className={`px-2.5 py-1 text-[11px] font-medium transition-all ${
@@ -551,7 +554,6 @@ const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
                 L
               </button>
             </div>
-          </div>
 
             {/* Notifications */}
             <button className="ml-2 p-2 text-gray-400 hover:text-gray-400 hover:bg-[#21262d] transition-colors">
