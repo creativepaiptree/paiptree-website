@@ -19,6 +19,25 @@ const MEMBER_SELECT = [
   { key: 'hk',   label: 'HK(강현국)',   href: '/dash_3' },
 ];
 
+type ArchLayer = 'frontend' | 'core' | 'backend';
+type ArchNode = {
+  id: string; name: string; sub: string; layer: ArchLayer;
+  color: string; href: string | null;
+  cx: number; cy: number; w: number; h: number;
+  desc: string; connects: string[];
+};
+
+const ARCH_NODES: ArchNode[] = [
+  { id: 'ems',          name: 'EMS',          sub: '기업 모니터링',    layer: 'frontend', color: '#3fb950', href: '/PoC',  cx: 220, cy: 85,  w: 150, h: 60, desc: '전체 농장 통계, 출하 예측, 기업 운영자용 대시보드', connects: ['Farmers-Mind'] },
+  { id: 'aiapp',        name: 'AI App',        sub: '농장주 모바일',    layer: 'frontend', color: '#8b5cf6', href: null,   cx: 450, cy: 85,  w: 150, h: 60, desc: '개별 농장주 앱. 자신의 농장 현황 및 체중 예측 확인', connects: ['Farmers-Mind'] },
+  { id: 'tms',          name: 'TMS',           sub: '차량 관제',        layer: 'frontend', color: '#f0883e', href: '/tms', cx: 680, cy: 85,  w: 150, h: 60, desc: '농장→도축장→유통 차량 관리. 배차 및 정산 처리', connects: ['Farmers-Mind'] },
+  { id: 'farmers_mind', name: 'Farmers-Mind',  sub: '무게예측 코어 엔진', layer: 'core',   color: '#58a6ff', href: null,   cx: 450, cy: 240, w: 260, h: 70, desc: '중앙 AI 무게예측 엔진. 모든 서비스의 핵심 데이터 소스', connects: ['EMS', 'AI App', 'TMS', 'API Gateway', 'ML Engine', 'Data Pipeline', 'Database'] },
+  { id: 'api_gw',       name: 'API Gateway',   sub: '요청 라우팅',      layer: 'backend',  color: '#8b949e', href: null,   cx: 195, cy: 390, w: 140, h: 60, desc: '모든 클라이언트 요청 라우팅 및 인증 처리', connects: ['Farmers-Mind'] },
+  { id: 'ml_engine',    name: 'ML Engine',     sub: '예측 추론 서버',   layer: 'backend',  color: '#8b949e', href: null,   cx: 365, cy: 390, w: 140, h: 60, desc: '체중 예측 모델 학습 및 실시간 추론 서버', connects: ['Farmers-Mind'] },
+  { id: 'pipeline',     name: 'Data Pipeline', sub: '데이터 수집/정제', layer: 'backend',  color: '#8b949e', href: null,   cx: 535, cy: 390, w: 140, h: 60, desc: '농장 센서 데이터 수집, 정제, 저장 파이프라인', connects: ['Farmers-Mind'] },
+  { id: 'database',     name: 'Database',      sub: '데이터 저장소',    layer: 'backend',  color: '#8b949e', href: null,   cx: 705, cy: 390, w: 140, h: 60, desc: '농장 데이터, 예측 결과, 사용자 정보 영구 저장', connects: ['Farmers-Mind'] },
+];
+
 const SYSTEM_DOC_BUTTONS = [
   { key: 'hub',       path: 'docs/admin/README.md',                          label: '문서 운영 허브'    },
   { key: 'index',     path: 'docs/README.md',                                label: '개발문서 인덱스'   },
@@ -152,6 +171,9 @@ export default function DashPage() {
   const docsModalRef                                  = useRef<HTMLDivElement>(null);
   const docsCloseBtnRef                               = useRef<HTMLButtonElement>(null);
 
+  // arch inspector
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
   const closeVersion = useCallback(() => setIsVersionOpen(false), []);
   const closeDocs    = useCallback(() => setIsDocsOpen(false),    []);
 
@@ -265,6 +287,8 @@ export default function DashPage() {
     if (!w) window.location.href = doc.editorUri;
   }, []);
 
+  const selectedArchNode = selectedNode ? (ARCH_NODES.find(n => n.id === selectedNode) ?? null) : null;
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#0d1117] text-gray-100" data-poc-theme="dark">
 
@@ -325,90 +349,128 @@ export default function DashPage() {
 
         {/* Service Architecture Map — 나머지 공간 가운데 */}
         <div className="flex-1 flex items-center justify-center px-4 py-6">
+          <div className="w-full max-w-5xl flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-mono text-[#6e7681] uppercase tracking-widest">Service Architecture</p>
+              <p className="text-[9px] font-mono text-[#30363d]">Farmers-Mind Platform · v1.0</p>
+            </div>
+            <div className="flex gap-3 items-start">
 
-        {/* Service Architecture Map */}
-        <div className="w-full max-w-3xl flex flex-col gap-2 shrink-0">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-mono text-[#6e7681] uppercase tracking-widest">Service Architecture</p>
-            <p className="text-[9px] font-mono text-[#30363d]">SAMPLE · v0.1</p>
-          </div>
-          <div className="border border-[#30363d] bg-[#0d1117]">
-            <svg viewBox="0 0 800 420" className="w-full h-auto">
-              <defs>
-                <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-                  <circle cx="1" cy="1" r="0.8" fill="#30363d" opacity="0.5" />
-                </pattern>
-                <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                  <polygon points="0 0, 8 3, 0 6" fill="#30363d" />
-                </marker>
-              </defs>
+              {/* Diagram */}
+              <div className="flex-1 border border-[#30363d] bg-[#0d1117] min-w-0">
+                <svg viewBox="0 0 900 460" className="w-full h-auto">
+                  <defs>
+                    <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+                      <circle cx="1" cy="1" r="0.8" fill="#30363d" opacity="0.4" />
+                    </pattern>
+                    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#30363d" />
+                    </marker>
+                  </defs>
 
-              {/* Background dots */}
-              <rect x="0" y="0" width="800" height="420" fill="url(#grid-dots)" />
+                  {/* Background */}
+                  <rect x="0" y="0" width="900" height="460" fill="url(#grid-dots)" />
 
-              {/* ── Connection lines ── */}
-              {/* Hub → paiptree HP */}
-              <path d="M400,80 C400,132 125,132 125,185" stroke="#30363d" strokeWidth="1" strokeDasharray="4" fill="none" markerEnd="url(#arr)" />
-              {/* Hub → PoC (straight) */}
-              <line x1="400" y1="80" x2="400" y2="185" stroke="#30363d" strokeWidth="1" strokeDasharray="4" markerEnd="url(#arr)" />
-              {/* Hub → Farm */}
-              <path d="M400,80 C400,132 675,132 675,185" stroke="#30363d" strokeWidth="1" strokeDasharray="4" fill="none" markerEnd="url(#arr)" />
-              {/* PoC → i18n (straight) */}
-              <line x1="400" y1="245" x2="400" y2="320" stroke="#30363d" strokeWidth="1" strokeDasharray="4" markerEnd="url(#arr)" />
+                  {/* ── Layer bands ── */}
+                  <rect x="8" y="20" width="884" height="120" fill="#161b22" fillOpacity="0.6" rx="2" />
+                  <text x="18" y="34" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">FRONTEND</text>
 
-              {/* ── Hub node: zoro_LAB ── */}
-              <a href="/dash">
-                <rect x="335" y="20" width="130" height="60" fill="#0d1117" stroke="#58a6ff" strokeWidth="1.5" />
-                <rect x="335" y="20" width="130" height="60" fill="#58a6ff" fillOpacity="0.06" />
-                <text x="400" y="45" textAnchor="middle" fill="#c9d1d9" fontSize="12" fontWeight="700" fontFamily="ui-monospace,SFMono-Regular,monospace">zoro_LAB</text>
-                <text x="400" y="63" textAnchor="middle" fill="#58a6ff" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">HUB</text>
-              </a>
+                  <rect x="8" y="160" width="884" height="125" fill="#161b22" fillOpacity="0.85" rx="2" stroke="#58a6ff" strokeOpacity="0.25" strokeWidth="1" />
+                  <text x="18" y="174" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">CORE ENGINE</text>
 
-              {/* ── paiptree HP ── */}
-              <a href="/about">
-                <rect x="60" y="185" width="130" height="60" fill="#0d1117" stroke="#3fb950" strokeWidth="1" />
-                <rect x="60" y="185" width="130" height="60" fill="#3fb950" fillOpacity="0.04" />
-                <text x="125" y="210" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">paiptree HP</text>
-                <text x="125" y="228" textAnchor="middle" fill="#3fb950" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">SITE</text>
-              </a>
+                  <rect x="8" y="305" width="884" height="130" fill="#161b22" fillOpacity="0.6" rx="2" />
+                  <text x="18" y="319" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">BACKEND</text>
 
-              {/* ── PoC Dashboard ── */}
-              <a href="/PoC">
-                <rect x="335" y="185" width="130" height="60" fill="#0d1117" stroke="#ff7700" strokeWidth="1" />
-                <rect x="335" y="185" width="130" height="60" fill="#ff7700" fillOpacity="0.04" />
-                <text x="400" y="210" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">PoC Dashboard</text>
-                <text x="400" y="228" textAnchor="middle" fill="#ff7700" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">PROTOTYPE</text>
-              </a>
+                  {/* ── Connections: Frontend → Farmers-Mind ── */}
+                  <path d="M220,115 C220,160 450,160 450,205" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M450,115 L450,205" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M680,115 C680,160 450,160 450,205" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
 
-              {/* ── Farm Camera Ops ── */}
-              <a href="/farm">
-                <rect x="610" y="185" width="130" height="60" fill="#0d1117" stroke="#ff7700" strokeWidth="1" />
-                <rect x="610" y="185" width="130" height="60" fill="#ff7700" fillOpacity="0.04" />
-                <text x="675" y="207" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">Farm Camera</text>
-                <text x="675" y="221" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontFamily="ui-monospace,SFMono-Regular,monospace">Ops</text>
-                <text x="675" y="237" textAnchor="middle" fill="#ff7700" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">PROTOTYPE</text>
-              </a>
+                  {/* ── Connections: Farmers-Mind → Backend ── */}
+                  <path d="M450,275 C450,318 195,318 195,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M450,275 C450,318 365,318 365,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M450,275 C450,318 535,318 535,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M450,275 C450,318 705,318 705,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
 
-              {/* ── i18n Tool ── */}
-              <a href="/i18n">
-                <rect x="335" y="320" width="130" height="60" fill="#0d1117" stroke="#58a6ff" strokeWidth="1" />
-                <rect x="335" y="320" width="130" height="60" fill="#58a6ff" fillOpacity="0.04" />
-                <text x="400" y="345" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">i18n Tool</text>
-                <text x="400" y="363" textAnchor="middle" fill="#58a6ff" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">TOOL</text>
-              </a>
+                  {/* ── Nodes ── */}
+                  {ARCH_NODES.map(node => {
+                    const nx = node.cx - node.w / 2;
+                    const ny = node.cy - node.h / 2;
+                    const isSel = selectedNode === node.id;
+                    return (
+                      <g
+                        key={node.id}
+                        onClick={() => setSelectedNode(prev => prev === node.id ? null : node.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <rect x={nx} y={ny} width={node.w} height={node.h} fill="#0d1117" stroke={node.color} strokeWidth={isSel ? 2 : 1} />
+                        <rect x={nx} y={ny} width={node.w} height={node.h} fill={node.color} fillOpacity={isSel ? 0.12 : 0.04} />
+                        <text x={node.cx} y={node.cy - 7} textAnchor="middle" fill={isSel ? '#ffffff' : '#c9d1d9'} fontSize="12" fontWeight="700" fontFamily="ui-monospace,SFMono-Regular,monospace">{node.name}</text>
+                        <text x={node.cx} y={node.cy + 10} textAnchor="middle" fill={node.color} fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="1">{node.sub}</text>
+                      </g>
+                    );
+                  })}
 
-              {/* ── Legend ── */}
-              <rect x="20" y="395" width="8" height="8" fill="none" stroke="#3fb950" strokeWidth="1" />
-              <text x="33" y="403" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">SITE</text>
-              <rect x="75" y="395" width="8" height="8" fill="none" stroke="#ff7700" strokeWidth="1" />
-              <text x="88" y="403" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">PROTOTYPE</text>
-              <rect x="175" y="395" width="8" height="8" fill="none" stroke="#58a6ff" strokeWidth="1" />
-              <text x="188" y="403" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">HUB / TOOL</text>
-              <text x="680" y="403" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">nodes are clickable →</text>
-            </svg>
+                  {/* ── Legend ── */}
+                  <rect x="20" y="445" width="7" height="7" fill="none" stroke="#3fb950" strokeWidth="1" />
+                  <text x="31" y="452" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">FRONTEND</text>
+                  <rect x="110" y="445" width="7" height="7" fill="none" stroke="#58a6ff" strokeWidth="1" />
+                  <text x="121" y="452" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">CORE</text>
+                  <rect x="167" y="445" width="7" height="7" fill="none" stroke="#8b949e" strokeWidth="1" />
+                  <text x="178" y="452" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">BACKEND</text>
+                  <text x="610" y="452" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">click node for details →</text>
+                </svg>
+              </div>
+
+              {/* Inspector */}
+              {selectedArchNode && (
+                <div className="w-52 shrink-0 bg-[#161b22] border border-[#30363d] p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span
+                        className="text-[9px] font-mono border px-1 py-[1px] uppercase tracking-widest self-start"
+                        style={{ color: selectedArchNode.color, borderColor: selectedArchNode.color }}
+                      >
+                        {selectedArchNode.layer}
+                      </span>
+                      <p className="text-sm font-bold font-mono truncate" style={{ color: selectedArchNode.color }}>
+                        {selectedArchNode.name}
+                      </p>
+                      <p className="text-[10px] text-[#8b949e] font-mono">{selectedArchNode.sub}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedNode(null)}
+                      className="text-[#6e7681] hover:text-[#c9d1d9] text-xs shrink-0 mt-1 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[#c9d1d9] leading-relaxed">{selectedArchNode.desc}</p>
+                  {selectedArchNode.connects.length > 0 && (
+                    <div>
+                      <p className="text-[9px] font-mono text-[#6e7681] uppercase tracking-widest mb-2">Connections</p>
+                      <div className="flex flex-col gap-1">
+                        {selectedArchNode.connects.map(c => (
+                          <span key={c} className="text-[10px] font-mono text-[#8b949e] border-l border-[#30363d] pl-2">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedArchNode.href && (
+                    <a
+                      href={selectedArchNode.href}
+                      className="mt-auto text-[10px] font-mono border border-[#30363d] px-2 py-1.5 text-[#58a6ff] hover:bg-[#21262d] transition-colors text-center block"
+                    >
+                      → 페이지로 이동
+                    </a>
+                  )}
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
-        </div>{/* flex-1 center wrapper */}
       </main>
 
       {/* ─ Footer ─────────────────────────────────────────────────────────── */}
