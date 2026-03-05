@@ -34,6 +34,8 @@ export interface PocRightSidebarData {
 export interface PocBlockContext {
   lang: PocLang;
   setLang: (lang: PocLang) => void;
+  themeMode: 'dark' | 'light';
+  setThemeMode: (themeMode: 'dark' | 'light') => void;
   onOpenTrace: (trace: TraceabilityPayload) => void;
   rightSidebarData: PocRightSidebarData;
 }
@@ -43,7 +45,7 @@ export const pocBlockPolicies: Record<string, PocBlockPolicy> = {
     id: 'top-navigation',
     name: '상단 네비게이션',
     purpose: '버전/문서 모달 열기, 언어 전환, 글로벌 액션 노출',
-    requiredFields: ['lang', 'setLang'],
+    requiredFields: ['lang', 'setLang', 'themeMode', 'setThemeMode'],
     supportedStates: ['default', 'loading', 'error'],
     constraints: {
       maxButtons: 2,

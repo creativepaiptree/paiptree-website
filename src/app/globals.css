@@ -753,3 +753,164 @@ a {
     background-position: 200% 0;
   }
 }
+
+/* PoC Theme CSS Variables */
+[data-poc-theme="dark"] {
+  --poc-surface: #161b22;
+  --poc-panel: #0d1117;
+  --poc-panel-strong: #11161d;
+  --poc-dark-bg: #0b1017;
+  --poc-border: #30363d;
+  --poc-text: #c9d1d9;
+  --poc-text-muted: #8b949e;
+  --poc-text-dim: #6e7681;
+  --poc-modal-bg: rgba(0, 0, 0, 0.7);
+  --poc-thumb-overlay: rgba(13, 17, 23, 0.85);
+  --poc-chart-legend-bg: rgba(22, 27, 34, 0.85);
+  --poc-overlay-item-bg: rgba(0, 0, 0, 0.3);
+  --poc-tooltip-bg: rgba(10, 10, 15, 0.96);
+  --poc-tooltip-border: #2a2a3a;
+  --poc-segment-bg: #21262d;
+}
+
+.poc-theme-light {
+  --poc-bg: #f8fafc;
+  --poc-surface: #ffffff;
+  --poc-surface-alt: #f1f5f9;
+  --poc-border: #d1d5db;
+  --poc-panel: #f8fafc;
+  --poc-panel-strong: #f1f5f9;
+  --poc-dark-bg: #e2e8f0;
+  --poc-text: #0f172a;
+  --poc-text-muted: #64748b;
+  --poc-text-dim: #94a3b8;
+  --poc-modal-bg: rgba(15, 23, 42, 0.45);
+  --poc-thumb-overlay: rgba(15, 23, 42, 0.62);
+  --poc-chart-legend-bg: rgba(248, 250, 252, 0.92);
+  --poc-overlay-item-bg: rgba(0, 0, 0, 0.05);
+  --poc-tooltip-bg: rgba(248, 250, 252, 0.98);
+  --poc-tooltip-border: #cbd5e1;
+  --poc-segment-bg: #e2e8f0;
+}
+
+.poc-theme-light [class*='bg-[#0d1117]'],
+.poc-theme-light [class*='bg-[#11161d]'] {
+  background-color: #f8fafc !important;
+}
+
+.poc-theme-light [class*='bg-[#161b22]'],
+.poc-theme-light [class*='bg-[#21262d]'] {
+  background-color: #f1f5f9 !important;
+}
+
+.poc-theme-light [class*='bg-[#30363d]'],
+.poc-theme-light [class*='bg-[#3d444d]'],
+.poc-theme-light [class*='bg-gray-700'],
+.poc-theme-light [class*='bg-gray-800'],
+.poc-theme-light [class*='bg-[rgba(0,0,0,0.3)]'] {
+  background-color: #e2e8f0 !important;
+}
+
+.poc-theme-light [class*='bg-black/60'] {
+  background-color: rgb(15 23 42 / 0.35) !important;
+}
+
+.poc-theme-light [class*='border-[#30363d]'],
+.poc-theme-light [class*='border-[#21262d]'],
+.poc-theme-light [class*='border-[#3d444d]'],
+.poc-theme-light [class*='border-gray-700'],
+.poc-theme-light [class*='border-gray-800'],
+.poc-theme-light [class*='border-[#30363d]/40'],
+.poc-theme-light [class*='border-[#30363d]/70'],
+.poc-theme-light [class*='border-[#30363d]/50'] {
+  border-color: #d1d5db !important;
+}
+
+.poc-theme-light .text-gray-100,
+.poc-theme-light [class*='text-gray-100'] {
+  color: #020617 !important;
+}
+
+.poc-theme-light .text-gray-200,
+.poc-theme-light [class*='text-gray-200'] {
+  color: #0f172a !important;
+}
+
+.poc-theme-light .text-gray-300,
+.poc-theme-light [class*='text-gray-300'] {
+  color: #1e293b !important;
+}
+
+.poc-theme-light .text-gray-400,
+.poc-theme-light [class*='text-gray-400'] {
+  color: #334155 !important;
+}
+
+.poc-theme-light .text-gray-500,
+.poc-theme-light [class*='text-gray-500'] {
+  color: #334155 !important;
+}
+
+.poc-theme-light .text-gray-600,
+.poc-theme-light [class*='text-gray-600'] {
+  color: #475569 !important;
+}
+
+.poc-theme-light .text-gray-700,
+.poc-theme-light [class*='text-gray-700'],
+.poc-theme-light .text-gray-800,
+.poc-theme-light [class*='text-gray-800'] {
+  color: #1e293b !important;
+}
+
+.poc-theme-light [class*='text-[#3fb950]'] {
+  color: #15803d !important;
+}
+
+.poc-theme-light [class*='text-[#58a6ff]'],
+.poc-theme-light [class*='text-[#4da3ff]'] {
+  color: #2563eb !important;
+}
+
+.poc-theme-light [class*='text-[#8b949e]'],
+.poc-theme-light [class*='text-[#484f58]'],
+.poc-theme-light [class*='text-[#6e7681]'],
+.poc-theme-light [class*='text-[#8b949e]'] {
+  color: #64748b !important;
+}
+
+.poc-theme-light [class*='text-[#f85149]'],
+.poc-theme-light [class*='text-[#dc2626]'] {
+  color: #dc2626 !important;
+}
+
+.poc-theme-light [class*='text-[#c9d1d9]'] {
+  color: #94a3b8 !important;
+}
+
+.poc-theme-light [class*='text-[#ff7700]'],
+.poc-theme-light [class*='text-[#ffc107]'] {
+  color: #d97706 !important;
+}
+
+.poc-theme-light [class*='bg-[#3fb950]'] {
+  background-color: #dcfce7 !important;
+}
+
+.poc-theme-light [class*='bg-[#30363d]'],
+.poc-theme-light [class*='bg-[#30363d]/'] {
+  background-color: #e2e8f0 !important;
+}
+
+.poc-theme-light [class*='border-[#3fb950]'] {
+  border-color: #22c55e !important;
+}
+
+.poc-theme-light [class*='border-[#58a6ff]'],
+.poc-theme-light [class*='border-[#4da3ff]'] {
+  border-color: #60a5fa !important;
+}
+
+.poc-theme-light [class*='border-[#f85149]'] {
+  border-color: #ef4444 !important;
+}

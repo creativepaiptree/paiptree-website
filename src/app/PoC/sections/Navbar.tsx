@@ -6,6 +6,8 @@ import { Menu, Settings, LogOut, User, Bell, X } from 'lucide-react';
 interface NavbarProps {
   lang: 'ko' | 'en';
   setLang: (lang: 'ko' | 'en') => void;
+  themeMode: 'dark' | 'light';
+  setThemeMode: (themeMode: 'dark' | 'light') => void;
 }
 
 type ReleaseItem = {
@@ -207,7 +209,7 @@ const fetchReleaseNotesFromSupabase = async (signal: AbortSignal): Promise<Relea
   }
 };
 
-const Navbar = ({ lang, setLang }: NavbarProps) => {
+const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -496,20 +498,59 @@ const Navbar = ({ lang, setLang }: NavbarProps) => {
           {/* Language, Notifications, Settings Group */}
           <div className="hidden lg:flex items-center gap-1">
             {/* Language Switch */}
-            <div className="flex items-center border border-[#30363d]">
+            <div className={`flex items-center border ${themeMode === 'dark' ? 'border-[#30363d]' : 'border-[#cbd5e1]'}`}>
             <span
-              className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${lang === 'ko' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
+              className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${themeMode === 'dark'
+                  ? lang === 'ko'
+                    ? 'text-[#c9d1d9]'
+                    : 'text-[#6e7681] hover:text-[#c9d1d9]'
+                  : lang === 'ko'
+                    ? 'text-[#0f172a]'
+                    : 'text-[#64748b] hover:text-[#334155]'}`}
               onClick={() => setLang('ko')}
             >
               KO
               </span>
-              <span className="text-gray-600">|</span>
-              <span
-                className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${lang === 'en' ? 'text-gray-400' : 'text-gray-500 hover:text-gray-400'}`}
-                onClick={() => setLang('en')}
+            <span className={themeMode === 'dark' ? 'text-[#6e7681]' : 'text-[#94a3b8]'}>|</span>
+            <span
+              className={`px-2.5 py-1 text-xs font-medium cursor-pointer transition-all ${themeMode === 'dark'
+                  ? lang === 'en'
+                    ? 'text-[#c9d1d9]'
+                    : 'text-[#6e7681] hover:text-[#c9d1d9]'
+                  : lang === 'en'
+                    ? 'text-[#0f172a]'
+                    : 'text-[#64748b] hover:text-[#334155]'}`}
+              onClick={() => setLang('en')}
             >
               EN
             </span>
+            <div className={`ml-1 flex items-center border ${themeMode === 'dark' ? 'border-[#30363d]' : 'border-[#cbd5e1]'}`}>
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-[11px] font-medium transition-all ${
+                  themeMode === 'dark' ? 'text-[#c9d1d9]' : 'text-[#64748b] hover:text-[#334155]'
+                }`}
+                onClick={() => setThemeMode('dark')}
+                aria-pressed={themeMode === 'dark'}
+                aria-label="다크 모드"
+              >
+                D
+              </button>
+              <span className={themeMode === 'dark' ? 'text-[#6e7681]' : 'text-[#94a3b8]'}>|</span>
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-[11px] font-medium transition-all ${
+                  themeMode === 'light'
+                    ? 'text-[#0f172a]'
+                    : 'text-[#64748b] hover:text-[#334155]'
+                }`}
+                onClick={() => setThemeMode('light')}
+                aria-pressed={themeMode === 'light'}
+                aria-label="라이트 모드"
+              >
+                L
+              </button>
+            </div>
           </div>
 
             {/* Notifications */}

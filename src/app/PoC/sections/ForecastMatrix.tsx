@@ -423,6 +423,81 @@ const transposedColumns = generateTransposedColumns();
 const transposedRows = generateTransposedRows(transposedColumns);
 const ageRangeLabels = generateAgeRangeLabels();
 
+const FORECAST_THEME = {
+  dark: {
+    line: {
+      standard: '#4da3ff',
+      historyBar: 'rgb(128 128 128)',
+      actualBar: 'rgb(0 212 170)',
+      forecastBar: 'rgb(255 193 7)',
+      history: '#808080',
+      actual: '#3fb950',
+      forecast: '#ffc107',
+    },
+    area: 'rgba(0, 212, 170, 0.15)',
+    todayForwardLabel: {
+      today: '#3fb950',
+      forecast: '#ffc107',
+    },
+    grid: '#2a2f37',
+    gridBorder: '#374151',
+    tick: '#6b7280',
+    accuracy: {
+      standard: '#4da3ff',
+      actual: '#c9d1d9',
+      actualFill: 'rgba(201, 209, 217, 0.15)',
+      d1: '#3fb950',
+      d2: '#ff7700',
+      d3: '#f85149',
+    },
+    tooltip: {
+      panelBg: 'rgba(10,10,15,0.95)',
+      panelBorder: '#2a2a3a',
+      buttonBg: '#11161d',
+      buttonBorder: '#30363d',
+      buttonText: '#c9d1d9',
+      missing: '#8b949e',
+      value: '#c9d1d9',
+    },
+  },
+  light: {
+    line: {
+      standard: '#2563eb',
+      historyBar: 'rgb(148 163 184)',
+      actualBar: 'rgb(34 197 94)',
+      forecastBar: 'rgb(245 158 11)',
+      history: '#94a3b8',
+      actual: '#16a34a',
+      forecast: '#d97706',
+    },
+    area: 'rgba(16, 185, 129, 0.12)',
+    todayForwardLabel: {
+      today: '#16a34a',
+      forecast: '#d97706',
+    },
+    grid: '#e2e8f0',
+    gridBorder: '#cbd5e1',
+    tick: '#475569',
+    accuracy: {
+      standard: '#2563eb',
+      actual: '#334155',
+      actualFill: 'rgba(100, 116, 139, 0.12)',
+      d1: '#16a34a',
+      d2: '#d97706',
+      d3: '#dc2626',
+    },
+    tooltip: {
+      panelBg: 'rgba(248, 250, 252, 0.98)',
+      panelBorder: '#cbd5e1',
+      buttonBg: '#e2e8f0',
+      buttonBorder: '#cbd5e1',
+      buttonText: '#334155',
+      missing: '#64748b',
+      value: '#334155',
+    },
+  },
+} as const;
+
 /**
  * ForecastMatrix 컴포넌트 Props
  */
@@ -430,6 +505,7 @@ interface ForecastMatrixProps {
   /** 표시 언어 */
   lang: 'ko' | 'en';
   onOpenTrace: (trace: TraceabilityPayload) => void;
+  themeMode?: 'dark' | 'light';
 }
 
 /**
@@ -448,7 +524,9 @@ interface ForecastMatrixProps {
  *
  * @see /docs/components/ForecastMatrix.blueprint.md
  */
-const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
+const ForecastMatrix = ({ lang, onOpenTrace, themeMode = 'dark' }: ForecastMatrixProps) => {
+  const isLightTheme = themeMode === 'light';
+  const chartTheme = FORECAST_THEME[themeMode];
   /** 전체보기(true) vs 주간보기(false) */
   const [fitAll, setFitAll] = useState(false);
   /** 현재 페이지: 1=25~31d, 2=32~38d, 3=39~45d */
@@ -1118,7 +1196,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
     );
     const actualOnlyPoints = MODEL_POINTS.filter((point) => point.x <= TODAY_INDEX);
     const forecastPoints = MODEL_POINTS.filter((point) => point.x >= TODAY_INDEX);
-    const barPastColor = '#3fb950';
+    const barPastColor = chartTheme.line.actual;
     const makeBarColor = (defaultColor: string) => (context: any) => {
       const xVal = context?.parsed?.x;
       if (typeof xVal === 'number' && xVal >= FORECAST_START_INDEX && xVal <= TODAY_INDEX) return barPastColor;
@@ -1161,7 +1239,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           ctx.font = isTodayValue
             ? '700 10px "Noto Sans KR", sans-serif'
             : '400 9px "Noto Sans KR", sans-serif';
-          ctx.fillStyle = isTodayValue ? '#3fb950' : '#ffc107';
+          ctx.fillStyle = isTodayValue ? chartTheme.todayForwardLabel.today : chartTheme.todayForwardLabel.forecast;
           ctx.fillText(text, x, y - 10);
         });
         ctx.restore();
@@ -1185,7 +1263,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             label: lang === 'ko' ? '예측 영역' : 'Forecast Area',
             data: MODEL_POINTS,
             borderColor: 'transparent',
-            backgroundColor: 'rgba(0, 212, 170, 0.15)',
+            backgroundColor: chartTheme.area,
             pointRadius: 0,
             borderWidth: 0,
             fill: 'origin',
@@ -1195,8 +1273,8 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: lang === 'ko' ? '표준 체중' : 'Standard Weight',
             data: standardWeightSeries,
-            borderColor: '#4da3ff',
-            backgroundColor: '#4da3ff',
+            borderColor: chartTheme.line.standard,
+            backgroundColor: chartTheme.line.standard,
             pointRadius: 0,
             borderWidth: 1,
             tension: 0.3,
@@ -1207,7 +1285,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             type: 'bar',
             label: lang === 'ko' ? '과거 데이터(막대)' : 'History (Bars)',
             data: historyWithLink,
-            backgroundColor: makeBarColor('rgb(128 128 128)'),
+            backgroundColor: makeBarColor(chartTheme.line.historyBar),
             borderWidth: 0,
             barThickness: 6,
             maxBarThickness: 6,
@@ -1218,7 +1296,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             type: 'bar',
             label: lang === 'ko' ? '실측값(막대)' : 'Actual (Bars)',
             data: actualOnlyPoints,
-            backgroundColor: makeBarColor('rgb(0 212 170)'),
+            backgroundColor: makeBarColor(chartTheme.line.actualBar),
             borderWidth: 0,
             barThickness: 6,
             maxBarThickness: 6,
@@ -1229,7 +1307,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             type: 'bar',
             label: lang === 'ko' ? '예측값(막대)' : 'Forecast (Bars)',
             data: forecastPoints,
-            backgroundColor: makeBarColor('rgb(255 193 7)'),
+            backgroundColor: makeBarColor(chartTheme.line.forecastBar),
             borderWidth: 0,
             barThickness: 6,
             maxBarThickness: 6,
@@ -1239,10 +1317,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: lang === 'ko' ? '과거 데이터' : 'History',
             data: historyWithLink,
-            borderColor: '#808080',
-            backgroundColor: '#808080',
-            pointBackgroundColor: '#808080',
-            pointBorderColor: '#808080',
+            borderColor: chartTheme.line.history,
+            backgroundColor: chartTheme.line.history,
+            pointBackgroundColor: chartTheme.line.history,
+            pointBorderColor: chartTheme.line.history,
             pointRadius: 0,
             pointHoverRadius: 0,
             pointHitRadius: 8,
@@ -1253,10 +1331,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: lang === 'ko' ? '실측값' : 'Actual',
             data: actualOnlyPoints,
-            borderColor: '#3fb950',
-            backgroundColor: '#3fb950',
-            pointBackgroundColor: '#3fb950',
-            pointBorderColor: '#3fb950',
+            borderColor: chartTheme.line.actual,
+            backgroundColor: chartTheme.line.actual,
+            pointBackgroundColor: chartTheme.line.actual,
+            pointBorderColor: chartTheme.line.actual,
             pointRadius: 0,
             pointHoverRadius: 0,
             pointHitRadius: 8,
@@ -1267,10 +1345,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: lang === 'ko' ? '예측값' : 'Forecast',
             data: forecastPoints,
-            borderColor: '#ffc107',
-            backgroundColor: '#ffc107',
-            pointBackgroundColor: '#ffc107',
-            pointBorderColor: '#ffc107',
+            borderColor: chartTheme.line.forecast,
+            backgroundColor: chartTheme.line.forecast,
+            pointBackgroundColor: chartTheme.line.forecast,
+            pointBorderColor: chartTheme.line.forecast,
             pointRadius: 0,
             pointHoverRadius: 0,
             pointHitRadius: 8,
@@ -1315,7 +1393,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
               if (!tooltipEl) {
                 tooltipEl = document.createElement('div');
                 tooltipEl.id = 'chartjs-tooltip';
-                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: auto; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                tooltipEl.style.cssText = `background: ${chartTheme.tooltip.panelBg}; border: 1px solid ${chartTheme.tooltip.panelBorder}; border-radius: 0; padding: 12px; pointer-events: auto; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: ${chartTheme.tooltip.value}; z-index: 9999;`;
                 document.body.appendChild(tooltipEl);
               }
 
@@ -1353,11 +1431,11 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                 const targetAge = targetIndex - AGE_OFFSET;
                 const targetDate = plainDateMap.get(targetIndex) ?? '-';
                 if (typeof currentPrediction !== 'number') {
-                  return `<div style="margin-bottom:4px;">${targetAge}${lang === 'ko' ? '일령' : 'd'}(${targetDate}): -</div>`;
+                  return `<div style="margin-bottom:4px; color:${chartTheme.tooltip.missing};">${targetAge}${lang === 'ko' ? '일령' : 'd'}(${targetDate}): -</div>`;
                 }
                 const baselinePrediction = targetIndex <= TODAY_INDEX ? modelMap.get(targetIndex) : undefined;
                 if (typeof baselinePrediction !== 'number') {
-                  return `<div style="margin-bottom:4px;">${targetAge}${lang === 'ko' ? '일령' : 'd'}(${targetDate}): ${currentPrediction.toLocaleString()}g <span style="color:#8b949e;">(${lang === 'ko' ? '분석중' : 'Analyzing'})</span></div>`;
+                  return `<div style="margin-bottom:4px; color:${chartTheme.tooltip.missing};">${targetAge}${lang === 'ko' ? '일령' : 'd'}(${targetDate}): ${currentPrediction.toLocaleString()}g <span style="color:${chartTheme.tooltip.missing};">(${lang === 'ko' ? '분석중' : 'Analyzing'})</span></div>`;
                 }
                 const delta = calcError(currentPrediction, baselinePrediction);
                 const color = getErrorColor(Math.abs(delta.pct), ERROR_THRESHOLDS, ERROR_COLORS);
@@ -1376,7 +1454,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                 }
               }
 
-              html += `<button type="button" data-trace-open style="margin-top:8px;border:1px solid #30363d;background:#11161d;color:#c9d1d9;padding:4px 8px;font-size:11px;cursor:pointer;">${lang === 'ko' ? '출처 열기' : 'Open Trace'}</button>`;
+              html += `<button type="button" data-trace-open style="margin-top:8px;border:1px solid ${chartTheme.tooltip.buttonBorder};background:${chartTheme.tooltip.buttonBg};color:${chartTheme.tooltip.buttonText};padding:4px 8px;font-size:11px;cursor:pointer;">${lang === 'ko' ? '출처 열기' : 'Open Trace'}</button>`;
 
               tooltipEl.innerHTML = html;
               tooltipEl.style.opacity = '1';
@@ -1400,10 +1478,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             type: 'linear',
             min: CHART_MIN_INDEX,
             max: CHART_MAX_INDEX,
-            grid: { color: '#2a2f37' },
-            border: { color: '#374151' },
+            grid: { color: chartTheme.grid },
+            border: { color: chartTheme.gridBorder },
             ticks: {
-              color: '#6b7280',
+              color: chartTheme.tick,
               font: { size: 10 },
               stepSize: 1,
               callback: (value: any) => {
@@ -1418,10 +1496,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           y: {
             min: 0,
             max: 3500,
-            grid: { color: '#2a2f37' },
-            border: { color: '#374151' },
+            grid: { color: chartTheme.grid },
+            border: { color: chartTheme.gridBorder },
             ticks: {
-              color: '#6b7280',
+              color: chartTheme.tick,
               font: { size: 10 },
               stepSize: 500,
               callback: (value: any) => `${value}g`,
@@ -1437,7 +1515,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         chartInstanceRef.current = null;
       }
     };
-  }, [buildMainChartPointTrace, dateMap, lang, onOpenTrace, plainDateMap]);
+    }, [buildMainChartPointTrace, dateMap, lang, onOpenTrace, plainDateMap, themeMode]);
 
   /**
    * 예측 정확도 차트 초기화 (D-1, D-2, D-3 vs 실측값)
@@ -1463,8 +1541,8 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: lang === 'ko' ? '표준 체중' : 'Standard Weight',
             data: standardWeightFiltered,
-            borderColor: '#4da3ff',
-            backgroundColor: '#4da3ff',
+            borderColor: chartTheme.accuracy.standard,
+            backgroundColor: chartTheme.accuracy.standard,
             pointRadius: 0,
             borderWidth: 3,
             tension: 0.3,
@@ -1474,9 +1552,9 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: lang === 'ko' ? '실측값' : 'Actual',
             data: OBSERVED_ACTUAL_POINTS,
-            borderColor: '#c9d1d9',
-            backgroundColor: 'rgba(201, 209, 217, 0.15)',
-            pointBackgroundColor: '#c9d1d9',
+            borderColor: chartTheme.accuracy.actual,
+            backgroundColor: chartTheme.accuracy.actualFill,
+            pointBackgroundColor: chartTheme.accuracy.actual,
             pointRadius: 3,
             borderWidth: 2,
             tension: 0.35,
@@ -1485,9 +1563,9 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: 'D-1',
             data: D1_POINTS,
-            borderColor: '#3fb950',
+            borderColor: chartTheme.accuracy.d1,
             backgroundColor: 'transparent',
-            pointBackgroundColor: '#3fb950',
+            pointBackgroundColor: chartTheme.accuracy.d1,
             pointRadius: 0,
             pointHoverRadius: 4,
             borderWidth: 2,
@@ -1496,9 +1574,9 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: 'D-2',
             data: D2_POINTS,
-            borderColor: '#ff7700',
+            borderColor: chartTheme.accuracy.d2,
             backgroundColor: 'transparent',
-            pointBackgroundColor: '#ff7700',
+            pointBackgroundColor: chartTheme.accuracy.d2,
             pointRadius: 0,
             pointHoverRadius: 4,
             borderWidth: 2,
@@ -1507,9 +1585,9 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {
             label: 'D-3',
             data: D3_POINTS,
-            borderColor: '#f85149',
+            borderColor: chartTheme.accuracy.d3,
             backgroundColor: 'transparent',
-            pointBackgroundColor: '#f85149',
+            pointBackgroundColor: chartTheme.accuracy.d3,
             pointRadius: 0,
             pointHoverRadius: 4,
             borderWidth: 2,
@@ -1539,7 +1617,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
               if (!tooltipEl) {
                 tooltipEl = document.createElement('div');
                 tooltipEl.id = 'accuracy-tooltip';
-                tooltipEl.style.cssText = 'background: rgba(10,10,15,0.95); border: 1px solid #2a2a3a; border-radius: 0; padding: 12px; pointer-events: auto; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: #f0f0f5; z-index: 9999;';
+                tooltipEl.style.cssText = `background: ${chartTheme.tooltip.panelBg}; border: 1px solid ${chartTheme.tooltip.panelBorder}; border-radius: 0; padding: 12px; pointer-events: auto; position: absolute; font-family: "Noto Sans KR", sans-serif; font-size: 12px; color: ${chartTheme.tooltip.value}; z-index: 9999;`;
                 document.body.appendChild(tooltipEl);
               }
 
@@ -1575,7 +1653,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
               let html = `<div style="font-weight:600; margin-bottom:8px;">${headerText}</div>`;
 
               const formatValue = (val: number | undefined, color: string, label: string) => {
-                if (typeof val !== 'number') return `<div style="color:#6e7681;">${label}: -</div>`;
+                if (typeof val !== 'number') return `<div style="color:${chartTheme.tooltip.missing};">${label}: -</div>`;
                 let errorText = '';
                 if (typeof actual === 'number' && label !== (lang === 'ko' ? '실측값' : 'Actual')) {
                   const diff = val - actual;
@@ -1585,11 +1663,11 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                 return `<div style="margin-bottom:4px;"><span style="color:${color};">${label}</span>: ${val.toLocaleString()}g${errorText}</div>`;
               };
 
-              html += formatValue(actual, '#c9d1d9', lang === 'ko' ? '실측값' : 'Actual');
-              html += formatValue(d1, '#3fb950', 'D-1');
-              html += formatValue(d2, '#ff7700', 'D-2');
-              html += formatValue(d3, '#f85149', 'D-3');
-              html += `<button type="button" data-accuracy-trace-open style="margin-top:8px;border:1px solid #30363d;background:#11161d;color:#c9d1d9;padding:4px 8px;font-size:11px;cursor:pointer;">${lang === 'ko' ? '출처 열기' : 'Open Trace'}</button>`;
+              html += formatValue(actual, chartTheme.accuracy.actual, lang === 'ko' ? '실측값' : 'Actual');
+              html += formatValue(d1, chartTheme.accuracy.d1, 'D-1');
+              html += formatValue(d2, chartTheme.accuracy.d2, 'D-2');
+              html += formatValue(d3, chartTheme.accuracy.d3, 'D-3');
+              html += `<button type="button" data-accuracy-trace-open style="margin-top:8px;border:1px solid ${chartTheme.tooltip.buttonBorder};background:${chartTheme.tooltip.buttonBg};color:${chartTheme.tooltip.buttonText};padding:4px 8px;font-size:11px;cursor:pointer;">${lang === 'ko' ? '출처 열기' : 'Open Trace'}</button>`;
 
               tooltipEl.innerHTML = html;
               tooltipEl.style.opacity = '1';
@@ -1613,10 +1691,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             type: 'linear',
             min: 26,  // 24일령 (여백용)
             max: 47,  // 45일령
-            grid: { color: '#2a2f37' },
-            border: { color: '#374151' },
+            grid: { color: chartTheme.grid },
+            border: { color: chartTheme.gridBorder },
             ticks: {
-              color: '#6b7280',
+              color: chartTheme.tick,
               font: { size: 10 },
               stepSize: 1,
               callback: (value: any) => {
@@ -1631,10 +1709,10 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           y: {
             min: 1200,
             max: 3000,
-            grid: { color: '#2a2f37' },
-            border: { color: '#374151' },
+            grid: { color: chartTheme.grid },
+            border: { color: chartTheme.gridBorder },
             ticks: {
-              color: '#6b7280',
+              color: chartTheme.tick,
               font: { size: 10 },
               stepSize: 500,
               callback: (value: any) => `${value}g`,
@@ -1650,14 +1728,14 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         accuracyChartInstanceRef.current = null;
       }
     };
-  }, [buildAccuracyChartPointTrace, chartMode, lang, onOpenTrace]);
+  }, [buildAccuracyChartPointTrace, chartMode, lang, onOpenTrace, themeMode]);
 
   return (
     <>
       <style jsx>{`
         .forecast-group {
-          background: #161b22;
-          border: 1px solid #30363d;
+          background: var(--poc-surface);
+          border: 1px solid var(--poc-border);
           border-radius: 0;
         }
         .forecast-card {
@@ -1691,7 +1769,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           display: flex;
           flex-direction: row;
           gap: 10px;
-          background: rgba(22, 27, 34, 0.85);
+          background: var(--poc-chart-legend-bg);
           padding: 6px 10px;
           border-radius: 0;
           border: 1px solid transparent;
@@ -1702,7 +1780,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           align-items: center;
           gap: 5px;
           font-size: 11px;
-          color: #8b949e;
+          color: var(--poc-text-muted);
         }
         .chart-error-legend {
           position: absolute;
@@ -1711,7 +1789,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           display: flex;
           flex-direction: row;
           gap: 10px;
-          background: #161b22;
+          background: var(--poc-surface);
           padding: 6px 10px;
           border-radius: 0;
           z-index: 10;
@@ -1721,19 +1799,19 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           align-items: center;
           gap: 4px;
           background: transparent;
-          border: 1px solid #30363d;
+          border: 1px solid var(--poc-border);
           border-radius: 0;
           padding: 4px 10px;
           min-height: 30px;
           font-size: 12px;
           font-weight: 700;
-          color: #8b949e;
+          color: var(--poc-text-muted);
           cursor: pointer;
           transition: all 0.2s;
         }
         .chart-mode-switch:hover {
-          border-color: #8b949e;
-          color: #c9d1d9;
+          border-color: var(--poc-text-muted);
+          color: var(--poc-text);
         }
         .chart-mode-switch.active {
           background: rgba(63, 185, 80, 0.15);
@@ -1755,7 +1833,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           display: flex;
           flex-direction: column;
           gap: 2px;
-          background: #161b22;
+          background: var(--poc-surface);
           padding: 6px 8px;
           border-radius: 0;
           z-index: 10;
@@ -1769,7 +1847,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         .matrix-table th, .matrix-table td {
           padding: 4px 5px;
           text-align: center;
-          border-bottom: 1px solid #30363d;
+          border-bottom: 1px solid var(--poc-border);
         }
         .matrix-table th:first-child,
         .matrix-table td:first-child {
@@ -1779,27 +1857,27 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         .matrix-table thead {
           position: sticky;
           top: 0;
-          background: #161b22;
+          background: var(--poc-surface);
           z-index: 1;
         }
         .matrix-table thead th {
-          color: #8b949e;
+          color: var(--poc-text-muted);
           font-weight: 500;
         }
         .date-main {
           display: block;
-          color: #c9d1d9;
+          color: var(--poc-text);
           font-weight: 600;
           font-size: 12px;
         }
         .date-sub {
           font-size: 10px;
-          color: #6e7681;
+          color: var(--poc-text-dim);
           white-space: nowrap;
         }
         .age-main {
           display: block;
-          color: #c9d1d9;
+          color: var(--poc-text);
           font-weight: 600;
           font-size: 12px;
         }
@@ -1817,11 +1895,11 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         }
         .row-header {
           text-align: left !important;
-          color: #c9d1d9;
+          color: var(--poc-text);
           font-weight: 600;
         }
         .prediction-cell .value {
-          color: #c9d1d9;
+          color: var(--poc-text);
           display: block;
         }
         .prediction-cell .error {
@@ -1857,11 +1935,11 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         }
         .future-cell .label {
           font-size: 9px;
-          color: #6e7681;
+          color: var(--poc-text-dim);
           display: block;
         }
         .empty-cell {
-          color: #484f58;
+          color: var(--poc-text-dim);
         }
         .legend {
           display: flex;
@@ -1869,14 +1947,14 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           flex-wrap: wrap;
           margin-top: 10px;
           padding-top: 10px;
-          border-top: 1px solid #30363d;
+          border-top: 1px solid var(--poc-border);
         }
         .legend-item {
           display: flex;
           align-items: center;
           gap: 5px;
           font-size: 10px;
-          color: #8b949e;
+          color: var(--poc-text-muted);
         }
         .legend-dot {
           width: 16px;
@@ -1897,8 +1975,8 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           display: flex;
           align-items: center;
           gap: 5px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid #30363d;
+          background: var(--poc-overlay-item-bg);
+          border: 1px solid var(--poc-border);
           border-radius: 0;
           padding: 4px 10px;
           min-height: 30px;
@@ -1916,8 +1994,8 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           display: none;
           width: 240px;
           max-width: calc(100vw - 48px);
-          background: rgba(10, 10, 15, 0.96);
-          border: 1px solid #2a2a3a;
+          background: var(--poc-tooltip-bg);
+          border: 1px solid var(--poc-tooltip-border);
           border-radius: 0;
           padding: 10px 12px;
           color: #f0f0f5;
@@ -1951,7 +2029,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         .accuracy-label .day {
           font-size: 12px;
           font-weight: 700;
-          color: #8b949e;
+          color: var(--poc-text-muted);
         }
         .prediction-card-label {
           min-width: 38px;
@@ -1968,7 +2046,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           flex: 1;
           height: 8px;
           border-radius: 1px;
-          background: #21262d;
+          background: var(--poc-segment-bg);
         }
         .accuracy-segment.good { background: #3fb950; }
         .accuracy-segment.medium { background: #ff7700; }
@@ -1988,7 +2066,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           font-weight: 400;
           min-width: 36px;
           text-align: right;
-          color: #8b949e;
+          color: var(--poc-text-muted);
         }
         .prediction-value {
           display: inline-flex;
@@ -2007,7 +2085,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         .prediction-main.good { color: #3fb950; }
         .prediction-main.medium { color: #ff7700; }
         .prediction-main.bad { color: #f85149; }
-        .prediction-main.neutral { color: #8b949e; }
+        .prediction-main.neutral { color: var(--poc-text-muted); }
         .prediction-error {
           margin-left: 4px;
           font-size: 11px;
@@ -2017,7 +2095,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
         .prediction-error.good { color: #3fb950; }
         .prediction-error.medium { color: #ff7700; }
         .prediction-error.bad { color: #f85149; }
-        .prediction-error.neutral { color: #8b949e; }
+        .prediction-error.neutral { color: var(--poc-text-muted); }
         .accuracy-item.good .accuracy-tooltip-summary { color: #3fb950; }
         .accuracy-item.medium .accuracy-tooltip-summary { color: #ff7700; }
         .accuracy-item.bad .accuracy-tooltip-summary { color: #f85149; }
@@ -2027,12 +2105,12 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           gap: 8px;
           font-size: 12px;
           font-weight: 700;
-          color: #8b949e;
+          color: var(--poc-text-muted);
         }
         .week-btn {
           background: transparent;
           border: none;
-          color: #8b949e;
+          color: var(--poc-text-muted);
           padding: 2px;
           cursor: pointer;
           transition: color 0.2s;
@@ -2040,7 +2118,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           align-items: center;
         }
         .week-btn:hover {
-          color: #c9d1d9;
+          color: var(--poc-text);
         }
         .fit-switch {
           display: flex;
@@ -2048,17 +2126,17 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           gap: 4px;
           font-size: 12px;
           font-weight: 700;
-          color: #8b949e;
+          color: var(--poc-text-muted);
           cursor: pointer;
           background: transparent;
-          border: 1px solid #30363d;
+          border: 1px solid var(--poc-border);
           padding: 4px 10px;
           min-height: 30px;
           border-radius: 0;
           transition: all 0.2s;
         }
         .fit-switch:hover {
-          background: #21262d;
+          background: var(--poc-segment-bg);
         }
         .fit-switch.active {
           background: rgba(63, 185, 80, 0.15);
@@ -2159,6 +2237,181 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
             flex-shrink: 0;
           }
         }
+        ${isLightTheme
+          ? `
+        :global(.poc-theme-light) .forecast-group {
+          background: #ffffff;
+          border-color: #d1d5db;
+        }
+        :global(.poc-theme-light) .chart-legend-overlay,
+        :global(.poc-theme-light) .chart-error-legend,
+        :global(.poc-theme-light) .table-legend-overlay,
+        :global(.poc-theme-light) .forecast-card {
+          background: #e2e8f0;
+          border-color: #cbd5e1;
+        }
+        :global(.poc-theme-light) .legend-row,
+        :global(.poc-theme-light) .fit-switch {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .fit-switch.active {
+          background: rgba(22, 163, 74, 0.12);
+          color: #16a34a;
+          border-color: #16a34a;
+        }
+        :global(.poc-theme-light) .chart-mode-switch,
+        :global(.poc-theme-light) .rolling-details-toggle,
+        :global(.poc-theme-light) .week-btn {
+          background: transparent;
+          border-color: #cbd5e1;
+          color: #334155;
+        }
+        :global(.poc-theme-light) .accuracy-item,
+        :global(.poc-theme-light) .week-btn,
+        :global(.poc-theme-light) .fit-switch {
+          border-color: #cbd5e1;
+        }
+        :global(.poc-theme-light) .accuracy-item {
+          background: #f8fafc;
+        }
+        :global(.poc-theme-light) .prediction-item {
+          background: #ffffff;
+        }
+        :global(.poc-theme-light) .prediction-cell .error {
+          color: #64748b;
+        }
+        :global(.poc-theme-light) .future-cell .label {
+          color: #64748b;
+        }
+        :global(.poc-theme-light) .chart-mode-switch:hover {
+          border-color: #94a3b8;
+          color: #0f172a;
+        }
+        :global(.poc-theme-light) .accuracy-tooltip,
+        :global(.poc-theme-light) .accuracy-tooltip-line {
+          border-color: #cbd5e1;
+          color: #334155;
+          background: #ffffff;
+        }
+        :global(.poc-theme-light) .chart-mode-switch.active {
+          background: #dcfce7;
+          border-color: #22c55e;
+          color: #15803d;
+        }
+        :global(.poc-theme-light) .matrix-table thead {
+          background: #f8fafc;
+        }
+        :global(.poc-theme-light) .matrix-table th,
+        :global(.poc-theme-light) .matrix-table td {
+          border-color: #d1d5db;
+        }
+        :global(.poc-theme-light) .matrix-table th {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .date-main,
+        :global(.poc-theme-light) .age-main,
+        :global(.poc-theme-light) .row-header,
+        :global(.poc-theme-light) .accuracy-tooltip-summary,
+        :global(.poc-theme-light) .accuracy-label .day {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .date-sub,
+        :global(.poc-theme-light) .today-row .date-sub,
+        :global(.poc-theme-light) .empty-cell,
+        :global(.poc-theme-light) .accuracy-value,
+        :global(.poc-theme-light) .week-nav,
+        :global(.poc-theme-light) .prediction-main.neutral,
+        :global(.poc-theme-light) .prediction-error.neutral {
+          color: #64748b;
+        }
+        :global(.poc-theme-light) .today-row {
+          background: rgba(16, 185, 129, 0.08);
+        }
+        :global(.poc-theme-light) .today-row td:first-child {
+          border-left-color: #16a34a;
+        }
+        :global(.poc-theme-light) .hovered-col {
+          background: rgba(59, 130, 246, 0.12);
+        }
+        :global(.poc-theme-light) .prediction-cell .value,
+        :global(.poc-theme-light) .future-cell .value {
+          color: #0f172a;
+        }
+        :global(.poc-theme-light) .prediction-cell .error.good,
+        :global(.poc-theme-light) .accuracy-item.good .accuracy-tooltip-summary,
+        :global(.poc-theme-light) .prediction-main.good,
+        :global(.poc-theme-light) .prediction-error.good {
+          color: #15803d;
+        }
+        :global(.poc-theme-light) .prediction-cell .error.medium,
+        :global(.poc-theme-light) .accuracy-item.medium .accuracy-tooltip-summary,
+        :global(.poc-theme-light) .prediction-main.medium,
+        :global(.poc-theme-light) .prediction-error.medium {
+          color: #b45309;
+        }
+        :global(.poc-theme-light) .prediction-cell .error.bad,
+        :global(.poc-theme-light) .accuracy-item.bad .accuracy-tooltip-summary,
+        :global(.poc-theme-light) .prediction-main.bad,
+        :global(.poc-theme-light) .prediction-error.bad {
+          color: #b91c1c;
+        }
+        :global(.poc-theme-light) .actual-cell {
+          background: rgba(22, 163, 74, 0.12);
+        }
+        :global(.poc-theme-light) .actual-cell .value {
+          color: #16a34a;
+        }
+        :global(.poc-theme-light) .future-cell {
+          background: rgba(245, 158, 11, 0.1);
+        }
+        :global(.poc-theme-light) .future-cell .value {
+          color: #d97706;
+        }
+        :global(.poc-theme-light) .forecast-group .accuracy-item .accuracy-tooltip-summary,
+        :global(.poc-theme-light) .forecast-group .legend-dot.good,
+        :global(.poc-theme-light) .forecast-group .legend-dot.actual {
+          color: #15803d;
+          background: #bbf7d0;
+        }
+        :global(.poc-theme-light) .forecast-group .accuracy-segment.good,
+        :global(.poc-theme-light) .forecast-group .accuracy-item.good .accuracy-segment {
+          background: #22c55e;
+        }
+        :global(.poc-theme-light) .forecast-group .accuracy-segment.medium {
+          background: #f59e0b;
+        }
+        :global(.poc-theme-light) .forecast-group .accuracy-segment.bad {
+          background: #ef4444;
+        }
+        :global(.poc-theme-light) .accuracy-segment {
+          background: #cbd5e1;
+        }
+        :global(.poc-theme-light) .legend-row {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .legend-dot.good,
+        :global(.poc-theme-light) .legend-dot.actual {
+          background: #15803d;
+          border-color: #15803d;
+        }
+        :global(.poc-theme-light) .legend-dot.medium {
+          background: #d97706;
+          border-color: #d97706;
+        }
+        :global(.poc-theme-light) .legend-dot.bad {
+          background: #dc2626;
+          border-color: #dc2626;
+        }
+        :global(.poc-theme-light) .accuracy-tooltip-line.good {
+          color: #16a34a;
+        }
+        :global(.poc-theme-light) .accuracy-tooltip-line.medium {
+          color: #b45309;
+        }
+        :global(.poc-theme-light) .accuracy-tooltip-line.bad {
+          color: #b91c1c;
+        }` 
+          : ''}
       `}</style>
 
       <div className="space-y-0">
@@ -2167,7 +2420,9 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
           {/* Header */}
           <div className="forecast-header-line">
           <div className="forecast-header-title">
-            <h3 className="text-gray-400 font-medium">{lang === 'ko' ? 'CCTV 무게예측' : 'CCTV WEIGHT'}</h3>
+            <h3 className="font-medium" style={{ color: chartTheme.tooltip.value }}>
+              {lang === 'ko' ? 'CCTV 무게예측' : 'CCTV WEIGHT'}
+            </h3>
           </div>
           <div className="forecast-header-actions">
             <div className="accuracy-indicators">
@@ -2190,6 +2445,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                   value={`${avgAccuracy.d1}%`}
                   trace={accuracyTraces.d1}
                   onOpenTrace={onOpenTrace}
+                  themeMode={themeMode}
                   indicatorMode="compact"
                   align="right"
                   className="w-full justify-end px-0 py-0"
@@ -2223,6 +2479,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                   value={`${avgAccuracy.d2}%`}
                   trace={accuracyTraces.d2}
                   onOpenTrace={onOpenTrace}
+                  themeMode={themeMode}
                   indicatorMode="compact"
                   align="right"
                   className="w-full justify-end px-0 py-0"
@@ -2256,6 +2513,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                   value={`${avgAccuracy.d3}%`}
                   trace={accuracyTraces.d3}
                   onOpenTrace={onOpenTrace}
+                  themeMode={themeMode}
                   indicatorMode="compact"
                   align="right"
                   className="w-full justify-end px-0 py-0"
@@ -2291,42 +2549,42 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                 {chartMode === 'main' ? (
                   <>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#3fb950] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.d1 }} />
                       <span>{lang === 'ko' ? '3일 예측 구간' : '3-day Forecast'}</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#4da3ff] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.standard }} />
                       <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#808080] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.line.history }} />
                       <span>{lang === 'ko' ? '예측무게' : 'Predicted'}</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#ffc107] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.line.forecast }} />
                       <span>{lang === 'ko' ? '3일예측' : 'Forecast'}</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#4da3ff] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.standard }} />
                       <span>{lang === 'ko' ? '표준 체중' : 'Standard'}</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#c9d1d9] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.actual }} />
                       <span>{lang === 'ko' ? '실측값' : 'Actual'}</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#3fb950] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.d1 }} />
                       <span>D-1</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#ff7700] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.d2 }} />
                       <span>D-2</span>
                     </div>
                     <div className="legend-row">
-                      <div className="w-2 h-2 bg-[#f85149] " />
+                      <div className="w-2 h-2" style={{ background: chartTheme.accuracy.d3 }} />
                       <span>D-3</span>
                     </div>
                   </>
@@ -2349,7 +2607,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
               </div>
             </div>
             <div className="chart-measurement-time">
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px]" style={{ color: chartTheme.tooltip.missing }}>
               {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
             </p>
           </div>
@@ -2358,10 +2616,15 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
 
         <div className="forecast-card">
           {/* Table Title & Header */}
-          <div className="mt-1 border-t border-[#30363d] pt-3">
+          <div
+            className="mt-1 border-t pt-3"
+            style={{ borderColor: isLightTheme ? '#cbd5e1' : '#30363d' }}
+          >
           <div className="forecast-matrix-header">
             <div className="forecast-matrix-title">
-              <h3 className="text-gray-400 font-medium">{lang === 'ko' ? '3일 예측 매트릭스' : 'ROLLING FORECAST MATRIX'}</h3>
+              <h3 className="font-medium" style={{ color: chartTheme.tooltip.value }}>
+                {lang === 'ko' ? '3일 예측 매트릭스' : 'ROLLING FORECAST MATRIX'}
+              </h3>
             </div>
             <div className="forecast-matrix-actions">
               <div className="accuracy-indicators">
@@ -2376,14 +2639,15 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                       ))}
                     </div>
                     <span className="accuracy-value prediction-value">
-                                  <TraceableValue
-                                    value={<span className={`prediction-main ${card.tone}`}>{card.value}</span>}
-                                    trace={card.trace}
-                                    onOpenTrace={onOpenTrace}
-                                    indicatorMode="compact"
-                                    align="center"
-                                    className="w-auto justify-center px-0 py-0"
-                                  />
+                                    <TraceableValue
+                                      value={<span className={`prediction-main ${card.tone}`}>{card.value}</span>}
+                                      trace={card.trace}
+                                      onOpenTrace={onOpenTrace}
+                                      themeMode={themeMode}
+                                      indicatorMode="compact"
+                                      align="center"
+                                      className="w-auto justify-center px-0 py-0"
+                                    />
                                   {card.isToday && (
                                     <span className={`prediction-error ${card.tone} hidden lg:inline`}>{card.errorText}</span>
                                   )}
@@ -2410,8 +2674,12 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                 type="button"
                 className={`rolling-details-toggle border min-h-[30px] px-[10px] py-[4px] text-[11px] md:text-[12px] font-bold transition-colors flex items-center gap-1 ${
                   isRollingCollapsed
-                    ? 'border-[#30363d] text-gray-400 hover:text-gray-200'
-                    : 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
+                    ? isLightTheme
+                      ? 'border-[#cbd5e1] text-[#64748b] hover:text-[#0f172a]'
+                      : 'border-[#30363d] text-gray-400 hover:text-gray-200'
+                    : isLightTheme
+                      ? 'border-[#16a34a] text-[#16a34a] bg-[#16a34a]/10'
+                      : 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
                 }`}
                 onClick={() => setIsRollingCollapsed(v => !v)}
                 aria-label={lang === 'ko' ? '3일 예측 매트릭스 접기/펼치기' : 'Toggle forecast table'}
@@ -2462,6 +2730,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                                   value={cell.value}
                                   trace={buildMatrixCellTrace(row, col, cell)}
                                   onOpenTrace={onOpenTrace}
+                                  themeMode={themeMode}
                                   indicatorMode="compact"
                                   showOriginBadge={false}
                                   align="right"
@@ -2492,6 +2761,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                                   value={cell.value}
                                   trace={buildMatrixCellTrace(row, col, cell)}
                                   onOpenTrace={onOpenTrace}
+                                  themeMode={themeMode}
                                   indicatorMode="compact"
                                   showOriginBadge={false}
                                   align="right"
@@ -2509,6 +2779,7 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                                   value={cell.value}
                                   trace={buildMatrixCellTrace(row, col, cell)}
                                   onOpenTrace={onOpenTrace}
+                                  themeMode={themeMode}
                                   indicatorMode="compact"
                                   showOriginBadge={false}
                                   align="right"
@@ -2527,17 +2798,21 @@ const ForecastMatrix = ({ lang, onOpenTrace }: ForecastMatrixProps) => {
                 </table>
               </div>
               <div className="mt-2 flex justify-end">
-                <p className="text-[10px] text-gray-500">
-                  {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
-                </p>
+            <p className="text-[10px]" style={{ color: chartTheme.tooltip.missing }}>
+              {lang === 'ko' ? '체중 측정 시각' : 'Weights at'} {MEASUREMENT_STAT_TIME}
+            </p>
               </div>
               <button
                 type="button"
                 onClick={() => setFitAll(v => !v)}
                 className={`mt-1 w-full border min-h-[30px] px-[10px] py-[4px] text-[12px] font-bold transition-colors flex items-center justify-center ${
                   fitAll
-                    ? 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
-                    : 'border-[#30363d] text-gray-400 hover:text-gray-200'
+                    ? isLightTheme
+                      ? 'border-[#16a34a] text-[#16a34a] bg-[#16a34a]/10'
+                      : 'border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10'
+                    : isLightTheme
+                      ? 'border-[#cbd5e1] text-[#64748b] hover:text-[#0f172a]'
+                      : 'border-[#30363d] text-gray-400 hover:text-gray-200'
                 }`}
               >
                 {fitAll

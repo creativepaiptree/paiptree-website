@@ -19,7 +19,12 @@ export default {
 export const Default = {
   render: (args: { lang: 'ko' | 'en' }) => (
     <div className="p-2">
-      <Navbar lang={args.lang} setLang={noop} />
+      <Navbar
+        lang={args.lang}
+        setLang={noop}
+        setThemeMode={(_themeMode: 'dark' | 'light') => noop()}
+        themeMode="dark"
+      />
     </div>
   ),
 };

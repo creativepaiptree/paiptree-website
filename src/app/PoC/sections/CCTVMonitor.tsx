@@ -18,6 +18,7 @@ interface CCTVMonitorProps {
   lang: 'ko' | 'en';
   onOpenTrace: (trace: TraceabilityPayload) => void;
   state?: 'default' | 'loading' | 'empty' | 'error';
+  themeMode?: 'dark' | 'light';
 }
 
 export type CCTVMonitorState = 'default' | 'loading' | 'empty' | 'error';
@@ -88,6 +89,63 @@ const SAMPLE_ARCHIVE_IMAGE_URLS = Array.from(
   (_, index) => `/media/cctv-sample-test1/images/frame-${String(index + 1).padStart(3, '0')}.jpg`,
 );
 
+const CCTV_THEME = {
+  dark: {
+    surface: '#161b22',
+    border: '#30363d',
+    panel: '#0d1117',
+    panelStrong: '#11161d',
+    panelLight: '#11161d',
+    text: '#c9d1d9',
+    textMuted: '#8b949e',
+    textDanger: '#f85149',
+    textOK: '#3fb950',
+    textWarn: '#ff7700',
+    textInfo: '#58a6ff',
+    hover: '#161b22',
+    success: '#3fb950',
+    warning: '#ff7700',
+    danger: '#f85149',
+    neutral: '#8b949e',
+    darkBg: '#0b1017',
+    modalBg: 'rgba(0, 0, 0, 0.7)',
+    overlayBg: 'rgba(0, 0, 0, 0.62)',
+    selectedBg: '#3fb95022',
+    selectedShadow: '#3fb95044',
+    inactiveText: '#484f58',
+    thumbBg: '#0d1117',
+    thumbOverlay: 'rgba(13, 17, 23, 0.85)',
+  },
+  light: {
+    surface: '#ffffff',
+    border: '#d1d5db',
+    panel: '#f8fafc',
+    panelStrong: '#f1f5f9',
+    panelLight: '#f8fafc',
+    text: '#0f172a',
+    textMuted: '#64748b',
+    textDanger: '#dc2626',
+    textOK: '#15803d',
+    textWarn: '#b45309',
+    textInfo: '#1d4ed8',
+    hover: '#f1f5f9',
+    success: '#15803d',
+    warning: '#b45309',
+    danger: '#dc2626',
+    neutral: '#94a3b8',
+    darkBg: 'rgba(15, 23, 42, 0.35)',
+    modalBg: 'rgba(15, 23, 42, 0.45)',
+    overlayBg: 'rgba(15, 23, 42, 0.75)',
+    selectedBg: '#bbf7d0',
+    selectedShadow: '#22c55e44',
+    inactiveText: '#64748b',
+    thumbBg: '#f8fafc',
+    thumbOverlay: 'rgba(15, 23, 42, 0.62)',
+  },
+} as const;
+
+type ThemeMode = 'dark' | 'light';
+
 const t = {
   title: { ko: 'CCTV 모니터링', en: 'CCTV Monitoring' },
   liveFeed: { ko: '라이브 스트림', en: 'Live Stream' },
@@ -146,21 +204,17 @@ const minuteToHHMM = (totalMinute: number) => {
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 };
 
-const getFrameColor = (frame: Pick<ProcessedArchiveImage, 'status' | 'eventType'>): string => {
-  if (frame.status === 'failed') return '#f85149';
-  if (frame.status === 'missing') return '#8b949e';
-  if (frame.eventType === 'intrusion') return '#ff7700';
-  if (frame.eventType === 'vehicle') return '#58a6ff';
-  if (frame.eventType === 'person') return '#3fb950';
-  return '#484f58';
-};
-
-const getStatusColor = (ok: number, total: number): string => {
-  if (total === 0) return '#8b949e';
+const getStatusColor = (
+  ok: number,
+  total: number,
+  themeMode: ThemeMode = 'dark',
+): string => {
+  const palette = CCTV_THEME[themeMode];
+  if (total === 0) return palette.neutral;
   const ratio = ok / total;
-  if (ratio >= 0.95) return '#3fb950';
-  if (ratio >= 0.8) return '#ff7700';
-  return '#f85149';
+  if (ratio >= 0.95) return palette.success;
+  if (ratio >= 0.8) return palette.warning;
+  return palette.danger;
 };
 
 const buildArchiveImages = (cameraId: string, batch: BatchTemplate, seedOffset: number): ProcessedArchiveImage[] => {
@@ -278,7 +332,9 @@ const getStatusCounts = (images: ProcessedArchiveImage[]) => {
   };
 };
 
-const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps) => {
+const CCTVMonitor = ({ lang, onOpenTrace, state = 'default', themeMode = 'dark' }: CCTVMonitorProps) => {
+  const isLightTheme = themeMode === 'light';
+  const cctvTheme = CCTV_THEME[themeMode];
   const [activeCamera, setActiveCamera] = useState<string>('CT01');
   const [activeBatchId, setActiveBatchId] = useState<string>('CT01-latest');
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
@@ -602,10 +658,10 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
         ...camera,
         counts: camCounts,
         live: mockLiveStateMap[camera.id],
-        color: getStatusColor(camCounts.ok, camCounts.total),
+        color: getStatusColor(camCounts.ok, camCounts.total, themeMode),
       };
     });
-  }, []);
+  }, [themeMode]);
 
   const reconnectStream = () => {
     if (retrying) return;
@@ -617,8 +673,8 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
     <>
       <style jsx>{`
         .cctv-shell {
-          background: #161b22;
-          border: 1px solid #30363d;
+          background: var(--poc-surface);
+          border: 1px solid var(--poc-border);
           width: 100%;
         }
         .cctv-header {
@@ -628,7 +684,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           flex-wrap: wrap;
           gap: 8px;
           padding: 12px 16px;
-          border-bottom: 1px solid #30363d;
+          border-bottom: 1px solid var(--poc-border);
         }
         .cctv-layout {
           display: flex;
@@ -652,8 +708,8 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           display: flex;
         }
         .panel {
-          border: 1px solid #30363d;
-          background: #0d1117;
+          border: 1px solid var(--poc-border);
+          background: var(--poc-panel);
         }
         .camera-rail {
           display: flex;
@@ -671,9 +727,9 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           min-height: 38px;
           padding: 8px;
           font-size: 11px;
-          color: #c9d1d9;
-          border: 1px solid #30363d;
-          background: #11161d;
+          color: var(--poc-text);
+          border: 1px solid var(--poc-border);
+          background: var(--poc-panel-strong);
         }
         .camera-list-scroll {
           flex: 1;
@@ -683,12 +739,12 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           flex-direction: column;
           gap: 8px;
           padding-right: 2px;
-          border-top: 1px solid #30363d;
+          border-top: 1px solid var(--poc-border);
           padding-top: 8px;
         }
         .camera-btn {
-          border: 1px solid #30363d;
-          background: #11161d;
+          border: 1px solid var(--poc-border);
+          background: var(--poc-panel-strong);
           padding: 6px;
           text-align: left;
           transition: border-color 0.15s, background 0.15s;
@@ -697,7 +753,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           border-color: #58a6ff;
         }
         .camera-btn.active {
-          background: #161b22;
+          background: var(--poc-surface);
           border-color: #3fb950;
         }
         .camera-card {
@@ -717,13 +773,13 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           align-items: center;
           gap: 6px;
           font-size: 10px;
-          color: #8b949e;
+          color: var(--poc-text-muted);
         }
         .camera-mini-live {
           width: 120px;
           flex-shrink: 0;
           aspect-ratio: 16 / 12;
-          border: 1px solid #30363d;
+          border: 1px solid var(--poc-border);
           background: radial-gradient(circle at 20% 20%, #243244 0%, #101823 70%);
           position: relative;
           overflow: hidden;
@@ -778,13 +834,13 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           background: #f851491a;
         }
         .camera-mini-id {
-          color: #c9d1d9;
+          color: var(--poc-text);
           font-size: 10px;
           line-height: 1;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
         }
         .camera-mini-foot {
-          color: #8b949e;
+          color: var(--poc-text-muted);
           font-size: 10px;
           line-height: 1;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
@@ -799,7 +855,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 8px;
-          border-bottom: 1px solid #30363d;
+          border-bottom: 1px solid var(--poc-border);
           padding: 10px;
         }
         .ops-item {
@@ -807,11 +863,11 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           align-items: center;
           justify-content: center;
           gap: 6px;
-          border: 1px solid #30363d;
+          border: 1px solid var(--poc-border);
           padding: 8px;
           font-size: 11px;
-          color: #c9d1d9;
-          background: #11161d;
+          color: var(--poc-text);
+          background: var(--poc-panel-strong);
           min-height: 38px;
           text-align: center;
         }
@@ -850,8 +906,8 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           margin: 10px;
           height: auto;
           aspect-ratio: 23 / 18;
-          border: 1px solid #30363d;
-          background: #0b1017;
+          border: 1px solid var(--poc-border);
+          background: var(--poc-dark-bg);
           position: relative;
           overflow: hidden;
         }
@@ -887,7 +943,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           }
         }
         .live-footer {
-          border-top: 1px solid #30363d;
+          border-top: 1px solid var(--poc-border);
           padding: 10px;
           display: flex;
           align-items: center;
@@ -897,11 +953,11 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
         }
         .stream-url {
           font-size: 10px;
-          color: #8b949e;
+          color: var(--poc-text-muted);
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-          border: 1px solid #30363d;
+          border: 1px solid var(--poc-border);
           padding: 2px 6px;
-          background: #11161d;
+          background: var(--poc-panel-strong);
           max-width: 100%;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -909,10 +965,10 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
         }
          .badge {
            font-size: 10px;
-           border: 1px solid #30363d;
+           border: 1px solid var(--poc-border);
            padding: 2px 6px;
-           background: #11161d;
-           color: #c9d1d9;
+           background: var(--poc-panel-strong);
+           color: var(--poc-text);
            display: inline-flex;
            align-items: center;
            gap: 4px;
@@ -934,37 +990,37 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
            min-height: 38px;
            padding: 8px;
            font-size: 11px;
-           color: #c9d1d9;
-           border: 1px solid #30363d;
-           background: #11161d;
+           color: var(--poc-text);
+           border: 1px solid var(--poc-border);
+           background: var(--poc-panel-strong);
          }
          .archive-content {
            display: flex;
            flex-direction: column;
            gap: 8px;
-           border-top: 1px solid #30363d;
+           border-top: 1px solid var(--poc-border);
            padding-top: 8px;
            flex: 1;
            min-height: 0;
          }
         .archive-note {
-          border: 1px solid #30363d;
-          background: #11161d;
-          color: #8b949e;
+          border: 1px solid var(--poc-border);
+          background: var(--poc-panel-strong);
+          color: var(--poc-text-muted);
           font-size: 11px;
           padding: 8px;
         }
         .preview-pane {
-          border: 1px solid #30363d;
-          background: #11161d;
+          border: 1px solid var(--poc-border);
+          background: var(--poc-panel-strong);
           padding: 8px;
           display: flex;
           flex-direction: column;
-          border-top: 1px solid #30363d;
+          border-top: 1px solid var(--poc-border);
           padding-top: 8px;
         }
         .preview-canvas {
-          border: 1px solid #30363d;
+          border: 1px solid var(--poc-border);
           aspect-ratio: 16 / 9;
           background: radial-gradient(circle at top, #202a36 0%, #0b1017 70%);
           display: flex;
@@ -986,9 +1042,9 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           display: flex;
           align-items: center;
           gap: 6px;
-          color: #c9d1d9;
+          color: var(--poc-text);
           font-size: 10px;
-          background: rgba(0, 0, 0, 0.7);
+          background: var(--poc-modal-bg);
           padding: 2px 6px;
           pointer-events: none;
         }
@@ -998,9 +1054,9 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
           gap: 4px;
         }
          .batch-btn {
-           border: 1px solid #30363d;
-           background: #11161d;
-           color: #8b949e;
+           border: 1px solid var(--poc-border);
+           background: var(--poc-panel-strong);
+           color: var(--poc-text-muted);
            text-align: left;
            padding: 6px 6px;
            display: flex;
@@ -1010,8 +1066,8 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
          }
          .batch-btn.active {
            border-color: #58a6ff;
-           background: #161b22;
-           color: #c9d1d9;
+           background: var(--poc-surface);
+           color: var(--poc-text);
          }
          .paging-row {
            display: flex;
@@ -1019,12 +1075,12 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
            align-items: center;
            gap: 8px;
            font-size: 12px;
-           color: #8b949e;
+           color: var(--poc-text-muted);
          }
          .page-btn {
-           border: 1px solid #30363d;
-           background: #11161d;
-           color: #c9d1d9;
+           border: 1px solid var(--poc-border);
+           background: var(--poc-panel-strong);
+           color: var(--poc-text);
            padding: 4px 8px;
            display: inline-flex;
            align-items: center;
@@ -1039,8 +1095,8 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
            gap: 6px;
          }
          .thumb-btn {
-           border: 1px solid #30363d;
-           background: #11161d;
+           border: 1px solid var(--poc-border);
+           background: var(--poc-panel-strong);
            text-align: left;
            padding: 6px;
            transition: border-color 0.15s;
@@ -1053,12 +1109,12 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
            box-shadow: 0 0 0 1px #3fb95044 inset;
          }
          .thumb-preview {
-           border: 1px solid #30363d;
+           border: 1px solid var(--poc-border);
            aspect-ratio: 16 / 9;
            display: flex;
            align-items: center;
            justify-content: center;
-           background: #0d1117;
+           background: var(--poc-panel);
            overflow: hidden;
            position: relative;
          }
@@ -1081,10 +1137,10 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
          .thumb-chip {
            font-size: 10px;
            line-height: 1;
-           border: 1px solid #30363d;
+           border: 1px solid var(--poc-border);
            padding: 2px 6px;
-           background: rgba(13, 17, 23, 0.85);
-           color: #c9d1d9;
+           background: var(--poc-thumb-overlay);
+           color: var(--poc-text);
            display: inline-flex;
            align-items: center;
            gap: 4px;
@@ -1095,15 +1151,15 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
            color: #e6edf3;
          }
          .selected-card {
-           border: 1px solid #30363d;
+           border: 1px solid var(--poc-border);
            padding: 8px;
-           background: #11161d;
+           background: var(--poc-panel-strong);
          }
          .empty {
-           border: 1px dashed #30363d;
+           border: 1px dashed var(--poc-border);
            padding: 16px;
            text-align: center;
-           color: #8b949e;
+           color: var(--poc-text-muted);
            font-size: 12px;
          }
         @media (max-width: 1360px) {
@@ -1187,18 +1243,169 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
             line-height: 1.2;
           }
         }
-       `}</style>
+        ${themeMode === 'light'
+          ? `
+        :global(.poc-theme-light) .cctv-shell {
+          background: #ffffff;
+          border-color: #d1d5db;
+        }
+        :global(.poc-theme-light) .cctv-header,
+        :global(.poc-theme-light) .panel,
+        :global(.poc-theme-light) .camera-list-head,
+        :global(.poc-theme-light) .camera-list-scroll,
+        :global(.poc-theme-light) .camera-btn,
+        :global(.poc-theme-light) .ops-bar,
+        :global(.poc-theme-light) .ops-item,
+        :global(.poc-theme-light) .live-footer,
+        :global(.poc-theme-light) .archive-header,
+        :global(.poc-theme-light) .archive-note,
+        :global(.poc-theme-light) .preview-pane,
+        :global(.poc-theme-light) .batch-row,
+        :global(.poc-theme-light) .paging-row,
+        :global(.poc-theme-light) .thumb-btn,
+        :global(.poc-theme-light) .selected-card,
+        :global(.poc-theme-light) .empty {
+          background: #f8fafc;
+          border-color: #d1d5db;
+        }
+        :global(.poc-theme-light) .camera-list-head {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .camera-list-scroll,
+        :global(.poc-theme-light) .live-footer,
+        :global(.poc-theme-light) .archive-content {
+          border-top-color: #d1d5db;
+        }
+        :global(.poc-theme-light) .camera-btn {
+          border-color: #d1d5db;
+          background: #f8fafc;
+        }
+        :global(.poc-theme-light) .camera-btn:hover {
+          border-color: #2563eb;
+        }
+        :global(.poc-theme-light) .camera-btn.active {
+          background: #ffffff;
+          border-color: #15803d;
+        }
+        :global(.poc-theme-light) .camera-mini-live {
+          border-color: #d1d5db;
+          background: #e2e8f0;
+        }
+        :global(.poc-theme-light) .camera-mini-live.active {
+          border-color: #15803d;
+          box-shadow: 0 0 0 1px #15803e44 inset;
+        }
+        :global(.poc-theme-light) .camera-mini-chip {
+          border-color: #15803d;
+          color: #15803d;
+          background: #dcfce7;
+        }
+        :global(.poc-theme-light) .camera-mini-chip.offline {
+          border-color: #dc2626;
+          color: #dc2626;
+          background: #fee2e2;
+        }
+        :global(.poc-theme-light) .ops-item {
+          background: #f8fafc;
+          color: #334155;
+        }
+        :global(.poc-theme-light) .retry-btn {
+          border-color: #15803d;
+          color: #15803d;
+          background: #dcfce7;
+        }
+        :global(.poc-theme-light) .retry-btn:hover {
+          background: #bbf7d0;
+        }
+        :global(.poc-theme-light) .live-frame,
+        :global(.poc-theme-light) .preview-canvas,
+        :global(.poc-theme-light) .thumb-preview {
+          background: #e2e8f0;
+          border-color: #d1d5db;
+        }
+        :global(.poc-theme-light) .stream-url,
+        :global(.poc-theme-light) .badge {
+          background: #f1f5f9;
+          border-color: #d1d5db;
+          color: #334155;
+        }
+        :global(.poc-theme-light) .page-btn {
+          border-color: #d1d5db;
+          background: #f1f5f9;
+          color: #334155;
+        }
+        :global(.poc-theme-light) .batch-btn {
+          border-color: #d1d5db;
+          background: #f8fafc;
+          color: #334155;
+        }
+        :global(.poc-theme-light) .batch-btn.active {
+          border-color: #2563eb;
+          background: #eff6ff;
+          color: #1e40af;
+        }
+        :global(.poc-theme-light) .thumb-btn {
+          border-color: #d1d5db;
+          background: #f8fafc;
+        }
+        :global(.poc-theme-light) .thumb-btn:hover {
+          border-color: #2563eb;
+        }
+        :global(.poc-theme-light) .thumb-btn.selected {
+          border-color: #15803d;
+          box-shadow: 0 0 0 1px #15803e44 inset;
+        }
+        :global(.poc-theme-light) .camera-subline {
+          color: #64748b;
+        }
+        :global(.poc-theme-light) .camera-mini-id {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .camera-mini-foot {
+          color: #64748b;
+        }
+        :global(.poc-theme-light) .camera-mini-live {
+          background: #d1d5db;
+        }
+        :global(.poc-theme-light) .camera-mini-live.offline {
+          background: #d1d5db;
+        }
+        :global(.poc-theme-light) .camera-mini-live .camera-mini-media,
+        :global(.poc-theme-light) .camera-mini-live.offline .camera-mini-media {
+          filter: grayscale(1) brightness(0.95);
+        }
+        :global(.poc-theme-light) .thumb-overlay {
+          background: linear-gradient(180deg, rgba(241, 245, 249, 0) 52%, rgba(30, 41, 59, 0.55) 100%);
+        }
+        :global(.poc-theme-light) .thumb-time {
+          color: #334155;
+        }
+        :global(.poc-theme-light) .thumb-chip {
+          background: rgba(241, 245, 249, 0.92);
+          border-color: #d1d5db;
+          color: #334155;
+        }
+        :global(.poc-theme-light) .preview-meta {
+          border: 1px solid #cbd5e1;
+          background: rgba(241, 245, 249, 0.92);
+          color: #334155;
+        }
+        :global(.poc-theme-light) .empty {
+          color: #64748b;
+        }` 
+          : ''}
+      `}</style>
 
        <div className="cctv-shell">
          <div className="cctv-header">
            <div className="flex items-center">
-             <h3 className="text-gray-300 font-medium">{t.title[lang]}</h3>
+           <h3 className="font-medium" style={{ color: cctvTheme.text }}>{t.title[lang]}</h3>
            </div>
            <div className="flex items-center gap-2 text-xs">
-             <span style={{ color: getStatusColor(counts.ok, counts.total) }}>
+             <span style={{ color: getStatusColor(counts.ok, counts.total, themeMode) }}>
                {counts.ok}/{counts.total}
              </span>
-             <span className="text-[#f85149]">
+             <span style={{ color: cctvTheme.textDanger }}>
                {t.abnormal[lang]} {counts.abnormal}
              </span>
            </div>
@@ -1221,9 +1428,9 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
                       <div className="camera-card">
                         <div className="camera-info">
                           <div className="flex items-center">
-                            <span className="text-sm font-semibold text-gray-200">{camera.id}</span>
+                            <span className="text-sm font-semibold" style={{ color: cctvTheme.text }}>{camera.id}</span>
                           </div>
-                          <p className="text-[11px] text-gray-500">{camera.name[lang]}</p>
+                          <p className="text-[11px]" style={{ color: cctvTheme.textMuted }}>{camera.name[lang]}</p>
                           <div className="camera-subline">
                             <Clock3 className="w-3 h-3" />
                             <span>{camera.live.online ? `${camera.live.latencyMs}ms` : '--'}</span>
@@ -1234,7 +1441,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
                             <span className="badge" style={{ borderColor: camera.color, color: camera.color, flex: 1, justifyContent: 'center' }}>
                               {camera.counts.ok}/{camera.counts.total}
                             </span>
-                            <span className="badge" style={{ borderColor: '#f85149', color: '#f85149', flex: 1, justifyContent: 'center' }}>
+                            <span className="badge" style={{ borderColor: cctvTheme.textDanger, color: cctvTheme.textDanger, flex: 1, justifyContent: 'center' }}>
                               {lang === 'ko' ? '누락' : 'Miss'} {camera.counts.abnormal}
                             </span>
                           </div>
@@ -1276,22 +1483,22 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
              <div className="ops-bar">
                <div className="ops-item">
                  {liveState?.online ? (
-                   <Wifi className="w-3.5 h-3.5 text-[#3fb950]" />
+                   <Wifi className="w-3.5 h-3.5" style={{ color: cctvTheme.success }} />
                  ) : (
-                   <WifiOff className="w-3.5 h-3.5 text-[#f85149]" />
+                   <WifiOff className="w-3.5 h-3.5" style={{ color: cctvTheme.danger }} />
                  )}
                  <span>
                    {t.streamStatus[lang]}: {liveError ? t.liveError[lang] : loadingLive ? t.loadingLive[lang] : liveState?.online ? t.online[lang] : t.offline[lang]}
                  </span>
                 </div>
                 <div className="ops-item">
-                 <Clock3 className="w-3.5 h-3.5 text-[#58a6ff]" />
+                 <Clock3 className="w-3.5 h-3.5" style={{ color: cctvTheme.textInfo }} />
                  <span>
                    {t.latency[lang]}: {liveError || loadingLive ? '-' : liveState?.online ? `${liveState.latencyMs}ms` : '-'}
                  </span>
                 </div>
                 <div className="ops-item">
-                 <Camera className="w-3.5 h-3.5 text-gray-400" />
+                 <Camera className="w-3.5 h-3.5" style={{ color: cctvTheme.text }} />
                  <span>
                    {t.lastHeartbeat[lang]}: {liveError || loadingLive ? '--:--' : liveState?.lastHeartbeat ?? '--:--'}
                  </span>
@@ -1326,19 +1533,20 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
 
              <div className="live-footer">
                <div className="min-w-0">
-                 <p className="text-xs text-gray-500">{t.liveFeed[lang]}</p>
-                 <p className="text-sm text-gray-300 font-semibold min-w-0 truncate">
+                 <p className="text-xs" style={{ color: cctvTheme.textMuted }}>{t.liveFeed[lang]}</p>
+                 <p className="text-sm font-semibold min-w-0 truncate" style={{ color: cctvTheme.text }}>
                    {CAMERAS.find((camera) => camera.id === activeCamera)?.name[lang]}
                  </p>
                </div>
 	               {liveStreamTrace ? (
-	                 <TraceableValue
-	                   value={liveState?.streamUrl ?? 'webrtc://-'}
-	                   trace={liveStreamTrace}
-	                   onOpenTrace={onOpenTrace}
-                   indicatorMode="compact"
-                    showOriginBadge={false}
-                    align="right"
+                   <TraceableValue
+                     value={liveState?.streamUrl ?? 'webrtc://-'}
+                     trace={liveStreamTrace}
+                     onOpenTrace={onOpenTrace}
+                     themeMode={themeMode}
+                     indicatorMode="compact"
+                      showOriginBadge={false}
+                      align="right"
                     className="stream-url !w-auto !px-0 !py-0 max-w-full"
                     valueClassName="truncate"
                   />
@@ -1355,13 +1563,13 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
             <section className="panel archive-wrap">
              <div className="archive-header">
                <span>{t.archiveTitle[lang]}</span>
-               <span className="text-[#f85149]">{t.abnormal[lang]} {counts.abnormal}</span>
+                   <span style={{ color: cctvTheme.textDanger }}>{t.abnormal[lang]} {counts.abnormal}</span>
              </div>
 
              <div className="archive-content">
-            {archiveError && <div className="text-[11px] text-[#f85149]">{archiveError}</div>}
+            {archiveError && <div className="text-[11px]" style={{ color: cctvTheme.textDanger }}>{archiveError}</div>}
              {loadingArchive && (
-               <div className="text-[11px] text-gray-500">{t.loadingArchive[lang]}</div>
+               <div className="text-[11px]" style={{ color: cctvTheme.textMuted }}>{t.loadingArchive[lang]}</div>
              )}
 
              <div className="preview-pane">
@@ -1375,19 +1583,20 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
                      sizes="(max-width: 1350px) 100vw, 40vw"
                    />
                  ) : !selectedImage ? (
-                   <span className="text-xs text-gray-500">{t.noFrame[lang]}</span>
+                   <span className="text-xs" style={{ color: cctvTheme.textMuted }}>{t.noFrame[lang]}</span>
                  ) : null}
 	                 <div className="preview-meta">
 	                   <span>{t.selectedFrame[lang]}</span>
 	                   {selectedImage && selectedImageTraces ? (
-	                     <TraceableValue
-	                       value={`#${selectedImage.sequence + 1}/${BATCH_FRAME_COUNT}`}
-	                       trace={selectedImageTraces.frame}
-	                       onOpenTrace={onOpenTrace}
-	                       indicatorMode="compact"
-	                       showOriginBadge={false}
-	                       align="right"
-	                       className="!w-auto !px-0 !py-0"
+                     <TraceableValue
+                       value={`#${selectedImage.sequence + 1}/${BATCH_FRAME_COUNT}`}
+                       trace={selectedImageTraces.frame}
+                       onOpenTrace={onOpenTrace}
+                       themeMode={themeMode}
+                       indicatorMode="compact"
+                       showOriginBadge={false}
+                       align="right"
+                       className="!w-auto !px-0 !py-0"
 	                     />
 	                   ) : (
 	                     <span>-</span>
@@ -1398,33 +1607,36 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
 
 	             {selectedImage && selectedImageTraces && (
 	               <div className="mt-2 grid grid-cols-2 gap-1">
-	                 <TraceableValue
-	                   value={`${t.captureAt[lang]}: ${selectedImage.capturedAt}`}
-	                   trace={selectedImageTraces.capturedAt}
-	                   onOpenTrace={onOpenTrace}
-	                   indicatorMode="compact"
-	                   showOriginBadge={false}
-	                   className="border border-[#30363d] bg-[#0d1117] px-2 py-1 text-[11px]"
-	                   valueClassName="whitespace-nowrap text-[11px] text-gray-300"
-	                 />
-	                 <TraceableValue
-	                   value={`${t.processedAt[lang]}: ${selectedImage.processedAt}`}
-	                   trace={selectedImageTraces.processedAt}
-	                   onOpenTrace={onOpenTrace}
-	                   indicatorMode="compact"
-	                   showOriginBadge={false}
-	                   className="border border-[#30363d] bg-[#0d1117] px-2 py-1 text-[11px]"
-	                   valueClassName="whitespace-nowrap text-[11px] text-gray-300"
-	                 />
-	                 <TraceableValue
-	                   value={`${t.imageUrl[lang]}: ${selectedImage.processedImageUrl}`}
-	                   trace={selectedImageTraces.imageUrl}
-	                   onOpenTrace={onOpenTrace}
-	                   indicatorMode="compact"
-	                   showOriginBadge={false}
-	                   className="col-span-2 border border-[#30363d] bg-[#0d1117] px-2 py-1 text-[11px]"
-	                   valueClassName="truncate text-[11px] text-gray-300"
-	                 />
+                  <TraceableValue
+                    value={`${t.captureAt[lang]}: ${selectedImage.capturedAt}`}
+                    trace={selectedImageTraces.capturedAt}
+                    onOpenTrace={onOpenTrace}
+                    themeMode={themeMode}
+                    indicatorMode="compact"
+                    showOriginBadge={false}
+                    className={`border px-2 py-1 text-[11px] ${isLightTheme ? 'border-[#d1d5db] bg-[#f8fafc]' : 'border-[#30363d] bg-[#0d1117]'}`}
+                   valueClassName={`whitespace-nowrap text-[11px] ${isLightTheme ? 'text-[#334155]' : 'text-gray-300'}`}
+                 />
+                  <TraceableValue
+                    value={`${t.processedAt[lang]}: ${selectedImage.processedAt}`}
+                    trace={selectedImageTraces.processedAt}
+                    onOpenTrace={onOpenTrace}
+                    themeMode={themeMode}
+                    indicatorMode="compact"
+                    showOriginBadge={false}
+                    className={`border px-2 py-1 text-[11px] ${isLightTheme ? 'border-[#d1d5db] bg-[#f8fafc]' : 'border-[#30363d] bg-[#0d1117]'}`}
+                   valueClassName={`whitespace-nowrap text-[11px] ${isLightTheme ? 'text-[#334155]' : 'text-gray-300'}`}
+                 />
+                  <TraceableValue
+                    value={`${t.imageUrl[lang]}: ${selectedImage.processedImageUrl}`}
+                    trace={selectedImageTraces.imageUrl}
+                    onOpenTrace={onOpenTrace}
+                    themeMode={themeMode}
+                    indicatorMode="compact"
+                    showOriginBadge={false}
+                    className={`col-span-2 border px-2 py-1 text-[11px] ${isLightTheme ? 'border-[#d1d5db] bg-[#f8fafc]' : 'border-[#30363d] bg-[#0d1117]'}`}
+                   valueClassName={`truncate text-[11px] ${isLightTheme ? 'text-[#334155]' : 'text-gray-300'}`}
+                 />
 	               </div>
 	             )}
 
@@ -1439,7 +1651,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
                      onClick={() => setActiveBatchId(batch.id)}
                    >
                      <span className="text-[11px] font-semibold whitespace-nowrap">{batch.label[lang]}</span>
-                     <span className="text-[10px] text-gray-500 whitespace-nowrap">{batch.rangeText}</span>
+                     <span className="text-[10px] whitespace-nowrap" style={{ color: cctvTheme.textMuted }}>{batch.rangeText}</span>
                    </button>
                  );
                })}
@@ -1477,7 +1689,7 @@ const CCTVMonitor = ({ lang, onOpenTrace, state = 'default' }: CCTVMonitorProps)
                    const isSelected = selectedImageId === img.id;
                    const compactOk = img.status === 'ok';
                    const compactLabel = lang === 'ko' ? (compactOk ? '정상' : '없음') : (compactOk ? 'OK' : 'None');
-                   const compactColor = compactOk ? '#3fb950' : '#f85149';
+              const compactColor = compactOk ? cctvTheme.success : cctvTheme.danger;
                    return (
                      <button
                        key={img.id}

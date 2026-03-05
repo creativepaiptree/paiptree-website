@@ -50,7 +50,14 @@ const createTopRegion = (ctx: PocBlockContext): PoCBlockSpec[] => {
       policyId: 'top-navigation',
       region: 'top',
       state: 'default',
-      render: () => <Navbar lang={ctx.lang} setLang={ctx.setLang} />,
+      render: () => (
+        <Navbar
+          lang={ctx.lang}
+          setLang={ctx.setLang}
+          themeMode={ctx.themeMode}
+          setThemeMode={ctx.setThemeMode}
+        />
+      ),
     }),
   ];
 };
@@ -78,7 +85,7 @@ const createCenterRegion = (ctx: PocBlockContext): PoCBlockSpec[] => {
       policyId: 'forecast-matrix',
       region: 'center',
       state: 'default',
-      render: () => <ForecastMatrix lang={ctx.lang} onOpenTrace={ctx.onOpenTrace} />,
+      render: () => <ForecastMatrix lang={ctx.lang} onOpenTrace={ctx.onOpenTrace} themeMode={ctx.themeMode} />,
     }),
     buildBlock({
       policyId: 'weight-distribution',
@@ -115,7 +122,7 @@ const createBottomRegion = (ctx: PocBlockContext): PoCBlockSpec[] => {
       policyId: 'cctv-monitor',
       region: 'bottom',
       state: 'default',
-      render: () => <CCTVMonitor lang={ctx.lang} onOpenTrace={ctx.onOpenTrace} />,
+      render: () => <CCTVMonitor lang={ctx.lang} onOpenTrace={ctx.onOpenTrace} themeMode={ctx.themeMode} />,
     }),
   ];
 };

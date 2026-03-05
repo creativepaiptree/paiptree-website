@@ -18,6 +18,7 @@ const renderBlockList = (blocks: ReadonlyArray<RenderableBlock>) =>
 
 export default function DashboardPage(): ReactElement {
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
   const [activeTrace, setActiveTrace] = useState<TraceabilityPayload | null>(null);
   const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
   const totalBirdCount = 20500;
@@ -35,6 +36,8 @@ export default function DashboardPage(): ReactElement {
       buildPocBlockCatalog({
         lang,
         setLang,
+        themeMode,
+        setThemeMode,
         onOpenTrace: openTracePanel,
         rightSidebarData: {
           feedbinBySensor: feedbinBySensorSample,
@@ -43,11 +46,16 @@ export default function DashboardPage(): ReactElement {
           totalBirdCount,
         },
       }),
-    [lang, openTracePanel, totalBirdCount]
+    [lang, themeMode, openTracePanel, totalBirdCount]
   );
 
   return (
-    <div className="h-screen bg-[#0d1117] text-gray-100 flex flex-col overflow-hidden">
+    <div
+      className={`h-screen flex flex-col overflow-hidden ${
+        themeMode === 'light' ? 'poc-theme-light bg-[#f8fafc] text-gray-900' : 'bg-[#0d1117] text-gray-100'
+      }`}
+      data-poc-theme={themeMode}
+    >
       {renderBlockList(blockCatalog.top)}
 
       <div className="flex-1 overflow-x-hidden overflow-y-auto p-4">
