@@ -307,7 +307,7 @@ export default function DashPage() {
       </div>
 
       {/* ─ Main ───────────────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto flex flex-col items-center py-6 px-4 gap-5">
+      <main className="flex-1 overflow-y-auto flex flex-col items-center justify-center py-6 px-4 gap-5">
 
         {/* Member identity */}
         <div className="flex flex-col items-center gap-2 shrink-0">
