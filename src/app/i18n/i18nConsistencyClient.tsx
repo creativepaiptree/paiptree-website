@@ -359,16 +359,40 @@ export default function I18nConsistencyClient({ initialData }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8fb] p-4 text-[#111827]">
-      <h2 className="mb-3 text-2xl font-semibold">FM-i18n 정합성 검증</h2>
+    <main
+      className="h-screen flex flex-col overflow-hidden bg-[#0d1117] text-gray-100"
+      data-poc-theme="dark"
+    >
+      {/* Header bar */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-[#30363d]">
+        <span className="text-xs font-semibold text-[#c9d1d9]">FM-i18n 정합성 검증</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onExportAllLangs}
+            className="border border-[#30363d] text-[#8b949e] hover:text-[#c9d1d9] px-3 py-1.5 text-xs transition-colors"
+          >
+            수정본 다운로드 (.ts 5개)
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="border border-[#3fb950] text-[#3fb950] bg-[#3fb950]/10 px-3 py-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? '저장 중...' : '저장'}
+          </button>
+        </div>
+      </div>
 
-      <section className="mb-2 flex flex-wrap items-center gap-2">
-        <label htmlFor="service">서비스</label>
+      {/* Toolbar */}
+      <div className="flex-shrink-0 flex flex-wrap items-center gap-2 px-4 py-2.5 bg-[#0d1117] border-b border-[#30363d]">
+        <label htmlFor="service" className="text-[11px] text-[#8b949e]">서비스</label>
         <select
           id="service"
           value={service}
           onChange={onServiceChange}
-          className="rounded-lg border border-slate-300 bg-white px-2 py-1"
+          className="bg-[#161b22] border border-[#30363d] text-[#c9d1d9] px-2 py-1 text-xs outline-none focus:border-[#58a6ff]"
         >
           {SERVICES.map((item) => (
             <option key={item} value={item}>
@@ -381,81 +405,67 @@ export default function I18nConsistencyClient({ initialData }: Props) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="key 또는 value 검색"
-          className="min-w-[260px] rounded-lg border border-slate-300 px-2 py-1"
+          className="min-w-[260px] bg-[#161b22] border border-[#30363d] text-[#c9d1d9] placeholder-[#6e7681] px-2 py-1 text-xs outline-none focus:border-[#58a6ff]"
         />
 
         <button
           type="button"
           onClick={() => setQuery('')}
-          className="rounded-lg border bg-white px-2 py-1"
+          className="border border-[#30363d] text-[#8b949e] hover:text-[#c9d1d9] px-3 py-1.5 text-xs transition-colors"
         >
           초기화
         </button>
 
-        <label className="ml-1 flex items-center gap-2 text-sm">
+        <label className="ml-1 inline-flex items-center gap-2 text-[11px] text-[#8b949e] cursor-pointer">
           <input
             type="checkbox"
             checked={showOnlyIssues}
             onChange={(event) => setShowOnlyIssues(event.target.checked)}
-            className="h-4 w-4"
+            className="h-4 w-4 accent-[#3fb950]"
           />
           문제 행만
         </label>
 
-        <span className="ml-2 inline-flex items-center gap-2 text-sm">
+        <span className="ml-1 inline-flex items-center gap-2 text-[11px] text-[#8b949e]">
           언어:
           {LANGS.map((lang) => (
-            <label key={lang} className="inline-flex items-center gap-1">
+            <label key={lang} className="inline-flex items-center gap-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={activeLangs.includes(lang)}
                 onChange={() => onLanguageToggle(lang)}
                 disabled={activeLangs.length === 1 && activeLangs.includes(lang)}
-                className="h-4 w-4"
+                className="h-4 w-4 accent-[#3fb950]"
               />
-              {lang}
+              <span className="text-[#c9d1d9]">{lang}</span>
             </label>
           ))}
         </span>
+      </div>
 
-        <button
-          type="button"
-          onClick={onExportAllLangs}
-          className="rounded-lg border bg-white px-2 py-1"
-        >
-          수정본 다운로드 (.ts 5개)
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="rounded-lg border bg-white px-2 py-1 disabled:cursor-not-allowed disabled:bg-slate-200"
-        >
-          {saving ? '저장 중...' : '저장'}
-        </button>
-      </section>
+      {/* Stats + messages */}
+      <div className="flex-shrink-0 px-4 py-2 bg-[#0d1117] border-b border-[#30363d] space-y-1">
+        <p className="text-[11px] text-[#8b949e]">
+          {`총 키 ${totalKeys}개 | 표시 행 ${rows.length}개 | 이슈 행 ${issueCount}개 | ${summary}`}
+        </p>
+        {message ? <p className="text-[11px] text-[#58a6ff]">{message}</p> : null}
+        {parseErrorLanguages.length > 0 ? (
+          <p className="text-[11px] text-[#ff7700]">
+            파싱 오류: {parseErrorLanguages.map(([lang]) => lang).join(', ')} (번역 파일을 확인해 주세요)
+          </p>
+        ) : null}
+      </div>
 
-      <section className="mb-2 min-h-6 text-sm text-slate-600">
-        {`총 키 ${totalKeys}개 | 표시 행 ${rows.length}개 | 이슈 행 ${issueCount}개 | ${summary}`}
-      </section>
-
-      {message ? <section className="mb-2 text-sm text-slate-700">{message}</section> : null}
-
-      {parseErrorLanguages.length > 0 ? (
-        <section className="mb-2 text-xs text-amber-700">
-          파싱 오류: {parseErrorLanguages.map(([lang]) => lang).join(', ')} (번역 파일을 확인해 주세요)
-        </section>
-      ) : null}
-
-      <section className="max-h-[calc(100vh-220px)] overflow-auto rounded-lg border border-slate-200 bg-white">
+      {/* Table */}
+      <div className="flex-1 overflow-auto">
         <table className="w-full border-collapse text-xs">
-          <thead className="sticky top-0 z-10 bg-slate-100">
+          <thead className="sticky top-0 z-10 bg-[#161b22]">
             <tr>
-              <th className="min-w-[250px] w-[32%] border-r border-b border-slate-200 px-2 py-2 text-left">key</th>
+              <th className="min-w-[250px] w-[32%] border-r border-b border-[#30363d] px-2 py-2 text-left text-[11px] font-semibold text-[#8b949e]">key</th>
               {visibleLangs.map((lang) => (
                 <th
                   key={lang}
-                  className="min-w-[160px] w-[13.6%] border-r border-b border-slate-200 px-2 py-2 text-left"
+                  className="min-w-[160px] w-[13.6%] border-r border-b border-[#30363d] px-2 py-2 text-left text-[11px] font-semibold text-[#8b949e]"
                 >
                   {lang}
                 </th>
@@ -467,7 +477,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
             {rows.length === 0 ? (
               <tr>
                 <td
-                  className="border-b border-slate-200 px-2 py-2 text-slate-500"
+                  className="border-b border-[#30363d] px-2 py-2 text-[#8b949e]"
                   colSpan={visibleLangs.length + 1}
                 >
                   검색 결과가 없습니다.
@@ -475,18 +485,23 @@ export default function I18nConsistencyClient({ initialData }: Props) {
               </tr>
             ) : (
               rows.map((row) => (
-                <tr key={row.key} className={row.hasIssue ? 'bg-rose-50' : 'bg-white'}>
-                  <td className="border-r border-b border-slate-200 px-2 py-2 align-top">
-                    {row.hasIssue ? <strong>[issue]</strong> : <span className="opacity-40">[ok]</span>} {row.key}
+                <tr key={row.key} className={row.hasIssue ? 'bg-[#f85149]/5' : ''}>
+                  <td className="border-r border-b border-[#30363d] px-2 py-2 align-top">
+                    {row.hasIssue ? (
+                      <span className="inline-block text-[#f85149] bg-[#f85149]/15 border border-[#f85149] px-1 py-[1px] text-[10px] font-semibold mr-1">issue</span>
+                    ) : (
+                      <span className="inline-block text-[#8b949e] bg-[#11161d] border border-[#30363d] px-1 py-[1px] text-[10px] mr-1">ok</span>
+                    )}
+                    <span className="text-[#c9d1d9] break-all">{row.key}</span>
                   </td>
                   {row.cells.map((cell) => (
                     <td
                       key={`${row.key}-${cell.lang}`}
-                      className={`border-r border-b border-slate-200 break-all px-2 py-2 align-top ${
+                      className={`border-r border-b border-[#30363d] break-all px-2 py-2 align-top ${
                         cell.type === 'missing'
-                          ? 'bg-rose-100'
+                          ? 'bg-[#f85149]/10'
                           : cell.type === 'empty'
-                            ? 'bg-amber-100'
+                            ? 'bg-[#ff7700]/10'
                             : ''
                       }`}
                     >
@@ -494,7 +509,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
                         value={cell.text}
                         onChange={(event) => onCellChange(row.key, cell.lang, event.target.value)}
                         placeholder={cell.hasKey ? '' : '(누락)'}
-                        className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 outline-none focus:border-slate-300 focus:bg-white"
+                        className="w-full bg-transparent border border-transparent text-[#c9d1d9] placeholder-[#6e7681] px-1 py-0.5 outline-none focus:border-[#30363d] focus:bg-[#161b22] rounded-[2px]"
                       />
                     </td>
                   ))}
@@ -503,7 +518,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
             )}
           </tbody>
         </table>
-      </section>
+      </div>
     </main>
   );
 }
