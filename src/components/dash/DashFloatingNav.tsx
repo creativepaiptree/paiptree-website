@@ -59,6 +59,13 @@ const TOOLS: { href: string; name: string; badge: string; badgeColor: string; ex
     badge: 'TOOL',
     badgeColor: '#58a6ff',
   },
+  {
+    href: 'https://docs.google.com/spreadsheets/d/1yfYArGHVN9KVyihNfiCG5P7pDX9iA3Xs_a4Ay1tjT4g/edit?gid=2072694558#gid=2072694558',
+    name: '버전관리',
+    badge: 'SHEET',
+    badgeColor: '#34a853',
+    external: true,
+  },
 ];
 
 type Props = {
