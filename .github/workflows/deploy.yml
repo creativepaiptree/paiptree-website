@@ -32,6 +32,9 @@ jobs:
         mkdir -p out
         touch out/.nojekyll
 
+    - name: Build Storybook
+      run: npx --yes storybook build --output-dir out/storybook
+
     - name: Deploy to server
       uses: appleboy/scp-action@v0.1.4
       with:
