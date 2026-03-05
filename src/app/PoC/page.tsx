@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import TracePanel from './components/trace/TracePanel';
+import DashFloatingNav from '@/components/dash/DashFloatingNav';
 import type { TraceabilityPayload } from '@/types/traceability';
 import { buildPocBlockCatalog, type PoCBlockCatalog, type PoCBlockSpec } from './blocks/poc-block-catalog';
 import {
@@ -84,6 +85,7 @@ export default function DashboardPage(): ReactElement {
         trace={activeTrace}
         onClose={closeTracePanel}
       />
+      <DashFloatingNav current="/PoC" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useMemo, useState } from 'react';
+import DashFloatingNav from '@/components/dash/DashFloatingNav';
 
 const LANGS = ['en', 'ko', 'th', 'tw', 'jp'] as const;
 type Lang = (typeof LANGS)[number];
@@ -637,6 +638,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
           </div>
         </div>
       ) : null}
+      <DashFloatingNav current="/i18n" />
     </main>
   );
 }

@@ -792,5 +792,74 @@
             }
         }
     </script>
+
+    <!-- zoro_LAB floating nav -->
+    <style>
+      #zl-nav { position:fixed; left:0; top:50%; transform:translateY(-50%); z-index:9999; display:flex; flex-direction:row; align-items:stretch; }
+      #zl-toggle {
+        background:#161b22; border:1px solid #30363d; border-left:none;
+        width:24px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+        border-radius:0 6px 6px 0; cursor:pointer; transition:border-color .15s; padding:0;
+      }
+      #zl-toggle:hover { border-color:rgba(88,166,255,.6); }
+      #zl-toggle-arrow { font-size:10px; color:#8b949e; line-height:1; }
+      #zl-toggle-label { font-size:9px; color:#8b949e; font-family:ui-monospace,monospace; letter-spacing:.1em; text-transform:uppercase; writing-mode:vertical-rl; transform:rotate(180deg); }
+      #zl-panel {
+        background:#161b22; border:1px solid #30363d; border-left:none;
+        display:flex; flex-direction:column; overflow:hidden;
+        box-shadow:0 8px 24px rgba(0,0,0,.5); transition:width .2s;
+        width:176px;
+      }
+      #zl-panel.closed { width:0; border-color:transparent; }
+      #zl-header { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #30363d; flex-shrink:0; }
+      #zl-header span { font-size:14px; font-weight:600; color:#c9d1d9; font-family:ui-monospace,monospace; white-space:nowrap; }
+      #zl-body { padding:16px 12px 20px; }
+      #zl-label { font-size:10px; color:#8b949e; font-family:ui-monospace,monospace; text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px; white-space:nowrap; }
+      .zl-item { display:flex; flex-direction:column; gap:6px; padding:10px 8px; text-decoration:none; transition:background .15s; }
+      .zl-item:hover { background:#21262d; }
+      .zl-item.active { background:#21262d; pointer-events:none; }
+      .zl-item-name { font-size:12px; font-weight:600; color:#c9d1d9; line-height:1; white-space:nowrap; }
+      .zl-item.active .zl-item-name { color:#fff; }
+      .zl-item-badge { font-size:9px; font-family:ui-monospace,monospace; border:1px solid; padding:0 4px; line-height:16px; align-self:flex-start; white-space:nowrap; }
+    </style>
+
+    <div id="zl-nav">
+      <button id="zl-toggle" onclick="zlToggle()" aria-label="내부 도구 메뉴">
+        <span id="zl-toggle-arrow">◀</span>
+        <span id="zl-toggle-label" style="display:none">zoro_LAB</span>
+      </button>
+      <nav id="zl-panel">
+        <div id="zl-header"><span>zoro_LAB</span></div>
+        <div id="zl-body">
+          <p id="zl-label">Tools</p>
+          <a href="/dash" class="zl-item">
+            <span class="zl-item-name">zoro_LAB</span>
+            <span class="zl-item-badge" style="color:#8b949e;border-color:#8b949e">HUB</span>
+          </a>
+          <a href="/PoC" class="zl-item">
+            <span class="zl-item-name">PoC Dashboard</span>
+            <span class="zl-item-badge" style="color:#ff7700;border-color:#ff7700">PROTOTYPE</span>
+          </a>
+          <a href="/i18n" class="zl-item">
+            <span class="zl-item-name">i18n 정합성</span>
+            <span class="zl-item-badge" style="color:#58a6ff;border-color:#58a6ff">TOOL</span>
+          </a>
+          <a href="/tms/tms-schedule.html" class="zl-item active">
+            <span class="zl-item-name">TMS Schedule</span>
+            <span class="zl-item-badge" style="color:#ff7700;border-color:#ff7700">PROTOTYPE</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+
+    <script>
+      var zlOpen = true;
+      function zlToggle() {
+        zlOpen = !zlOpen;
+        document.getElementById('zl-panel').classList.toggle('closed', !zlOpen);
+        document.getElementById('zl-toggle-arrow').textContent = zlOpen ? '◀' : '▶';
+        document.getElementById('zl-toggle-label').style.display = zlOpen ? 'none' : 'block';
+      }
+    </script>
 </body>
 </html>

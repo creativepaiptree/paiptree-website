@@ -50,7 +50,7 @@ export default function TmsPage() {
   };
 
   return (
-    <div data-theme="showcase" data-surface="product" className="min-h-screen bg-[var(--surface-bg)] text-[var(--surface-text)]">
+    <div data-theme="product" className="min-h-screen bg-[var(--surface-bg)] text-[var(--surface-text)]">
       {/* Header - Logo and Language Toggle */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-[color:color-mix(in_oklab,var(--surface-bg)_80%,transparent)] backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-4">

@@ -68,6 +68,17 @@
   --surface-border-strong: var(--border-hover);
 }
 
+/* Product landing page - light surface (TMS marketing page) */
+[data-theme='product'] {
+  --surface-bg: #ffffff;
+  --surface-bg-elevated: #f8fafc;
+  --surface-bg-soft: #f1f5f9;
+  --surface-text: #0f172a;
+  --surface-text-muted: #64748b;
+  --surface-border: #e2e8f0;
+  --surface-border-strong: #cbd5e1;
+}
+
 /* Product / showcase surface (reserved for PoC/TMS split) */
 [data-theme='showcase'] {
   --accent-from: #6366F1;
