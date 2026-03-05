@@ -1,3 +1,9 @@
+---
+title: PoC Design System
+author: ZORO
+last_updated: 26.03.05
+---
+
 # PoC Design System
 
 새 페이지를 PoC 디자인 언어로 구현할 때 참조하는 레퍼런스 가이드.
