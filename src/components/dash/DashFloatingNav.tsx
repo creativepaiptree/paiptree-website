@@ -49,8 +49,8 @@ const TOOLS: { href: string; name: string; badge: string; badgeColor: string; ex
   },
   {
     href: '/storybook',
-    name: 'UI/UX DOCS',
-    badge: 'DOCS',
+    name: 'Storybook(3.0)',
+    badge: 'UI/UX DOCS',
     badgeColor: '#e91e8c',
   },
   {
