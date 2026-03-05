@@ -307,22 +307,104 @@ export default function DashPage() {
       </div>
 
       {/* ─ Main ───────────────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto flex flex-col items-center justify-center gap-4">
-        <div className="flex flex-col items-center gap-3">
+      <main className="flex-1 overflow-y-auto flex flex-col items-center py-6 px-4 gap-5">
+
+        {/* Member identity */}
+        <div className="flex flex-col items-center gap-2 shrink-0">
           <span
-            className="text-[10px] font-mono border px-2 py-[2px] uppercase tracking-widest"
+            className="text-[10px] font-mono border px-2 py-[1px] uppercase tracking-widest"
             style={{ color: MEMBER.color, borderColor: MEMBER.color }}
           >
             {MEMBER.role}
           </span>
-          <p className="text-3xl font-bold font-mono tracking-tight" style={{ color: MEMBER.color }}>
+          <p className="text-2xl font-bold font-mono tracking-tight" style={{ color: MEMBER.color }}>
             {MEMBER.spaceName}
           </p>
           <p className="text-[11px] text-[#8b949e] font-mono">{MEMBER.desc}</p>
         </div>
-        <p className="text-[10px] text-[#30363d] font-mono uppercase tracking-widest select-none mt-6">
-          dashboard · coming soon
-        </p>
+
+        {/* Service Architecture Map */}
+        <div className="w-full max-w-3xl flex flex-col gap-2 shrink-0">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-mono text-[#6e7681] uppercase tracking-widest">Service Architecture</p>
+            <p className="text-[9px] font-mono text-[#30363d]">SAMPLE · v0.1</p>
+          </div>
+          <div className="border border-[#30363d] bg-[#0d1117]">
+            <svg viewBox="0 0 800 420" className="w-full h-auto">
+              <defs>
+                <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+                  <circle cx="1" cy="1" r="0.8" fill="#30363d" opacity="0.5" />
+                </pattern>
+                <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#30363d" />
+                </marker>
+              </defs>
+
+              {/* Background dots */}
+              <rect x="0" y="0" width="800" height="420" fill="url(#grid-dots)" />
+
+              {/* ── Connection lines ── */}
+              {/* Hub → paiptree HP */}
+              <path d="M400,80 C400,132 125,132 125,185" stroke="#30363d" strokeWidth="1" strokeDasharray="4" fill="none" markerEnd="url(#arr)" />
+              {/* Hub → PoC (straight) */}
+              <line x1="400" y1="80" x2="400" y2="185" stroke="#30363d" strokeWidth="1" strokeDasharray="4" markerEnd="url(#arr)" />
+              {/* Hub → Farm */}
+              <path d="M400,80 C400,132 675,132 675,185" stroke="#30363d" strokeWidth="1" strokeDasharray="4" fill="none" markerEnd="url(#arr)" />
+              {/* PoC → i18n (straight) */}
+              <line x1="400" y1="245" x2="400" y2="320" stroke="#30363d" strokeWidth="1" strokeDasharray="4" markerEnd="url(#arr)" />
+
+              {/* ── Hub node: zoro_LAB ── */}
+              <a href="/dash">
+                <rect x="335" y="20" width="130" height="60" fill="#0d1117" stroke="#58a6ff" strokeWidth="1.5" />
+                <rect x="335" y="20" width="130" height="60" fill="#58a6ff" fillOpacity="0.06" />
+                <text x="400" y="45" textAnchor="middle" fill="#c9d1d9" fontSize="12" fontWeight="700" fontFamily="ui-monospace,SFMono-Regular,monospace">zoro_LAB</text>
+                <text x="400" y="63" textAnchor="middle" fill="#58a6ff" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">HUB</text>
+              </a>
+
+              {/* ── paiptree HP ── */}
+              <a href="/about">
+                <rect x="60" y="185" width="130" height="60" fill="#0d1117" stroke="#3fb950" strokeWidth="1" />
+                <rect x="60" y="185" width="130" height="60" fill="#3fb950" fillOpacity="0.04" />
+                <text x="125" y="210" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">paiptree HP</text>
+                <text x="125" y="228" textAnchor="middle" fill="#3fb950" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">SITE</text>
+              </a>
+
+              {/* ── PoC Dashboard ── */}
+              <a href="/PoC">
+                <rect x="335" y="185" width="130" height="60" fill="#0d1117" stroke="#ff7700" strokeWidth="1" />
+                <rect x="335" y="185" width="130" height="60" fill="#ff7700" fillOpacity="0.04" />
+                <text x="400" y="210" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">PoC Dashboard</text>
+                <text x="400" y="228" textAnchor="middle" fill="#ff7700" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">PROTOTYPE</text>
+              </a>
+
+              {/* ── Farm Camera Ops ── */}
+              <a href="/farm">
+                <rect x="610" y="185" width="130" height="60" fill="#0d1117" stroke="#ff7700" strokeWidth="1" />
+                <rect x="610" y="185" width="130" height="60" fill="#ff7700" fillOpacity="0.04" />
+                <text x="675" y="207" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">Farm Camera</text>
+                <text x="675" y="221" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontFamily="ui-monospace,SFMono-Regular,monospace">Ops</text>
+                <text x="675" y="237" textAnchor="middle" fill="#ff7700" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">PROTOTYPE</text>
+              </a>
+
+              {/* ── i18n Tool ── */}
+              <a href="/i18n">
+                <rect x="335" y="320" width="130" height="60" fill="#0d1117" stroke="#58a6ff" strokeWidth="1" />
+                <rect x="335" y="320" width="130" height="60" fill="#58a6ff" fillOpacity="0.04" />
+                <text x="400" y="345" textAnchor="middle" fill="#c9d1d9" fontSize="11" fontWeight="600" fontFamily="ui-monospace,SFMono-Regular,monospace">i18n Tool</text>
+                <text x="400" y="363" textAnchor="middle" fill="#58a6ff" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">TOOL</text>
+              </a>
+
+              {/* ── Legend ── */}
+              <rect x="20" y="395" width="8" height="8" fill="none" stroke="#3fb950" strokeWidth="1" />
+              <text x="33" y="403" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">SITE</text>
+              <rect x="75" y="395" width="8" height="8" fill="none" stroke="#ff7700" strokeWidth="1" />
+              <text x="88" y="403" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">PROTOTYPE</text>
+              <rect x="175" y="395" width="8" height="8" fill="none" stroke="#58a6ff" strokeWidth="1" />
+              <text x="188" y="403" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">HUB / TOOL</text>
+              <text x="680" y="403" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">nodes are clickable →</text>
+            </svg>
+          </div>
+        </div>
       </main>
 
       {/* ─ Footer ─────────────────────────────────────────────────────────── */}
