@@ -1,7 +1,7 @@
 ---
 title: 개발 문서 인덱스
 author: ZORO
-last_updated: 26.02.11
+last_updated: 26.03.07
 ---
 
 # 개발 문서 인덱스
@@ -23,12 +23,16 @@ last_updated: 26.02.11
   - 아카이브 문서(레거시 컴포넌트/과거 정리 문서)
 - `docs/templates/`
   - 신규 문서 템플릿
+- **`docs/3.0-design-system.md`**
+  - 내부 도구 UI 디자인 시스템 레퍼런스 (색상 토큰, 레이아웃 패턴, 컴포넌트 레시피)
 
 ## 3. 핵심 문서
 - 인덱스
   - [개발 문서 인덱스](./README.md)
 - 운영 허브
   - [문서 운영 허브](./admin/README.md)
+- **디자인 시스템**
+  - [3.0-design-system.md](./3.0-design-system.md) — 내부 도구 UI 색상·레이아웃·컴포넌트 레퍼런스
 - 페이지 문서
   - [home.page.md](./pages/home.page.md)
   - [about.page.md](./pages/about.page.md)

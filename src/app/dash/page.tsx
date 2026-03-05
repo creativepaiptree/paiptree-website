@@ -19,23 +19,41 @@ const MEMBER_SELECT = [
   { key: 'hk',   label: 'HK(강현국)',   href: '/dash_3' },
 ];
 
-type ArchLayer = 'frontend' | 'core' | 'backend';
+type ArchLayer  = 'edge' | 'service' | 'core' | 'backend';
+type NodeStatus = 'live' | 'dev' | 'inactive' | 'planned';
 type ArchNode = {
-  id: string; name: string; sub: string; layer: ArchLayer;
+  id: string; name: string; sub: string;
+  layer: ArchLayer; status: NodeStatus;
   color: string; href: string | null;
   cx: number; cy: number; w: number; h: number;
   desc: string; connects: string[];
 };
 
+const STATUS_CFG: Record<NodeStatus, { label: string; color: string }> = {
+  live:     { label: 'LIVE',     color: '#3fb950' },
+  dev:      { label: 'DEV',      color: '#f0883e' },
+  inactive: { label: 'INACTIVE', color: '#8b949e' },
+  planned:  { label: 'PLANNED',  color: '#6e7681' },
+};
+
 const ARCH_NODES: ArchNode[] = [
-  { id: 'ems',          name: 'EMS',          sub: '기업 모니터링',    layer: 'frontend', color: '#3fb950', href: '/PoC',  cx: 220, cy: 85,  w: 150, h: 60, desc: '전체 농장 통계, 출하 예측, 기업 운영자용 대시보드', connects: ['Farmers-Mind'] },
-  { id: 'aiapp',        name: 'AI App',        sub: '농장주 모바일',    layer: 'frontend', color: '#8b5cf6', href: null,   cx: 450, cy: 85,  w: 150, h: 60, desc: '개별 농장주 앱. 자신의 농장 현황 및 체중 예측 확인', connects: ['Farmers-Mind'] },
-  { id: 'tms',          name: 'TMS',           sub: '차량 관제',        layer: 'frontend', color: '#f0883e', href: '/tms', cx: 680, cy: 85,  w: 150, h: 60, desc: '농장→도축장→유통 차량 관리. 배차 및 정산 처리', connects: ['Farmers-Mind'] },
-  { id: 'farmers_mind', name: 'Farmers-Mind',  sub: '무게예측 코어 엔진', layer: 'core',   color: '#58a6ff', href: null,   cx: 450, cy: 240, w: 260, h: 70, desc: '중앙 AI 무게예측 엔진. 모든 서비스의 핵심 데이터 소스', connects: ['EMS', 'AI App', 'TMS', 'API Gateway', 'ML Engine', 'Data Pipeline', 'Database'] },
-  { id: 'api_gw',       name: 'API Gateway',   sub: '요청 라우팅',      layer: 'backend',  color: '#8b949e', href: null,   cx: 195, cy: 390, w: 140, h: 60, desc: '모든 클라이언트 요청 라우팅 및 인증 처리', connects: ['Farmers-Mind'] },
-  { id: 'ml_engine',    name: 'ML Engine',     sub: '예측 추론 서버',   layer: 'backend',  color: '#8b949e', href: null,   cx: 365, cy: 390, w: 140, h: 60, desc: '체중 예측 모델 학습 및 실시간 추론 서버', connects: ['Farmers-Mind'] },
-  { id: 'pipeline',     name: 'Data Pipeline', sub: '데이터 수집/정제', layer: 'backend',  color: '#8b949e', href: null,   cx: 535, cy: 390, w: 140, h: 60, desc: '농장 센서 데이터 수집, 정제, 저장 파이프라인', connects: ['Farmers-Mind'] },
-  { id: 'database',     name: 'Database',      sub: '데이터 저장소',    layer: 'backend',  color: '#8b949e', href: null,   cx: 705, cy: 390, w: 140, h: 60, desc: '농장 데이터, 예측 결과, 사용자 정보 영구 저장', connects: ['Farmers-Mind'] },
+  // ── Farm Edge ────────────────────────────────────────────────────────────────
+  { id: 'sensor',  name: 'Farm Sensor',      sub: '센서 / 체중계',        layer: 'edge',    status: 'live',     color: '#ff7700', href: null,    cx: 230, cy: 55,  w: 155, h: 44, desc: '현장 체중계·환경 센서 수집기. sensorCollector, fileCollector가 데이터를 수집해 Data Collection으로 전송', connects: ['Data Collection'] },
+  { id: 'cctv',    name: 'CCTV / Camera',    sub: 'CCTV 관제',            layer: 'edge',    status: 'live',     color: '#ff7700', href: '/farm', cx: 670, cy: 55,  w: 155, h: 44, desc: '현장 CCTV 및 AI 카메라. cctvManager, imageTransfer로 영상·이미지 수집. nvrManager를 통해 NVR에 저장', connects: ['NVR / NAS'] },
+  // ── Service ──────────────────────────────────────────────────────────────────
+  { id: 'ems',     name: 'Farmers-Mind_ems', sub: '기업 모니터링',        layer: 'service', status: 'live',     color: '#3fb950', href: '/PoC',  cx: 134, cy: 158, w: 155, h: 52, desc: 'fms.farmers-mind.com 운영 중. Vue3/Quasar + Spring Boot. 전체 농장 통계, 출하 예측, 기업 운영자 대시보드', connects: ['API Gateway'] },
+  { id: 'aiapp',   name: 'Farmers-Mind_ai',  sub: '농장주 모바일',        layer: 'service', status: 'inactive', color: '#8b5cf6', href: null,    cx: 345, cy: 158, w: 155, h: 52, desc: 'platform/notused. FM-mobile / FM-back. 개별 농장주가 자신의 농장 현황·체중 예측을 확인하는 모바일 서비스', connects: ['API Gateway'] },
+  { id: 'tms',     name: 'Farmers-Mind_tms', sub: '차량 관제',            layer: 'service', status: 'dev',      color: '#f0883e', href: '/tms',  cx: 556, cy: 158, w: 155, h: 52, desc: 'Nuxt3 + Spring Boot. 농장→도축장→유통 차량 배차·위치 추적·정산. TMS, TMS-back, TMS-location', connects: ['API Gateway'] },
+  { id: 'vms',     name: 'Farmers-Mind_vms', sub: '영상 관제',            layer: 'service', status: 'planned',  color: '#6e7681', href: null,    cx: 767, cy: 158, w: 155, h: 52, desc: '계획 단계. VMS-back, VMS-service 리포 존재. 현장 영상 관제 전용 서비스', connects: ['API Gateway'] },
+  // ── AI Core ──────────────────────────────────────────────────────────────────
+  { id: 'datacol', name: 'Data Collection',  sub: '수집 / 정제 / 통계',   layer: 'core',    status: 'live',     color: '#58a6ff', href: null,    cx: 200, cy: 275, w: 175, h: 52, desc: 'sensorCollector · fileCollector · dataConsumer · dataStatistic · farmDiaryManager · eventEngine. 현장 데이터 수집·정제·통계 처리', connects: ['AI / ML Engine', 'MariaDB', 'AWS S3'] },
+  { id: 'aiml',    name: 'AI / ML Engine',   sub: '체중예측 추론',         layer: 'core',    status: 'dev',      color: '#58a6ff', href: null,    cx: 450, cy: 275, w: 175, h: 52, desc: 'dataAnalysis + newWeightModule2 (platform/temp 개발 중). AI 체중예측 모델 학습 및 실시간 추론. 핵심 Core-Engine', connects: ['API Gateway', 'MariaDB'] },
+  { id: 'apigw',   name: 'API Gateway',      sub: '요청 라우팅',           layer: 'core',    status: 'live',     color: '#58a6ff', href: null,    cx: 700, cy: 275, w: 175, h: 52, desc: 'apiGateway (운영: 172.31.55.157:8100 / 개발: 3.36.42.219:8100). 모든 서비스 요청 라우팅 및 인증 처리', connects: ['Redis', 'MariaDB'] },
+  // ── Backend ──────────────────────────────────────────────────────────────────
+  { id: 'mariadb', name: 'MariaDB',          sub: '주 데이터베이스',       layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 170, cy: 392, w: 140, h: 52, desc: 'MariaDB (172.31.33.100:6241/fms). FMS·TMS 모든 서비스 주 데이터베이스. 농장·파스·출하·정산 데이터 저장', connects: [] },
+  { id: 'redis',   name: 'Redis',            sub: '세션 캐시',             layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 370, cy: 392, w: 140, h: 52, desc: 'Redis. FMS-back 세션 캐시 및 임시 데이터 저장', connects: [] },
+  { id: 's3',      name: 'AWS S3',           sub: '파일 저장소',           layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 560, cy: 392, w: 140, h: 52, desc: 'AWS S3. 이미지·엑셀·첨부파일 등 정적 파일 저장. FMS-back에서 직접 업로드', connects: [] },
+  { id: 'nvr',     name: 'NVR / NAS',        sub: '영상 저장소',           layer: 'backend', status: 'live',     color: '#8b949e', href: null,    cx: 750, cy: 392, w: 140, h: 52, desc: 'nvrManager · nasTransfer. 현장 CCTV 영상·AI 분석 이미지 저장. 고용량 정적 스토리지', connects: [] },
 ];
 
 const SYSTEM_DOC_BUTTONS = [
@@ -43,6 +61,7 @@ const SYSTEM_DOC_BUTTONS = [
   { key: 'index',     path: 'docs/README.md',                                label: '개발문서 인덱스'   },
   { key: 'authoring', path: 'docs/guides/document-authoring.md',             label: '개발문서 작성가이드' },
   { key: 'template',  path: 'docs/templates/component-spec.template.md',     label: '컴포넌트 템플릿'   },
+  { key: 'design',    path: 'docs/3.0-design-system.md',                     label: '3.0 디자인 시스템'  },
 ] as const;
 
 type SystemDocKey = typeof SYSTEM_DOC_BUTTONS[number]['key'];
@@ -352,11 +371,11 @@ export default function DashPage() {
           <div className="w-full max-w-5xl flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-mono text-[#6e7681] uppercase tracking-widest">Service Architecture</p>
-              <p className="text-[9px] font-mono text-[#30363d]">Farmers-Mind Platform · v1.0</p>
+              <p className="text-[9px] font-mono text-[#30363d]">Core-Engine Platform · v1.0</p>
             </div>
             {/* Diagram — 항상 full-width */}
             <div className="border border-[#30363d] bg-[#0d1117]">
-                <svg viewBox="0 0 900 460" className="w-full h-auto">
+                <svg viewBox="0 0 900 482" className="w-full h-auto">
                   <defs>
                     <pattern id="grid-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
                       <circle cx="1" cy="1" r="0.8" fill="#30363d" opacity="0.4" />
@@ -364,59 +383,96 @@ export default function DashPage() {
                     <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                       <polygon points="0 0, 8 3, 0 6" fill="#30363d" />
                     </marker>
+                    <marker id="arr-dim" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#6e7681" />
+                    </marker>
+                    <marker id="arr-edge" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#ff7700" fillOpacity="0.5" />
+                    </marker>
+                    <marker id="arr-core" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#58a6ff" fillOpacity="0.5" />
+                    </marker>
                   </defs>
 
                   {/* Background */}
-                  <rect x="0" y="0" width="900" height="460" fill="url(#grid-dots)" />
+                  <rect x="0" y="0" width="900" height="482" fill="url(#grid-dots)" />
 
                   {/* ── Layer bands ── */}
-                  <rect x="8" y="20" width="884" height="120" fill="#161b22" fillOpacity="0.6" rx="2" />
-                  <text x="18" y="34" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">FRONTEND</text>
+                  <rect x="8" y="14"  width="884" height="78"  fill="#161b22" fillOpacity="0.5"  rx="2" stroke="#ff7700" strokeOpacity="0.2" strokeWidth="1" />
+                  <text x="18" y="27"  fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">FARM EDGE</text>
 
-                  <rect x="8" y="160" width="884" height="125" fill="#161b22" fillOpacity="0.85" rx="2" stroke="#58a6ff" strokeOpacity="0.25" strokeWidth="1" />
-                  <text x="18" y="174" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">CORE ENGINE</text>
+                  <rect x="8" y="108" width="884" height="92"  fill="#161b22" fillOpacity="0.6"  rx="2" />
+                  <text x="18" y="121" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">SERVICE</text>
 
-                  <rect x="8" y="305" width="884" height="130" fill="#161b22" fillOpacity="0.6" rx="2" />
-                  <text x="18" y="319" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">BACKEND</text>
+                  <rect x="8" y="216" width="884" height="94"  fill="#161b22" fillOpacity="0.85" rx="2" stroke="#58a6ff" strokeOpacity="0.25" strokeWidth="1" />
+                  <text x="18" y="229" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">AI CORE</text>
 
-                  {/* ── Connections: Frontend → Farmers-Mind ── */}
-                  <path d="M220,115 C220,160 450,160 450,205" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M450,115 L450,205" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M680,115 C680,160 450,160 450,205" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <rect x="8" y="326" width="884" height="112" fill="#161b22" fillOpacity="0.6"  rx="2" />
+                  <text x="18" y="339" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="2">BACKEND</text>
 
-                  {/* ── Connections: Farmers-Mind → Backend ── */}
-                  <path d="M450,275 C450,318 195,318 195,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M450,275 C450,318 365,318 365,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M450,275 C450,318 535,318 535,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
-                  <path d="M450,275 C450,318 705,318 705,360" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  {/* ── Connections ── */}
+                  {/* Farm Sensor → Data Collection */}
+                  <path d="M230,77 C230,163 200,163 200,249" stroke="#ff7700" strokeOpacity="0.35" strokeWidth="1" fill="none" markerEnd="url(#arr-edge)" />
+                  {/* CCTV → NVR (right-edge bypass) */}
+                  <path d="M748,55 C892,55 892,392 820,392" stroke="#ff7700" strokeOpacity="0.35" strokeWidth="1" fill="none" markerEnd="url(#arr-edge)" />
+                  {/* Service → API GW */}
+                  <path d="M134,184 C134,208 665,208 665,249" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M345,184 C345,208 682,208 682,249" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M556,184 C556,208 700,208 700,249" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  {/* VMS → API GW (planned, dashed) */}
+                  <path d="M767,184 C767,208 728,208 728,249" stroke="#6e7681" strokeWidth="1" strokeDasharray="4 3" fill="none" markerEnd="url(#arr-dim)" />
+                  {/* Core horizontal: Data Collection → AI/ML → API GW */}
+                  <path d="M288,275 L362,275" stroke="#58a6ff" strokeOpacity="0.4" strokeWidth="1" fill="none" markerEnd="url(#arr-core)" />
+                  <path d="M538,275 L612,275" stroke="#58a6ff" strokeOpacity="0.4" strokeWidth="1" fill="none" markerEnd="url(#arr-core)" />
+                  {/* Core → Backend */}
+                  <path d="M185,301 C185,318 160,318 160,366" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M215,301 C215,318 560,318 560,366" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
+                  <path d="M700,301 C700,318 370,318 370,366" stroke="#30363d" strokeWidth="1" fill="none" markerEnd="url(#arr)" />
 
                   {/* ── Nodes ── */}
                   {ARCH_NODES.map(node => {
                     const nx = node.cx - node.w / 2;
                     const ny = node.cy - node.h / 2;
-                    const isSel = selectedNode === node.id;
+                    const isSel     = selectedNode === node.id;
+                    const st        = STATUS_CFG[node.status];
+                    const isPlanned = node.status === 'planned';
                     return (
                       <g
                         key={node.id}
                         onClick={() => setSelectedNode(prev => prev === node.id ? null : node.id)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', opacity: isPlanned ? 0.65 : 1 }}
                       >
-                        <rect x={nx} y={ny} width={node.w} height={node.h} fill="#0d1117" stroke={node.color} strokeWidth={isSel ? 2 : 1} />
+                        <rect x={nx} y={ny} width={node.w} height={node.h} fill="#0d1117" stroke={node.color} strokeWidth={isSel ? 2 : 1} strokeDasharray={isPlanned ? '4 3' : undefined} />
                         <rect x={nx} y={ny} width={node.w} height={node.h} fill={node.color} fillOpacity={isSel ? 0.12 : 0.04} />
-                        <text x={node.cx} y={node.cy - 7} textAnchor="middle" fill={isSel ? '#ffffff' : '#c9d1d9'} fontSize="12" fontWeight="700" fontFamily="ui-monospace,SFMono-Regular,monospace">{node.name}</text>
+                        {/* Status badge (top-right) */}
+                        <text x={nx + node.w - 4} y={ny + 10} textAnchor="end" fill={st.color} fontSize="7" fontFamily="ui-monospace,SFMono-Regular,monospace">{st.label}</text>
+                        {/* Node name */}
+                        <text x={node.cx} y={node.cy - 4} textAnchor="middle" fill={isSel ? '#ffffff' : '#c9d1d9'} fontSize="11" fontWeight="700" fontFamily="ui-monospace,SFMono-Regular,monospace">{node.name}</text>
+                        {/* Sub label */}
                         <text x={node.cx} y={node.cy + 10} textAnchor="middle" fill={node.color} fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace" letterSpacing="1">{node.sub}</text>
                       </g>
                     );
                   })}
 
-                  {/* ── Legend ── */}
-                  <rect x="20" y="445" width="7" height="7" fill="none" stroke="#3fb950" strokeWidth="1" />
-                  <text x="31" y="452" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">FRONTEND</text>
-                  <rect x="110" y="445" width="7" height="7" fill="none" stroke="#58a6ff" strokeWidth="1" />
-                  <text x="121" y="452" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">CORE</text>
-                  <rect x="167" y="445" width="7" height="7" fill="none" stroke="#8b949e" strokeWidth="1" />
-                  <text x="178" y="452" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">BACKEND</text>
-                  <text x="610" y="452" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">click node for details →</text>
+                  {/* ── Legend — Layer ── */}
+                  <rect x="18"  y="457" width="7" height="7" fill="none" stroke="#ff7700" strokeWidth="1" />
+                  <text x="29"  y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">FARM EDGE</text>
+                  <rect x="103" y="457" width="7" height="7" fill="none" stroke="#3fb950" strokeWidth="1" />
+                  <text x="114" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">SERVICE</text>
+                  <rect x="168" y="457" width="7" height="7" fill="none" stroke="#58a6ff" strokeWidth="1" />
+                  <text x="179" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">AI CORE</text>
+                  <rect x="233" y="457" width="7" height="7" fill="none" stroke="#8b949e" strokeWidth="1" />
+                  <text x="244" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">BACKEND</text>
+                  {/* ── Legend — Status ── */}
+                  <circle cx="314" cy="461" r="3" fill="#3fb950" />
+                  <text x="321" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">LIVE</text>
+                  <circle cx="354" cy="461" r="3" fill="#f0883e" />
+                  <text x="361" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">DEV</text>
+                  <circle cx="393" cy="461" r="3" fill="#8b949e" />
+                  <text x="400" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">INACTIVE</text>
+                  <line x1="456" y1="458" x2="470" y2="458" stroke="#6e7681" strokeWidth="1" strokeDasharray="3 2" />
+                  <text x="474" y="464" fill="#6e7681" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">PLANNED</text>
+                  <text x="630" y="464" fill="#30363d" fontSize="9" fontFamily="ui-monospace,SFMono-Regular,monospace">click node for details →</text>
                 </svg>
               </div>
 
@@ -433,12 +489,20 @@ export default function DashPage() {
                   {/* Header */}
                   <div className="flex items-start justify-between px-4 py-3 border-b border-[#30363d] shrink-0">
                     <div className="flex flex-col gap-1.5 min-w-0">
-                      <span
-                        className="text-[9px] font-mono border px-1 py-[1px] uppercase tracking-widest self-start"
-                        style={{ color: selectedArchNode.color, borderColor: selectedArchNode.color }}
-                      >
-                        {selectedArchNode.layer}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="text-[9px] font-mono border px-1 py-[1px] uppercase tracking-widest"
+                          style={{ color: selectedArchNode.color, borderColor: selectedArchNode.color }}
+                        >
+                          {selectedArchNode.layer}
+                        </span>
+                        <span
+                          className="text-[9px] font-mono border px-1 py-[1px] uppercase tracking-widest"
+                          style={{ color: STATUS_CFG[selectedArchNode.status].color, borderColor: STATUS_CFG[selectedArchNode.status].color }}
+                        >
+                          {STATUS_CFG[selectedArchNode.status].label}
+                        </span>
+                      </div>
                       <p className="text-sm font-bold font-mono" style={{ color: selectedArchNode.color }}>
                         {selectedArchNode.name}
                       </p>

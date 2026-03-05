@@ -53,7 +53,7 @@ last_updated: 26.03.05
 | templates | 2 |
 
 ## 6. 최근 수정 문서 (상위 10개)
-- `docs/poc-design-system.md` (26.03.05)
+- `docs/3.0-design-system.md` (26.03.07)
 - `docs/admin/README.md` (26.03.05)
 - `docs/pages/poc.page.md` (26.03.05)
 - `docs/pages/i18n.page.md` (26.03.05)

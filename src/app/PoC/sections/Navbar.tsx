@@ -39,7 +39,7 @@ type DevDocsResponse = {
   docs: DevDoc[];
 };
 
-type SystemDocKey = 'hub' | 'index' | 'authoring' | 'template';
+type SystemDocKey = 'hub' | 'index' | 'authoring' | 'template' | 'design';
 
 const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: string; labelEn: string }> = [
   {
@@ -65,6 +65,12 @@ const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: stri
     path: 'docs/templates/component-spec.template.md',
     labelKo: '컴포넌트 템플릿',
     labelEn: 'Component Spec Template',
+  },
+  {
+    key: 'design',
+    path: 'docs/3.0-design-system.md',
+    labelKo: '3.0 디자인 시스템',
+    labelEn: 'Design System 3.0',
   },
 ];
 
