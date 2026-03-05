@@ -664,7 +664,7 @@ export default function DashPage() {
           <select
             value="zoro"
             onChange={e => { const item = MEMBER_SELECT.find(m => m.key === e.target.value); if (item) router.push(item.href); }}
-            className="bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] text-xs font-mono px-2 py-1 outline-none focus:border-[#58a6ff] cursor-pointer"
+            className="appearance-none bg-[#161b22] border border-[#161b22] text-[#161b22] text-xs font-mono px-2 py-1 outline-none focus:border-[#161b22] cursor-pointer"
           >
             {MEMBER_SELECT.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
           </select>
