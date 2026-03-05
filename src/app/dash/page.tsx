@@ -63,7 +63,7 @@ const ARCH_NODES: ArchNode[] = [
   // ── Farm Edge ────────────────────────────────────────────────────────────────
   {
     id: 'sensor',
-    name: '온습도계',
+    name: 'Farm Sensor',
     sub: '온도 / 습도 / 체중계',
     layer: 'edge',
     status: 'live',
