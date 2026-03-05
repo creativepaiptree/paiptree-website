@@ -349,8 +349,7 @@ export default function I18nConsistencyClient({ initialData }: Props) {
         throw new Error(err);
       }
 
-      onExportAllLangs();
-      setMessage('저장 완료. ts 파일 5개를 내려받았습니다.');
+      setMessage('저장 완료.');
     } catch (error) {
       setMessage(error instanceof Error ? `저장 실패: ${error.message}` : '저장 실패');
     } finally {
