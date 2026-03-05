@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-const TOOLS = [
+const TOOLS: { href: string; name: string; badge: string; badgeColor: string; external?: boolean }[] = [
   {
     href: '/dash',
     name: 'zoro_LAB',
@@ -15,6 +15,13 @@ const TOOLS = [
     name: '파이프트리 홈페이지',
     badge: 'SITE',
     badgeColor: '#3fb950',
+  },
+  {
+    href: 'https://paiptree-ds.vercel.app/',
+    name: '크리에이티브팀 페이지',
+    badge: 'SITE',
+    badgeColor: '#3fb950',
+    external: true,
   },
   {
     href: '/tms',
@@ -92,6 +99,8 @@ export default function DashFloatingNav({ current }: Props) {
                 <Link
                   key={tool.href}
                   href={tool.href}
+                  target={tool.external ? '_blank' : undefined}
+                  rel={tool.external ? 'noopener noreferrer' : undefined}
                   onClick={() => setOpen(false)}
                   className={`flex flex-col gap-1.5 px-2 py-2.5 transition-colors group ${
                     isCurrent
