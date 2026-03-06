@@ -1,11 +1,9 @@
 // src/components/PartnersSection.tsx
 'use client';
 
-import { useTranslation } from '@/hooks/useTranslation';
 import Image from 'next/image';
 
 const PartnersSection = () => {
-  const { t } = useTranslation();
   const partnerLogos = [
     { name: '디캠프', src: '/partners/1.디캠프.png', width: 240 },
     { name: '아산나눔재단', src: '/partners/2.아산나눔재단.png', width: 280 },
@@ -31,42 +29,30 @@ const PartnersSection = () => {
 
   return (
     <section className="py-20 bg-black overflow-hidden">
-      <div className="container mx-auto px-6 max-w-7xl">
-        {/* Title Section - Left Aligned like PlatformSection */}
-        <div className="max-w-[1200px] mx-auto mb-12">
-          <h3 className="text-3xl font-normal text-white mb-8">
-            Global Partners
-          </h3>
-        </div>
-        
-        {/* Partners Carousel */}
-        <div className="relative">
-          <div className="flex items-center gap-x-12 infinite-scroll opacity-60">
-            {/* 첫 번째 세트 */}
-            {partnerLogos.map((logo, index) => (
-              <Image
-                key={`first-${logo.name}-${index}`}
-                src={logo.src}
-                alt={`${logo.name} logo`}
-                width={logo.width * 0.8}
-                height={80}
-                style={{ filter: 'brightness(0) invert(1)' }}
-                className="h-auto flex-shrink-0"
-              />
-            ))}
-            {/* 두 번째 세트 (무한 루프를 위한 복제) */}
-            {partnerLogos.map((logo, index) => (
-              <Image
-                key={`second-${logo.name}-${index}`}
-                src={logo.src}
-                alt={`${logo.name} logo`}
-                width={logo.width * 0.8}
-                height={80}
-                style={{ filter: 'brightness(0) invert(1)' }}
-                className="h-auto flex-shrink-0"
-              />
-            ))}
-          </div>
+      <div className="container-max px-6 mb-12">
+        <h3 className="text-3xl font-normal text-white">Global Partners</h3>
+      </div>
+
+      {/* Partners Carousel — edge fade */}
+      <div
+        className="relative"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+        }}
+      >
+        <div className="flex items-center gap-x-12 infinite-scroll opacity-50" aria-label="파트너사 목록">
+          {[...partnerLogos, ...partnerLogos].map((logo, index) => (
+            <Image
+              key={`${logo.name}-${index}`}
+              src={logo.src}
+              alt={`${logo.name} logo`}
+              width={logo.width * 0.8}
+              height={80}
+              style={{ filter: 'brightness(0) invert(1)' }}
+              className="h-auto flex-shrink-0"
+            />
+          ))}
         </div>
       </div>
     </section>
