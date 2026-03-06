@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @font-face {
   font-family: 'Gmarket Sans';
   font-weight: 500;
@@ -32,9 +31,11 @@
   --text-secondary: #A1A1AA;
   --text-muted: #6B7280;
 
-  /* Accent Colors (Purple-Blue Gradient) */
-  --accent-from: #8B5CF6;
-  --accent-to: #3B82F6;
+  /* Accent Colors (Brand Cyan-Teal) */
+  --accent: #00ABE6;
+  --accent-sub: #2DD4BF;
+  --accent-from: #00ABE6;
+  --accent-to: #2DD4BF;
 
   /* Border & Effects */
   --border-subtle: rgba(255, 255, 255, 0.1);
@@ -45,7 +46,7 @@
   /* Shadows */
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 10px 25px rgba(139, 92, 246, 0.3);
+  --shadow-glow: 0 10px 25px rgba(0, 171, 230, 0.3);
 
   /* Semantic design tokens (foundation) */
   --surface-bg: var(--bg-primary);
@@ -223,17 +224,13 @@ a {
   color: var(--accent-from);
 }
 
-/* Palantir-style Glow effects */
-.glow-purple {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
-}
-
-.glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-}
-
+/* Glow effects */
 .glow-accent {
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 25px rgba(0, 171, 230, 0.3);
+}
+
+.glow-teal {
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.2);
 }
 
 /* Floating animation */
@@ -310,12 +307,12 @@ a {
   }
 }
 
-/* Palantir-style Mesh gradient background */
+/* Mesh gradient background */
 .mesh-gradient {
-  background: 
-    radial-gradient(at 40% 20%, rgba(139, 92, 246, 0.06) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.06) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
+  background:
+    radial-gradient(at 40% 20%, rgba(0, 171, 230, 0.06) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(45, 212, 191, 0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(0, 171, 230, 0.04) 0px, transparent 50%);
 }
 
 /* Palantir-style Button System */
@@ -524,11 +521,11 @@ a {
 .category-badge-inline {
   display: inline-block;
   padding: 0.25rem 0.625rem;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(0, 171, 230, 0.1);
   border-radius: 0.375rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #8B5CF6;
+  color: var(--accent);
 }
 
 .blog-date {
@@ -592,7 +589,7 @@ a {
 .tag-cloud-item-light:hover {
   background: #F3F4F6;
   border-color: #D1D5DB;
-  color: #8B5CF6;
+  color: #00ABE6;
   transform: translateY(-1px);
 }
 

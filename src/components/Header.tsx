@@ -34,7 +34,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <a href="/" className="text-xl font-gmarket" style={{ fontWeight: 700, color: '#00ABE6' }}>
+            <a href="/" className="text-xl font-gmarket" style={{ fontWeight: 700, color: 'var(--accent)' }}>
               paiptree.
             </a>
           </div>
