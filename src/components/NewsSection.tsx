@@ -2,13 +2,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Button from './ui/Button';
 import Link from 'next/link';
-import { useTranslation } from '@/hooks/useTranslation';
 import { fetchLatestNews, NewsItem } from '@/lib/googleSheets';
 
+const sectionStyle = {
+  backgroundImage: 'url("/news-bg.png")',
+  backgroundColor: '#0a1219',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+} as const;
+
 const NewsSection = () => {
-  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,94 +75,56 @@ const NewsSection = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <section className="pt-32 pb-16 relative overflow-hidden" 
-               style={{
-                 backgroundImage: 'url("/news-bg.png")',
-                 backgroundColor: '#0a1219',
-                 backgroundSize: 'cover',
-                 backgroundPosition: 'center',
-                 backgroundRepeat: 'no-repeat'
-               }}>
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="container mx-auto px-6 max-w-4xl relative z-10">
-          <div className="text-center text-white">
-            <div className="animate-pulse">뉴스를 불러오는 중...</div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (newsItems.length === 0) {
-    return (
-      <section className="pt-32 pb-16 relative overflow-hidden" 
-               style={{
-                 backgroundImage: 'url("/news-bg.png")',
-                 backgroundColor: '#0a1219',
-                 backgroundSize: 'cover',
-                 backgroundPosition: 'center',
-                 backgroundRepeat: 'no-repeat'
-               }}>
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="container mx-auto px-6 max-w-4xl relative z-10">
-          <div className="text-center text-white">
-            <div>뉴스를 불러올 수 없습니다.</div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const current = newsItems[currentIndex];
 
   return (
-    <section className="pt-32 pb-16 relative overflow-hidden" 
-             style={{
-               backgroundImage: 'url("/news-bg.png")',
-               backgroundColor: '#0a1219',
-               backgroundSize: 'cover',
-               backgroundPosition: 'center',
-               backgroundRepeat: 'no-repeat'
-             }}>
-      {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-black/40"></div>
-      
-      <div className="container mx-auto px-6 max-w-4xl relative z-10">
-        <div className="text-center">
-          {/* Current News Item */}
-          <div className="mb-8">
-            <h2 className="text-4xl md:text-5xl font-medium text-white mb-4 leading-tight h-16 md:h-20 flex items-center justify-center">
-              <span className="line-clamp-2">{newsItems[currentIndex].title}</span>
-            </h2>
-            <p className="text-lg text-gray-400 mb-6">
-              ({newsItems[currentIndex].category}, {formatDate(newsItems[currentIndex].upload_date)})
-            </p>
-            <p className="text-lg text-gray-300 leading-relaxed max-w-3xl mx-auto mb-4 h-24 flex items-start justify-center">
-              <span className="line-clamp-3">{newsItems[currentIndex].description}</span>
-            </p>
-          </div>
+    <section className="pt-32 pb-16 relative overflow-hidden" style={sectionStyle}>
+      <div className="absolute inset-0 bg-black/40" />
 
-          {/* View Details Button */}
-          <Link href={newsItems[currentIndex].original_url}>
-            <Button variant="outline" className="mb-6 border-white/30 text-white hover:bg-white/10 text-lg px-8 py-3">
-              기사전문보기
-            </Button>
-          </Link>
+      <div className="container-max px-6 relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+          {loading ? (
+            <p className="text-white/50 animate-pulse">뉴스를 불러오는 중...</p>
+          ) : !current ? (
+            <p className="text-white/50">뉴스를 불러올 수 없습니다.</p>
+          ) : (
+            <>
+              {/* Current News Item */}
+              <div className="mb-8">
+                <h2 className="text-4xl md:text-5xl font-medium text-white mb-4 leading-tight min-h-[4rem] flex items-center justify-center">
+                  <span className="line-clamp-2">{current.title}</span>
+                </h2>
+                <p className="text-sm text-white/40 mb-6 tracking-wide uppercase">
+                  {current.category} · {formatDate(current.upload_date)}
+                </p>
+                <p className="text-lg text-white/70 leading-relaxed max-w-3xl mx-auto line-clamp-3">
+                  {current.description}
+                </p>
+              </div>
 
-          {/* Dot Indicators */}
-          <div className="flex justify-center gap-3">
-            {newsItems.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentIndex 
-                    ? 'bg-white' 
-                    : 'bg-white/30 hover:bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
+              {/* CTA */}
+              <Link
+                href={current.original_url}
+                className="inline-block mb-8 border border-white/30 text-white text-sm px-8 py-3 hover:bg-white/10 transition-colors duration-200"
+              >
+                기사 전문 보기
+              </Link>
+
+              {/* Dot Indicators */}
+              <div className="flex justify-center gap-3">
+                {newsItems.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    aria-label={`슬라이드 ${index + 1}`}
+                    className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                      index === currentIndex ? 'bg-white scale-125' : 'bg-white/30 hover:bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>
