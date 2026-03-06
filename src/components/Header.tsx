@@ -30,15 +30,15 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
-      <nav
-        className="container-max px-6 py-4 backdrop-blur-md"
-        style={{
-          background: 'rgba(5,5,5,0.75)',
-          borderBottom: '1px solid var(--color-line)',
-        }}
-      >
-        <div className="flex items-center justify-between">
+    <header
+      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
+      style={{
+        background: 'rgba(5,5,5,0.85)',
+        borderBottom: '1px solid var(--color-line-mid)',
+      }}
+    >
+      <nav className="container-max px-6">
+        <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link
             href="/"
@@ -83,8 +83,8 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4" style={{ borderTop: '1px solid var(--color-line)' }}>
-            <div className="space-y-3">
+          <div className="md:hidden pb-4" style={{ borderTop: '1px solid var(--color-line-mid)' }}>
+            <div className="space-y-3 pt-4">
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
