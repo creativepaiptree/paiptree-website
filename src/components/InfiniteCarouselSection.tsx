@@ -66,27 +66,34 @@ export default function InfiniteCarouselSection() {
   }, [isPaused]);
 
   return (
-    <section className="py-16 overflow-hidden bg-gray-300 relative">
-      {/* Noise overlay */}
-      <div className="absolute inset-0 noise-overlay"></div>
-
+    <section className="py-16 overflow-hidden relative" style={{ background: 'var(--color-light-bg-alt)' }}>
       {/* Top Navigation Buttons */}
-      <div className="container-max px-6 mb-6 relative z-10">
-        <div className="flex justify-center gap-2 flex-wrap">
+      <div className="container-max px-6 mb-8 relative z-10">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>/01</span>
+          <span className="w-6 h-px" style={{ background: 'var(--color-light-line)' }} />
+          <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>CAPABILITIES</span>
+        </div>
+        <div className="flex gap-2 flex-wrap">
           {carouselData.map((card, index) => (
             <button
               key={card.id}
-              className="relative px-3 py-1 rounded text-black text-xs bg-white overflow-hidden transition-all duration-300"
+              className="relative px-3 py-1.5 text-xs overflow-hidden transition-all duration-200"
               onClick={() => setCurrentIndex(index)}
+              style={{
+                border: `1px solid ${index === currentIndex ? 'var(--color-accent)' : 'var(--color-light-line)'}`,
+                color: index === currentIndex ? 'var(--color-accent)' : 'var(--color-light-text-sub)',
+                background: 'transparent',
+              }}
             >
               {/* Background fill animation */}
               <div
-                className={`absolute inset-0 opacity-20 ${
+                className={`absolute inset-0 ${
                   index === currentIndex && !isPaused
                     ? 'animate-[fillProgress_6s_linear_infinite]'
                     : 'w-0'
                 }`}
-                style={{ backgroundColor: 'var(--accent)' }}
+                style={{ backgroundColor: 'var(--color-accent)', opacity: 0.08 }}
               />
               {/* Button text */}
               <span className="relative z-10">{t(`infiniteCarousel.cards.${card.id}.title`)}</span>
@@ -98,7 +105,7 @@ export default function InfiniteCarouselSection() {
       {/* Carousel */}
       <div className="relative overflow-hidden z-10">
         <div
-          className="flex gap-6 transition-transform duration-500 ease-in-out"
+          className="flex gap-4 transition-transform duration-500 ease-in-out"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           style={{
@@ -108,7 +115,7 @@ export default function InfiniteCarouselSection() {
           {carouselData.map((card, index) => (
             <div
               key={card.id}
-              className="flex-shrink-0 w-[960px] h-[600px] relative rounded-lg overflow-hidden group cursor-pointer"
+              className="flex-shrink-0 w-[960px] h-[560px] relative overflow-hidden group cursor-pointer"
             >
               {/* Background image */}
               <div
@@ -158,15 +165,13 @@ export default function InfiniteCarouselSection() {
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
 
               {/* Label */}
-              <div className="absolute top-6 left-6 right-6">
-                <div className="inline-block bg-white/30 backdrop-blur-sm rounded px-4 py-2">
-                  <h3 className="text-sm text-white mb-1">{t(`infiniteCarousel.cards.${card.id}.title`)}</h3>
-                  <p className="text-2xl text-white/80">{t(`infiniteCarousel.cards.${card.id}.subtitle`)}</p>
-                </div>
+              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+                <p className="type-label mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{t(`infiniteCarousel.cards.${card.id}.title`)}</p>
+                <h3 className="type-heading-s" style={{ color: 'var(--color-text)' }}>{t(`infiniteCarousel.cards.${card.id}.subtitle`)}</h3>
               </div>
 
               {/* Hover glow effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to top, rgba(0,171,230,0.12), transparent)' }} />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to top, rgba(0,171,230,0.15), transparent)' }} />
             </div>
           ))}
         </div>

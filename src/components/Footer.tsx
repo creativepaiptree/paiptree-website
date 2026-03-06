@@ -39,19 +39,19 @@ const footerLinks = [
 ];
 
 const Footer = () => (
-  <footer className="py-12" style={{ background: 'var(--bg-secondary)' }}>
+  <footer className="py-16" style={{ background: 'var(--color-bg-surface)', borderTop: '1px solid var(--color-line)' }}>
     <div className="container-max px-6">
       {/* Logo & Description */}
       <div className="mb-12">
         <Link
           href="/"
-          className="text-2xl font-gmarket inline-block mb-4"
-          style={{ fontWeight: 700, color: 'var(--accent)' }}
+          className="text-xl font-gmarket inline-block mb-4"
+          style={{ fontWeight: 700, color: 'var(--color-accent)' }}
         >
           paiptree.
         </Link>
-        <p className="body-md max-w-md" style={{ color: 'var(--text-secondary)' }}>
-          AI 기반 스마트 양계 플랫폼으로 농장부터 유통까지 연결합니다.
+        <p className="type-body-s max-w-xs" style={{ color: 'var(--color-text-dim)' }}>
+          AI 기반 스마트 양계 플랫폼으로<br />농장부터 유통까지 연결합니다.
         </p>
       </div>
 
@@ -59,16 +59,16 @@ const Footer = () => (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
         {footerLinks.map(({ title, items }) => (
           <div key={title}>
-            <h4 className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+            <h4 className="type-label mb-4" style={{ color: 'var(--color-text-dim)', letterSpacing: '0.1em' }}>
               {title}
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {items.map(({ label, href }) => (
                 <li key={label}>
                   <Link
                     href={href}
-                    className="body-sm hover:text-white transition-colors duration-200"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="type-body-s transition-colors duration-200 hover:text-white"
+                    style={{ color: 'var(--color-text-sub)' }}
                   >
                     {label}
                   </Link>
@@ -80,13 +80,13 @@ const Footer = () => (
       </div>
 
       {/* Bottom Bar */}
-      <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4" style={{ borderColor: 'var(--border-subtle)' }}>
-        <p className="body-sm" style={{ color: 'var(--text-muted)' }}>
+      <div className="pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" style={{ borderTop: '1px solid var(--color-line)' }}>
+        <p className="type-label" style={{ color: 'var(--color-text-dim)' }}>
           © 2026 Paiptree Inc. All Rights Reserved.
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           {['Instagram', 'LinkedIn', 'GitHub'].map((name) => (
-            <Link key={name} href="#" className="body-sm hover:text-white transition-colors duration-200" style={{ color: 'var(--text-secondary)' }}>
+            <Link key={name} href="#" className="type-label transition-colors duration-200 hover:text-white" style={{ color: 'var(--color-text-sub)' }}>
               {name}
             </Link>
           ))}

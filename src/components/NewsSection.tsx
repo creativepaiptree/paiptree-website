@@ -78,50 +78,63 @@ const NewsSection = () => {
   const current = newsItems[currentIndex];
 
   return (
-    <section className="pt-32 pb-16 relative overflow-hidden" style={sectionStyle}>
-      <div className="absolute inset-0 bg-black/40" />
+    <section className="pt-24 pb-16 relative overflow-hidden" style={sectionStyle}>
+      <div className="absolute inset-0 bg-black/50" />
 
       <div className="container-max px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+        {/* Eyebrow */}
+        <div className="flex items-center gap-3 mb-16">
+          <span className="type-label" style={{ color: 'var(--color-accent)' }}>/05</span>
+          <span className="w-6 h-px" style={{ background: 'var(--color-accent)', opacity: 0.4 }} />
+          <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>NEWSROOM</span>
+        </div>
+
+        <div className="max-w-3xl">
           {loading ? (
-            <p className="text-white/50 animate-pulse">뉴스를 불러오는 중...</p>
+            <p className="type-body-s" style={{ color: 'var(--color-text-dim)' }}>뉴스를 불러오는 중...</p>
           ) : !current ? (
-            <p className="text-white/50">뉴스를 불러올 수 없습니다.</p>
+            <p className="type-body-s" style={{ color: 'var(--color-text-dim)' }}>뉴스를 불러올 수 없습니다.</p>
           ) : (
             <>
-              {/* Current News Item */}
-              <div className="mb-8">
-                <h2 className="text-4xl md:text-5xl font-medium text-white mb-4 leading-tight min-h-[4rem] flex items-center justify-center">
-                  <span className="line-clamp-2">{current.title}</span>
-                </h2>
-                <p className="text-sm text-white/40 mb-6 tracking-wide uppercase">
-                  {current.category} · {formatDate(current.upload_date)}
-                </p>
-                <p className="text-lg text-white/70 leading-relaxed max-w-3xl mx-auto line-clamp-3">
-                  {current.description}
-                </p>
-              </div>
+              {/* Meta */}
+              <p className="type-label mb-4" style={{ color: 'var(--color-text-dim)', letterSpacing: '0.1em' }}>
+                {current.category} · {formatDate(current.upload_date)}
+              </p>
 
-              {/* CTA */}
-              <Link
-                href={current.original_url}
-                className="inline-block mb-8 border border-white/30 text-white text-sm px-8 py-3 hover:bg-white/10 transition-colors duration-200"
-              >
-                기사 전문 보기
-              </Link>
+              {/* Headline */}
+              <h2 className="type-heading-l mb-6 line-clamp-2" style={{ color: 'var(--color-text)' }}>
+                {current.title}
+              </h2>
 
-              {/* Dot Indicators */}
-              <div className="flex justify-center gap-3">
-                {newsItems.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    aria-label={`슬라이드 ${index + 1}`}
-                    className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                      index === currentIndex ? 'bg-white scale-125' : 'bg-white/30 hover:bg-white/50'
-                    }`}
-                  />
-                ))}
+              {/* Description */}
+              <p className="type-body mb-10 line-clamp-3" style={{ color: 'var(--color-text-sub)', maxWidth: '560px' }}>
+                {current.description}
+              </p>
+
+              {/* CTA + Dots row */}
+              <div className="flex items-center gap-8">
+                <Link href={current.original_url} className="btn-site-link" style={{ color: 'var(--color-text-sub)' }}>
+                  기사 전문 보기
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+
+                <div className="flex items-center gap-2">
+                  {newsItems.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      aria-label={`슬라이드 ${index + 1}`}
+                      className="transition-all duration-300"
+                      style={{
+                        width: index === currentIndex ? '24px' : '6px',
+                        height: '1px',
+                        background: index === currentIndex ? 'var(--color-accent)' : 'rgba(255,255,255,0.25)',
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             </>
           )}
