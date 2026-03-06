@@ -71,7 +71,7 @@ export default function InfiniteCarouselSection() {
       <div className="absolute inset-0 noise-overlay"></div>
 
       {/* Top Navigation Buttons */}
-      <div className="max-w-8xl mx-auto px-6 mb-6 relative z-10">
+      <div className="container-max px-6 mb-6 relative z-10">
         <div className="flex justify-center gap-2 flex-wrap">
           {carouselData.map((card, index) => (
             <button
@@ -81,12 +81,13 @@ export default function InfiniteCarouselSection() {
             >
               {/* Background fill animation */}
               <div
-                className={`absolute inset-0 bg-blue-500 opacity-20 ${index === currentIndex && !isPaused
+                className={`absolute inset-0 opacity-20 ${
+                  index === currentIndex && !isPaused
                     ? 'animate-[fillProgress_6s_linear_infinite]'
                     : 'w-0'
-                  }`}
-              ></div>
-
+                }`}
+                style={{ backgroundColor: 'var(--accent)' }}
+              />
               {/* Button text */}
               <span className="relative z-10">{t(`infiniteCarousel.cards.${card.id}.title`)}</span>
             </button>
@@ -136,14 +137,12 @@ export default function InfiniteCarouselSection() {
                       <div className="bg-white/10 rounded flex items-center justify-center text-xs text-white/60">COMPILE</div>
                       <div className="bg-white/10 rounded flex items-center justify-center text-xs text-white/60">EXECUTE</div>
                     </div>
-                    <div className="absolute bottom-4 left-4 right-4 h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded"></div>
+                    <div className="absolute bottom-4 left-4 right-4 h-20 rounded" style={{ background: 'linear-gradient(to right, rgba(0,171,230,0.2), rgba(45,212,191,0.2))' }} />
                   </div>
                 )}
                 {card.id === '3' && (
                   <div className="absolute inset-6">
-                    <div className="w-full h-full bg-gradient-to-br from-teal-500/20 via-transparent to-green-500/20 rounded-lg flex items-center justify-center">
-                      <div className="text-4xl opacity-40">🤖</div>
-                    </div>
+                    <div className="w-full h-full rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(0,171,230,0.15) 0%, transparent 50%, rgba(45,212,191,0.15) 100%)' }} />
                   </div>
                 )}
                 {(card.id === '4' || card.id === '5') && (
@@ -167,7 +166,7 @@ export default function InfiniteCarouselSection() {
               </div>
 
               {/* Hover glow effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-blue-500/10 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to top, rgba(0,171,230,0.12), transparent)' }} />
             </div>
           ))}
         </div>
