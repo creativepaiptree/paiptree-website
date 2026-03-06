@@ -12,42 +12,54 @@ export default function PlatformSection() {
   const { t } = useTranslation();
 
   return (
-    <section className="py-20 bg-white relative overflow-hidden">
+    <section className="py-24 relative overflow-hidden" style={{ background: 'var(--color-light-bg)' }}>
       <div className="container-max px-6">
-        {/* Main Text */}
-        <div className="mb-20">
-          <h2 className="text-4xl font-normal text-black mb-4 leading-tight">
-            {t('platformSection.mainTitle')}{' '}
-            <span className="text-gray-400">AI-driven</span>{' '}
-            {t('platformSection.mainSubtitle')}
+
+        {/* Eyebrow */}
+        <div className="flex items-center gap-3 mb-16" style={{ borderTop: '1px solid var(--color-light-line)', paddingTop: '2rem' }}>
+          <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>/02</span>
+          <span className="w-8 h-px" style={{ background: 'var(--color-light-line)' }} />
+          <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>PLATFORM</span>
+        </div>
+
+        {/* Lead text */}
+        <div className="mb-20 max-w-3xl">
+          <h2 className="type-heading-l mb-4" style={{ color: 'var(--color-light-text)' }}>
+            {t('platformSection.mainTitle')}
+            <br />
+            <span style={{ color: 'var(--color-light-text-sub)' }}>{t('platformSection.mainSubtitle')}</span>
           </h2>
         </div>
 
-        {/* Platform List */}
+        {/* Platform list */}
         <div>
-          <h3 className="text-3xl font-normal text-black mb-8 lg:mb-12">
-            {t('platformSection.ourPlatforms')}
-          </h3>
-
           {platforms.map(({ num, key, name }, i) => (
             <div
               key={key}
-              className={`flex flex-col lg:flex-row lg:justify-between lg:items-center px-8 pt-8 pb-24 transition-colors duration-300 hover:bg-gray-100 border-t border-gray-200 ${
-                i === platforms.length - 1 ? 'border-b' : ''
-              }`}
+              className="flex flex-col lg:flex-row lg:items-center lg:gap-16 py-10 transition-colors duration-200 group cursor-default"
+              style={{
+                borderTop: '1px solid var(--color-light-line)',
+                borderBottom: i === platforms.length - 1 ? '1px solid var(--color-light-line)' : undefined,
+              }}
             >
-              {/* 번호 + 설명 */}
-              <div className="flex-1 order-2 lg:order-1 max-w-[200px]">
-                <div className="text-sm text-gray-400 mb-4 text-right lg:text-left">{num}</div>
-                <p className="text-base text-gray-600 leading-snug text-right lg:text-left hidden lg:block">
-                  {t(`platformSection.${key}.description`)}
-                </p>
+              {/* 번호 */}
+              <div className="w-16 flex-shrink-0 mb-3 lg:mb-0">
+                <span className="type-mono" style={{ color: 'var(--color-light-text-sub)' }}>{num}</span>
               </div>
 
               {/* 플랫폼명 */}
-              <div className="order-1 lg:order-2">
-                <div className="text-6xl lg:text-9xl font-bold text-black">{name}</div>
-                <p className="text-sm text-gray-600 mt-2 lg:hidden">
+              <div className="flex-1">
+                <span
+                  className="type-heading-l block transition-colors duration-200"
+                  style={{ color: 'var(--color-light-text)', letterSpacing: '-0.04em' }}
+                >
+                  {name}
+                </span>
+              </div>
+
+              {/* 설명 */}
+              <div className="lg:w-72 mt-3 lg:mt-0">
+                <p className="type-body-s" style={{ color: 'var(--color-light-text-sub)' }}>
                   {t(`platformSection.${key}.description`)}
                 </p>
               </div>

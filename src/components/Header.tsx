@@ -30,29 +30,36 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-4 left-4 right-4 z-50">
-      <nav className="container-max px-6 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl">
+    <header className="fixed top-0 left-0 right-0 z-50">
+      <nav
+        className="container-max px-6 py-4 backdrop-blur-md"
+        style={{
+          background: 'rgba(5,5,5,0.75)',
+          borderBottom: '1px solid var(--color-line)',
+        }}
+      >
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
-            className="text-xl font-gmarket hover:opacity-80 transition-opacity"
-            style={{ fontWeight: 700, color: 'var(--accent)' }}
+            className="text-xl font-gmarket hover:opacity-75 transition-opacity"
+            style={{ fontWeight: 700, color: 'var(--color-accent)' }}
           >
             paiptree.
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center gap-8">
             {navigationItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-link text-sm font-medium transition-colors duration-200 ${
-                  isActiveMenu(item.href)
-                    ? 'nav-link-active'
-                    : 'hover:text-white'
-                }`}
+                className="type-body-s transition-colors duration-200"
+                style={{
+                  color: isActiveMenu(item.href) ? 'var(--color-accent)' : 'var(--color-text-sub)',
+                }}
+                onMouseEnter={e => { if (!isActiveMenu(item.href)) (e.target as HTMLElement).style.color = 'var(--color-text)'; }}
+                onMouseLeave={e => { if (!isActiveMenu(item.href)) (e.target as HTMLElement).style.color = 'var(--color-text-sub)'; }}
               >
                 {t(`header.nav.${item.label.toLowerCase()}`)}
               </Link>
@@ -76,17 +83,14 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-white/10">
+          <div className="md:hidden mt-4 pt-4" style={{ borderTop: '1px solid var(--color-line)' }}>
             <div className="space-y-3">
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block text-sm font-medium transition-colors duration-200 ${
-                    isActiveMenu(item.href)
-                      ? 'nav-link-active'
-                      : 'text-white/60 hover:text-white'
-                  }`}
+                  className="block type-body-s transition-colors duration-200"
+                  style={{ color: isActiveMenu(item.href) ? 'var(--color-accent)' : 'var(--color-text-sub)' }}
                 >
                   {t(`header.nav.${item.label.toLowerCase()}`)}
                 </Link>
