@@ -1,329 +1,205 @@
+// src/app/careers/page.tsx
 import Header from '@/components/Header';
-import ParticleBackground from '@/components/ParticleBackground';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 const jobOpenings = [
   {
-    title: 'Senior AI Research Scientist',
+    title: 'AI 연구 엔지니어',
     department: 'Research',
-    location: 'London, UK',
-    type: 'Full-time',
-    description: 'Lead cutting-edge research in generative AI models and publish high-impact papers.',
-    requirements: ['PhD in ML/AI', '5+ years research experience', 'Strong publication record'],
-    featured: true
+    location: '서울',
+    type: '정규직',
+    description: '양계 데이터 기반 예측 모델 연구 및 FarmersMind 고도화를 담당합니다.',
   },
   {
-    title: 'Machine Learning Engineer',
+    title: '백엔드 엔지니어',
     department: 'Engineering',
-    location: 'San Francisco, CA',
-    type: 'Full-time',
-    description: 'Build and scale ML infrastructure for training and serving large-scale AI models.',
-    requirements: ['MS in CS/ML', 'Python/PyTorch', 'Distributed systems experience'],
-    featured: false
+    location: '서울',
+    type: '정규직',
+    description: '농장 데이터 수집·처리 파이프라인과 API 플랫폼을 개발합니다.',
   },
   {
-    title: 'Product Manager - AI Platform',
+    title: '프로덕트 매니저',
     department: 'Product',
-    location: 'Remote',
-    type: 'Full-time',
-    description: 'Drive product strategy and roadmap for our AI platform and developer tools.',
-    requirements: ['5+ years PM experience', 'Technical background', 'AI/ML product experience'],
-    featured: false
+    location: '서울',
+    type: '정규직',
+    description: 'FarmersMind 플랫폼의 로드맵과 고객 경험을 주도합니다.',
   },
   {
-    title: 'DevOps Engineer',
-    department: 'Infrastructure',
-    location: 'Berlin, Germany',
-    type: 'Full-time',
-    description: 'Manage cloud infrastructure and deployment pipelines for AI model serving.',
-    requirements: ['Kubernetes experience', 'AWS/GCP', 'CI/CD pipelines'],
-    featured: false
+    title: '농업 도메인 전문가',
+    department: 'Domain',
+    location: '서울·현장',
+    type: '정규직',
+    description: '양계 농가와의 협업을 통해 현장 데이터와 제품 방향을 연결합니다.',
   },
   {
-    title: 'UX Designer',
-    department: 'Design',
-    location: 'New York, NY',
-    type: 'Full-time',
-    description: 'Design intuitive interfaces for AI-powered creative tools and developer platforms.',
-    requirements: ['5+ years UX design', 'Figma/Sketch', 'AI product experience preferred'],
-    featured: false
+    title: '프론트엔드 엔지니어',
+    department: 'Engineering',
+    location: '서울',
+    type: '정규직',
+    description: '농장 운영자가 사용하는 대시보드와 모바일 인터페이스를 개발합니다.',
   },
-  {
-    title: 'Research Intern',
-    department: 'Research',
-    location: 'London, UK',
-    type: 'Internship',
-    description: 'Work alongside our research team on cutting-edge AI projects and publications.',
-    requirements: ['PhD student in ML/AI', 'Strong coding skills', 'Research experience'],
-    featured: false
-  }
 ];
 
 const benefits = [
-  {
-    icon: '💰',
-    title: 'Competitive Compensation',
-    description: 'Top-tier salary, equity, and performance bonuses'
-  },
-  {
-    icon: '🏥',
-    title: 'Health & Wellness',
-    description: 'Comprehensive health insurance and wellness programs'
-  },
-  {
-    icon: '🏖️',
-    title: 'Flexible Time Off',
-    description: 'Unlimited PTO and sabbatical opportunities'
-  },
-  {
-    icon: '📚',
-    title: 'Learning & Development',
-    description: 'Conference attendance, courses, and research time'
-  },
-  {
-    icon: '🌍',
-    title: 'Remote-First',
-    description: 'Work from anywhere with flexible hours'
-  },
-  {
-    icon: '🚀',
-    title: 'Cutting-Edge Work',
-    description: 'Work on breakthrough AI research and products'
-  }
+  { label: '경쟁력 있는 급여', note: '스톡옵션 포함' },
+  { label: '유연 근무제', note: '자율 출퇴근' },
+  { label: '학습·개발 지원', note: '컨퍼런스·도서 지원' },
+  { label: '건강 보험', note: '본인·가족 포함' },
+  { label: '성과 보너스', note: '반기 지급' },
+  { label: '최신 장비 지원', note: '맥북·모니터' },
 ];
 
-const departments = ['All', 'Research', 'Engineering', 'Product', 'Design', 'Infrastructure'];
+const steps = [
+  { num: '01', title: '서류 지원', desc: '이력서와 포트폴리오를 제출합니다.' },
+  { num: '02', title: '1차 인터뷰', desc: '팀 리드와 30분 화상 미팅을 진행합니다.' },
+  { num: '03', title: '과제·기술 인터뷰', desc: '직무 관련 과제 또는 기술 면접을 진행합니다.' },
+  { num: '04', title: '최종 합류', desc: '오퍼 수락 후 온보딩을 시작합니다.' },
+];
 
 export default function CareersPage() {
   return (
-    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: 'var(--bg-primary)' }}>
-      <ParticleBackground />
-      <Header />
-      
-      <main className="pt-20">
-        {/* Hero Section */}
-        <section className="section-padding">
-          <div className="container-max">
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center px-4 py-2 rounded-full glass-card mb-8">
-                <span className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mr-2 animate-pulse"></span>
-                <span className="body-sm">Careers</span>
+    <LanguageProvider>
+      <div className="min-h-screen text-white overflow-x-hidden" style={{ background: 'var(--color-bg)' }}>
+        <Header />
+        <main className="pt-14">
+
+          {/* Hero */}
+          <section className="py-24" style={{ borderBottom: '1px solid var(--color-line)' }}>
+            <div className="container-max px-6">
+              <div className="flex items-center gap-3 mb-10">
+                <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>PAIPTREE</span>
+                <span className="w-8 h-px" style={{ background: 'var(--color-line-mid)' }} />
+                <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>CAREERS</span>
               </div>
-              
-              <h1 className="heading-xl mb-8">
-                Join Our <span className="gradient-text">Mission</span>
+              <h1 className="type-display mb-6" style={{ color: 'var(--color-text)', maxWidth: '820px' }}>
+                농업의 미래를<br />함께 만들어갑니다
               </h1>
-              
-              <p className="body-lg mb-12 max-w-4xl mx-auto">
-                Help us democratize AI and build the future of generative models. 
-                Work with world-class researchers and engineers at Paiptree on breakthrough technology.
+              <p className="type-body" style={{ color: 'var(--color-text-sub)', maxWidth: '480px' }}>
+                Paiptree는 AI와 데이터로 양계 산업의 구조적 문제를 해결합니다.
+                함께할 사람을 찾고 있습니다.
               </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button className="btn-primary">
-                  View Open Positions
-                </button>
-                <button className="btn-secondary">
-                  Explore Our Culture
-                </button>
+            </div>
+          </section>
+
+          {/* Job Openings */}
+          <section className="py-24" style={{ background: 'var(--color-light-bg)' }}>
+            <div className="container-max px-6">
+              <div className="flex items-center gap-3 mb-16">
+                <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>/01</span>
+                <span className="w-6 h-px" style={{ background: 'var(--color-light-line)' }} />
+                <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>OPEN POSITIONS</span>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Culture Link Section */}
-        <section className="py-16 px-6" style={{ background: 'var(--bg-secondary)' }}>
-          <div className="container-max">
-            <div className="text-center">
-              <h2 className="heading-lg mb-6">
-                Want to Learn About Our <span className="gradient-text">Culture</span>?
-              </h2>
-              <p className="body-lg mb-8 max-w-2xl mx-auto">
-                Discover our values, work environment, and what makes Paiptree a great place to work.
-              </p>
-              <button className="btn-secondary">
-                Explore Our Culture
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Benefits */}
-        <section className="section-padding">
-          <div className="container-max">
-            <h2 className="heading-lg text-center mb-16">
-              Why Work <span className="gradient-text">With Us</span>
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {benefits.map((benefit, index) => (
-                <div key={index} className="glass-card hover:bg-white/10 transition-all duration-300">
-                  <div className="text-3xl mb-4">{benefit.icon}</div>
-                  <h3 className="text-lg font-semibold mb-3">{benefit.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{benefit.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Job Openings */}
-        <section className="section-padding" style={{ background: 'var(--bg-secondary)' }}>
-          <div className="container-max">
-            <h2 className="heading-lg text-center mb-16">
-              Open <span className="gradient-text">Positions</span>
-            </h2>
-            
-            {/* Department Filter */}
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              {departments.map((dept) => (
-                <button
-                  key={dept}
-                  className={`px-6 py-2 rounded-full transition-all duration-300 ${
-                    dept === 'All' 
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
-                      : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-                  }`}
-                >
-                  {dept}
-                </button>
-              ))}
-            </div>
-
-            {/* Featured Job */}
-            {jobOpenings.filter(job => job.featured).map((job, index) => (
-              <div key={index} className="glass-card mb-8 hover:bg-white/10 transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <span className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-full">
-                    Featured
-                  </span>
-                  <div className="text-right">
-                    <span className="text-purple-400 text-sm font-medium">{job.department}</span>
-                    <div className="text-gray-400 text-sm">{job.location} • {job.type}</div>
-                  </div>
-                </div>
-                
-                <h3 className="text-2xl font-bold mb-4">{job.title}</h3>
-                <p className="text-gray-300 mb-6 leading-relaxed">{job.description}</p>
-                
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold mb-3">Requirements:</h4>
-                  <ul className="space-y-2">
-                    {job.requirements.map((req, reqIndex) => (
-                      <li key={reqIndex} className="flex items-center text-gray-300">
-                        <svg className="w-4 h-4 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <button className="btn-primary px-8 py-3">
-                  Apply Now
-                </button>
-              </div>
-            ))}
-
-            {/* Other Jobs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {jobOpenings.filter(job => !job.featured).map((job, index) => (
-                <div key={index} className="glass-card hover:bg-white/10 transition-all duration-300 group">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-purple-400 text-sm font-medium">{job.department}</span>
-                    <span className="text-gray-400 text-sm">{job.type}</span>
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold mb-2 group-hover:text-purple-300 transition-colors">
-                    {job.title}
-                  </h3>
-                  
-                  <p className="text-gray-400 text-sm mb-4">{job.location}</p>
-                  <p className="text-gray-300 text-sm mb-6 leading-relaxed">{job.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">
-                      {job.requirements.length} requirements
+              <div>
+                {jobOpenings.map(({ title, department, location, type, description }, i) => (
+                  <div
+                    key={title}
+                    className="flex flex-col md:flex-row md:items-center md:gap-12 py-8 group"
+                    style={{
+                      borderTop: '1px solid var(--color-light-line)',
+                      borderBottom: i === jobOpenings.length - 1 ? '1px solid var(--color-light-line)' : undefined,
+                    }}
+                  >
+                    <div className="md:w-48 flex-shrink-0 mb-3 md:mb-0">
+                      <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>{department}</span>
                     </div>
-                    <button className="text-purple-400 hover:text-purple-300 font-medium">
-                      Apply →
-                    </button>
+                    <div className="flex-1">
+                      <h3 className="type-heading-s mb-1" style={{ color: 'var(--color-light-text)' }}>{title}</h3>
+                      <p className="type-body-s" style={{ color: 'var(--color-light-text-sub)' }}>{description}</p>
+                    </div>
+                    <div className="md:w-40 flex-shrink-0 mt-3 md:mt-0 flex md:flex-col items-center md:items-end gap-2">
+                      <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>{location}</span>
+                      <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>{type}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <p className="type-body-s mt-8" style={{ color: 'var(--color-light-text-sub)' }}>
+                원하는 포지션이 없으신가요?{' '}
+                <a href="mailto:team@paiptree.com" className="underline" style={{ color: 'var(--color-light-text)' }}>
+                  이력서를 보내주세요
+                </a>
+              </p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Application Process */}
-        <section className="py-24 px-6">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-16">
-              Application <span className="gradient-text">Process</span>
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">1</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Apply</h3>
-                <p className="text-gray-400 text-sm">Submit your application and resume through our portal</p>
+          {/* Benefits */}
+          <section className="py-24" style={{ background: 'var(--color-bg)' }}>
+            <div className="container-max px-6">
+              <div className="flex items-center gap-3 mb-16">
+                <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>/02</span>
+                <span className="w-6 h-px" style={{ background: 'var(--color-line-mid)' }} />
+                <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>BENEFITS</span>
               </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">2</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Screen</h3>
-                <p className="text-gray-400 text-sm">Initial screening call with our talent team</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">3</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Interview</h3>
-                <p className="text-gray-400 text-sm">Technical and cultural fit interviews with the team</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">4</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Offer</h3>
-                <p className="text-gray-400 text-sm">Receive offer and join our mission to democratize AI</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-0" style={{ border: '1px solid var(--color-line)' }}>
+                {benefits.map(({ label, note }, i) => (
+                  <div
+                    key={label}
+                    className="p-8"
+                    style={{
+                      borderRight: (i + 1) % 3 !== 0 ? '1px solid var(--color-line)' : undefined,
+                      borderBottom: i < 3 ? '1px solid var(--color-line)' : undefined,
+                    }}
+                  >
+                    <p className="type-body-s mb-1" style={{ color: 'var(--color-text)' }}>{label}</p>
+                    <p className="type-label" style={{ color: 'var(--color-text-dim)' }}>{note}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* CTA */}
-        <section className="py-24 px-6 bg-stability-gray-900/10">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-6">
-              Ready to <span className="gradient-text">Make Impact</span>?
-            </h2>
-            
-            <p className="text-xl text-gray-400 mb-12">
-              Don&apos;t see a role that fits? We&apos;re always looking for exceptional talent at Paiptree. 
-              Send us your resume and let&apos;s start a conversation.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="btn-primary">
-                Send Resume
-              </button>
-              <button className="btn-secondary px-8 py-4 text-lg">
-                Contact Talent Team
-              </button>
+          {/* Process */}
+          <section className="py-24" style={{ background: 'var(--color-bg-surface)', borderTop: '1px solid var(--color-line)', borderBottom: '1px solid var(--color-line)' }}>
+            <div className="container-max px-6">
+              <div className="flex items-center gap-3 mb-16">
+                <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>/03</span>
+                <span className="w-6 h-px" style={{ background: 'var(--color-line-mid)' }} />
+                <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>PROCESS</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-0">
+                {steps.map(({ num, title, desc }, i) => (
+                  <div
+                    key={num}
+                    className="p-6"
+                    style={{ borderLeft: i > 0 ? '1px solid var(--color-line)' : undefined }}
+                  >
+                    <span className="type-mono block mb-4" style={{ color: 'var(--color-accent)' }}>{num}</span>
+                    <h3 className="type-body-s font-semibold mb-2" style={{ color: 'var(--color-text)' }}>{title}</h3>
+                    <p className="type-body-s" style={{ color: 'var(--color-text-sub)' }}>{desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
-      
-      <Footer />
-    </div>
+          </section>
+
+          {/* CTA */}
+          <section className="py-24" style={{ background: 'var(--color-bg)' }}>
+            <div className="container-max px-6">
+              <h2 className="type-heading-l mb-4" style={{ color: 'var(--color-text)', maxWidth: '560px' }}>
+                함께 농업의 미래를 만들어갈 준비가 되셨나요?
+              </h2>
+              <p className="type-body mb-10" style={{ color: 'var(--color-text-sub)', maxWidth: '400px' }}>
+                열린 포지션이 없더라도 언제든 연락 주세요.
+              </p>
+              <div className="flex gap-3">
+                <a href="mailto:team@paiptree.com" className="btn-site-primary">
+                  이력서 보내기
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </a>
+                <Link href="/culture" className="btn-site-ghost">
+                  컬처 보기
+                </Link>
+              </div>
+            </div>
+          </section>
+
+        </main>
+        <Footer />
+      </div>
+    </LanguageProvider>
   );
 }
