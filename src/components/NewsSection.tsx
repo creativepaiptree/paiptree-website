@@ -7,7 +7,6 @@ import { fetchLatestNews, NewsItem } from '@/lib/googleSheets';
 
 const sectionStyle = {
   backgroundImage: 'url("/news-bg.png")',
-  backgroundColor: '#0a1219',
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
@@ -78,7 +77,7 @@ const NewsSection = () => {
   const current = newsItems[currentIndex];
 
   return (
-    <section className="pt-24 pb-16 relative overflow-hidden" style={sectionStyle}>
+    <section className="pt-24 pb-16 relative overflow-hidden" style={{ ...sectionStyle, background: 'var(--color-bg-surface)' }}>
       <div className="absolute inset-0 bg-black/50" />
 
       <div className="container-max px-6 relative z-10">

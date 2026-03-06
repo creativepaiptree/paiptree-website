@@ -15,10 +15,16 @@ export default function StatsSection() {
           {stats.map(({ value, label, note }, i) => (
             <div
               key={label}
-              className="py-12 px-6 first:pl-0"
-              style={{
-                borderLeft: i > 0 ? '1px solid var(--color-line)' : undefined,
-              }}
+              className={[
+                'py-10 px-6',
+                // 모바일(2col): 홀수번째 → 왼쪽 선, 하단행(i>=2) → 상단 선
+                i % 2 === 1 ? 'border-l'         : '',
+                i >= 2      ? 'border-t md:border-t-0' : '',
+                // 데스크톱(4col): 첫번째 제외 모두 왼쪽 선
+                i > 0       ? 'md:border-l'      : '',
+                i === 0     ? 'pl-0'             : '',
+              ].filter(Boolean).join(' ')}
+              style={{ borderColor: 'var(--color-line)' }}
             >
               <div
                 className="type-mono mb-1"

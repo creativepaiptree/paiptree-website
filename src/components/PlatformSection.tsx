@@ -1,11 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const platforms = [
-  { num: '/0.1', key: 'platform1', name: 'FarmersMind' },
-  { num: '/0.2', key: 'platform2', name: 'SCM' },
-  { num: '/0.3', key: 'platform3', name: 'TmS' },
+  { num: '/0.1', key: 'platform1', name: 'FarmersMind', href: '/services' },
+  { num: '/0.2', key: 'platform2', name: 'SCM',         href: '/services' },
+  { num: '/0.3', key: 'platform3', name: 'TmS',         href: '/tms'      },
 ];
 
 export default function PlatformSection() {
@@ -33,10 +34,11 @@ export default function PlatformSection() {
 
         {/* Platform list */}
         <div>
-          {platforms.map(({ num, key, name }, i) => (
-            <div
+          {platforms.map(({ num, key, name, href }, i) => (
+            <Link
               key={key}
-              className="flex flex-col lg:flex-row lg:items-center lg:gap-16 py-10 transition-colors duration-200 group cursor-default"
+              href={href}
+              className="flex flex-col lg:flex-row lg:items-center lg:gap-16 py-10 transition-colors duration-200 group"
               style={{
                 borderTop: '1px solid var(--color-light-line)',
                 borderBottom: i === platforms.length - 1 ? '1px solid var(--color-light-line)' : undefined,
@@ -50,7 +52,7 @@ export default function PlatformSection() {
               {/* 플랫폼명 */}
               <div className="flex-1">
                 <span
-                  className="type-heading-l block transition-colors duration-200"
+                  className="type-heading-l block transition-colors duration-200 group-hover:opacity-70"
                   style={{ color: 'var(--color-light-text)', letterSpacing: '-0.04em' }}
                 >
                   {name}
@@ -63,7 +65,18 @@ export default function PlatformSection() {
                   {t(`platformSection.${key}.description`)}
                 </p>
               </div>
-            </div>
+
+              {/* 화살표 */}
+              <div className="hidden lg:block flex-shrink-0">
+                <svg
+                  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                  style={{ color: 'var(--color-light-text-sub)' }}
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
           ))}
         </div>
       </div>

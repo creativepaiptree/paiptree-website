@@ -60,7 +60,7 @@ const VideoHeroSection = () => {
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
-            <Link href="/about" className="btn-site-ghost">
+            <Link href="/culture" className="btn-site-ghost">
               {t('videoHero.learnMore')}
             </Link>
           </div>

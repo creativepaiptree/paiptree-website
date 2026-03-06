@@ -37,7 +37,7 @@ const CaseStudiesSection = () => {
             <p className="type-body mb-10" style={{ color: 'var(--color-light-text-sub)' }}>
               Paiptree는 AI와 데이터로 양계 산업의 생산·물류·품질 의사결정을 자동화합니다.
             </p>
-            <Link href="/about" className="btn-site-link" style={{ color: 'var(--color-light-text-sub)' }}>
+            <Link href="/culture" className="btn-site-link" style={{ color: 'var(--color-light-text-sub)' }}>
               자세히 보기
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />

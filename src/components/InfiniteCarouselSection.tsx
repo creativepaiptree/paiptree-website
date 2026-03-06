@@ -128,34 +128,34 @@ export default function InfiniteCarouselSection() {
               {/* Background pattern/mockup */}
               <div className="absolute inset-0 opacity-20">
                 {card.id === '1' && (
-                  <div className="absolute bottom-10 left-6 right-6 h-32 bg-gradient-to-t from-white/10 to-transparent rounded-lg flex items-end justify-center">
+                  <div className="absolute bottom-10 left-6 right-6 h-32 flex items-end justify-center">
                     <div className="grid grid-cols-4 gap-2 p-4 w-full">
                       {[...Array(8)].map((_, i) => (
-                        <div key={i} className="h-8 bg-white/20 rounded"></div>
+                        <div key={i} className="h-8 bg-white/20"></div>
                       ))}
                     </div>
                   </div>
                 )}
                 {card.id === '2' && (
-                  <div className="absolute inset-6 border border-white/20 rounded-lg">
+                  <div className="absolute inset-6 border border-white/20">
                     <div className="absolute inset-4 grid grid-cols-4 gap-4">
-                      <div className="bg-white/10 rounded flex items-center justify-center text-xs text-white/60">QUERY</div>
-                      <div className="bg-white/10 rounded flex items-center justify-center text-xs text-white/60">EXPLORE</div>
-                      <div className="bg-white/10 rounded flex items-center justify-center text-xs text-white/60">COMPILE</div>
-                      <div className="bg-white/10 rounded flex items-center justify-center text-xs text-white/60">EXECUTE</div>
+                      <div className="bg-white/10 flex items-center justify-center text-xs text-white/60">QUERY</div>
+                      <div className="bg-white/10 flex items-center justify-center text-xs text-white/60">EXPLORE</div>
+                      <div className="bg-white/10 flex items-center justify-center text-xs text-white/60">COMPILE</div>
+                      <div className="bg-white/10 flex items-center justify-center text-xs text-white/60">EXECUTE</div>
                     </div>
-                    <div className="absolute bottom-4 left-4 right-4 h-20 rounded" style={{ background: 'linear-gradient(to right, rgba(0,171,230,0.2), rgba(45,212,191,0.2))' }} />
+                    <div className="absolute bottom-4 left-4 right-4 h-20" style={{ background: 'linear-gradient(to right, rgba(0,171,230,0.2), rgba(45,212,191,0.2))' }} />
                   </div>
                 )}
                 {card.id === '3' && (
                   <div className="absolute inset-6">
-                    <div className="w-full h-full rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(0,171,230,0.15) 0%, transparent 50%, rgba(45,212,191,0.15) 100%)' }} />
+                    <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, rgba(0,171,230,0.15) 0%, transparent 50%, rgba(45,212,191,0.15) 100%)' }} />
                   </div>
                 )}
                 {(card.id === '4' || card.id === '5') && (
-                  <div className="absolute inset-6 border border-white/10 rounded-lg flex items-center justify-center">
-                    <div className="w-20 h-20 border-2 border-white/20 rounded-full flex items-center justify-center">
-                      <div className="w-10 h-10 bg-white/10 rounded-full"></div>
+                  <div className="absolute inset-6 border border-white/10 flex items-center justify-center">
+                    <div className="w-20 h-20 border-2 border-white/20 flex items-center justify-center">
+                      <div className="w-10 h-10 bg-white/10"></div>
                     </div>
                   </div>
                 )}
