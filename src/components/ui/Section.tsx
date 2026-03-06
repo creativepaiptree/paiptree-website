@@ -67,7 +67,7 @@ const Section: React.FC<SectionProps> = ({
       )}
 
       {/* Content Container */}
-      <div className="max-w-8xl mx-auto px-6 relative z-10">
+      <div className="container-max px-6 relative z-10">
         {children}
       </div>
     </section>
