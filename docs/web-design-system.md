@@ -1,6 +1,6 @@
 ---
 title: Paiptree Web Design System
-version: 1.0.0
+version: 1.1.0
 author: SYSTEM
 last_updated: 26.03.06
 status: ACTIVE — 이 문서가 홈페이지 구현의 단일 기준이다
@@ -194,22 +194,17 @@ Label 또는 CTA               ← 행동 유도
 ### 4-1. 컨테이너
 
 ```css
-.container-site {
+/* 실제 Tailwind 클래스명: container-max */
+.container-max {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;  /* 24px */
-}
-
-/* 좁은 콘텐츠 (텍스트 중심 섹션) */
-.container-narrow {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1.5rem;  /* 24px — 항상 px-6 와 함께 사용 */
 }
 ```
 
-단일 기준 `container-site`를 모든 섹션에 사용.
+모든 섹션에 `container-max px-6` 조합으로 통일.
 `max-w-7xl`, `max-w-4xl` 등 임의 max-width 금지.
+인라인 `maxWidth` 스타일은 섹션 내부 콘텐츠 폭 제한에만 사용 (예: `maxWidth: '480px'`).
 
 ### 4-2. 섹션 패딩
 
@@ -303,18 +298,44 @@ D. 4컬럼 스탯 그리드
 
 ### 5-2. 섹션 레이블 (Eyebrow)
 
-모든 섹션 진입부에 레이블을 넣는다.
+모든 섹션 진입부에 레이블을 넣는다. 섹션 테마(다크/라이트)에 따라 색상 변수가 달라진다.
 
+**다크 섹션 (기본):**
 ```tsx
 <div className="flex items-center gap-3 mb-6">
-  <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>
-    /01
-  </span>
-  <span className="w-8 h-px" style={{ background: 'var(--color-line-mid)' }} />
-  <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>
-    PLATFORM
-  </span>
+  <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>/01</span>
+  <span className="w-6 h-px" style={{ background: 'var(--color-line-mid)' }} />
+  <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>SECTION NAME</span>
 </div>
+```
+
+**라이트 섹션 (PlatformSection, CTASection 등):**
+```tsx
+<div className="flex items-center gap-3 mb-6">
+  <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>/02</span>
+  <span className="w-6 h-px" style={{ background: 'var(--color-light-line)' }} />
+  <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>SECTION NAME</span>
+</div>
+```
+
+**페이지 섹션 번호 순서 (홈페이지 기준):**
+
+| 번호 | 섹션 | 테마 |
+|---|---|---|
+| `/01` | CAPABILITIES (InfiniteCarousel) | 라이트 |
+| `/02` | PLATFORM | 라이트 |
+| `/03` | MISSION (CaseStudies) | 라이트 |
+| `/04` | PARTNERS | 다크 |
+| `/05` | NEWSROOM | 다크 |
+| `/06` | GET STARTED (CTA) | 라이트 |
+
+Stats 섹션 추가 시 Hero 바로 다음에 삽입, 번호는 기존 순서와 무관하게 페이지 상단부터 재정렬.
+
+**엑센트 색상 Eyebrow (Newsroom 등 강조 섹션):**
+```tsx
+<span className="type-label" style={{ color: 'var(--color-accent)' }}>/05</span>
+<span className="w-6 h-px" style={{ background: 'var(--color-accent)', opacity: 0.4 }} />
+<span className="type-label" style={{ color: 'var(--color-text-dim)' }}>NEWSROOM</span>
 ```
 
 ### 5-3. 통계/숫자 블록
@@ -381,12 +402,23 @@ D. 4컬럼 스탯 그리드
 구분:        border-left (첫 컬럼 제외)
 ```
 
+### Stats / Numbers Section (다크) — 미구현, 추가 예정
+```
+배경:        var(--color-bg)
+구성:        4컬럼 숫자 그리드
+             숫자: type-display (또는 type-heading-l) + type-mono
+             레이블: type-label
+구분:        border-left (첫 컬럼 제외)
+위치:        Hero 바로 아래 (첫 번째 다크 섹션)
+예시 데이터: 75+ 농장, 2M+ 분석 데이터 포인트, 99.2% 업타임, 3개 플랫폼
+```
+
 ### Partners Section (다크)
 ```
-배경:        #000000
-구성:        eyebrow label + 무한 스크롤 로고 띠
-로고:        흰색 모노크롬 filter, opacity 0.4~0.5
-엣지:        좌우 마스크 페이드
+배경:        var(--color-bg)  ← #000000 하드코딩 아님
+구성:        eyebrow /04 PARTNERS + 무한 스크롤 로고 띠
+로고:        filter: brightness(0) invert(1), opacity 0.4~0.5
+엣지:        좌우 maskImage 페이드 (8%~92%)
 ```
 
 ### News / Latest Section (다크)
@@ -478,13 +510,52 @@ transition: background-color 0.3s ease;
 ## 10. 체크리스트 (구현 전 확인)
 
 ```
-[ ] 모든 색상이 CSS 변수를 통해 적용되는가?
+[ ] 모든 색상이 CSS 변수(--color-*)를 통해 적용되는가?
 [ ] border-radius가 0 또는 2px 이하인가?
-[ ] 모든 섹션에 eyebrow label이 있는가?
+[ ] 모든 섹션에 eyebrow label(/번호 + 구분선 + 섹션명)이 있는가?
 [ ] 구조선(border-top/bottom)으로 섹션/항목이 구분되는가?
-[ ] 버튼이 btn-site-primary 또는 btn-site-ghost 둘 중 하나인가?
+[ ] CTA 버튼이 btn-site-primary / btn-site-ghost / btn-site-link 중 하나인가?
 [ ] 숫자/날짜/코드에 type-mono가 적용되는가?
-[ ] 모든 컨테이너가 container-site를 사용하는가?
+[ ] 모든 컨테이너가 container-max px-6 조합을 사용하는가?
 [ ] hover 시 translateY 이동이 없는가?
-[ ] 인라인 하드코딩 색상이 없는가?
+[ ] 인라인 하드코딩 색상이 없는가? (--color-* 변수 사용)
+[ ] 레거시 토큰(--bg-primary, --accent, --text-primary 등)을 신규 섹션에서 사용하지 않았는가?
+[ ] 라이트 섹션에서 --color-light-* 변수를 사용하는가?
+[ ] 다크 섹션 eyebrow: --color-text-dim / 라이트 섹션 eyebrow: --color-light-text-sub?
 ```
+
+---
+
+## 11. 알려진 레거시 잔존 항목
+
+홈페이지 구현 완료 후 정리 대상. PoC/내부 도구는 별도 토큰 체계(`--poc-*`, `--bg-*`)를 유지하므로 건드리지 않는다.
+
+| 파일 | 잔존 내용 | 조치 |
+|---|---|---|
+| `src/app/about/page.tsx` | `var(--bg-primary)` 레거시 토큰 | `var(--color-bg)` 교체 필요 |
+| `src/components/ParticleBackground.tsx` | 구 브랜드색 `#8B5CF6` (보라) 사용 | 제거 또는 색상 업데이트 (결정 대기) |
+| `src/app/globals.css` | 레거시 토큰 compat 블록 존재 | PoC 폐기 시 제거 가능 |
+
+---
+
+## 12. 홈페이지 섹션 구성 현황
+
+현재 구현된 페이지 (`/about` = 메인 홈):
+
+```
+[Header]               — fixed, blur backdrop, 다크
+[VideoHeroSection]     — h-screen, 다크, 배경 이미지
+[InfiniteCarouselSection] — 라이트, /01 CAPABILITIES
+[PlatformSection]      — 라이트, /02 PLATFORM
+[CaseStudiesSection]   — 혼합(이미지+라이트), /03 MISSION
+[PartnersSection]      — 다크, /04 PARTNERS, 무한 스크롤
+[NewsSection]          — 다크, /05 NEWSROOM, 배경 이미지
+[CTACardsSection]      — 라이트, /06 GET STARTED
+[Footer]               — 다크 (color-bg-surface)
+```
+
+**추가 예정 섹션:**
+
+| 우선순위 | 섹션 | 위치 | 설명 |
+|---|---|---|---|
+| P0 | Stats/Numbers | Hero 바로 아래 | 숫자로 신뢰감 제공 — 75+ 농장 등 |
