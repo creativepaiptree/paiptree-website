@@ -91,6 +91,7 @@ export default function Header() {
                   href={item.href}
                   className="block type-body-s transition-colors duration-200"
                   style={{ color: isActiveMenu(item.href) ? 'var(--color-accent)' : 'var(--color-text-sub)' }}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t(`header.nav.${item.label.toLowerCase()}`)}
                 </Link>

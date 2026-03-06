@@ -14,9 +14,8 @@ const footerLinks = [
   {
     title: 'PRODUCT',
     items: [
-      { label: 'FarmersMind', href: '#' },
+      { label: 'FarmersMind', href: '/services' },
       { label: 'TmS',         href: '/tms' },
-      { label: '3D Matrix',   href: '/PoC' },
       { label: 'API',         href: '#' },
     ],
   },
