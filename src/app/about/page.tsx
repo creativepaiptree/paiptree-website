@@ -8,14 +8,12 @@ import PartnersSection from '@/components/PartnersSection';
 import NewsSection from '@/components/NewsSection';
 import CTACardsSection from '@/components/CTACardsSection';
 import Footer from '@/components/Footer';
-import ParticleBackground from '@/components/ParticleBackground';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 
 export default function AboutPage() {
   return (
     <LanguageProvider>
       <div className="min-h-screen text-white overflow-x-hidden" style={{ background: 'var(--color-bg)' }}>
-        <ParticleBackground />
         <Header />
         <main>
           <VideoHeroSection />
