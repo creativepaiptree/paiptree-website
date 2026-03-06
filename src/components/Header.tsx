@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NavigationItem } from '@/types';
 import LanguageToggle from './LanguageToggle';
@@ -30,29 +31,31 @@ export default function Header() {
 
   return (
     <header className="fixed top-4 left-4 right-4 z-50">
-      <nav className="glass-card px-6 py-4 container-max">
+      <nav className="container-max px-6 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center">
-            <a href="/" className="text-xl font-gmarket" style={{ fontWeight: 700, color: 'var(--accent)' }}>
-              paiptree.
-            </a>
-          </div>
+          <Link
+            href="/"
+            className="text-xl font-gmarket hover:opacity-80 transition-opacity"
+            style={{ fontWeight: 700, color: 'var(--accent)' }}
+          >
+            paiptree.
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navigationItems.map((item) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-link body-md font-medium transition-all duration-300 ${
-                  isActiveMenu(item.href) 
-                    ? 'nav-link-active' 
-                    : 'text-gradient-hover'
+                className={`nav-link text-sm font-medium transition-colors duration-200 ${
+                  isActiveMenu(item.href)
+                    ? 'nav-link-active'
+                    : 'hover:text-white'
                 }`}
               >
                 {t(`header.nav.${item.label.toLowerCase()}`)}
-              </a>
+              </Link>
             ))}
             <LanguageToggle />
           </div>
@@ -61,34 +64,32 @@ export default function Header() {
           <button
             className="md:hidden p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="메뉴 열기"
           >
-            <div className="w-6 h-6 flex flex-col justify-center items-center">
-              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'
-                }`}></span>
-              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
-                }`}></span>
-              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'
-                }`}></span>
+            <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+              <span className={`bg-white block transition-all duration-300 ease-out h-px w-6 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`bg-white block transition-all duration-300 ease-out h-px w-6 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+              <span className={`bg-white block transition-all duration-300 ease-out h-px w-6 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
             </div>
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-white/20">
-            <div className="space-y-4">
+          <div className="md:hidden mt-4 pt-4 border-t border-white/10">
+            <div className="space-y-3">
               {navigationItems.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
-                  className={`block nav-link body-md font-medium transition-all duration-300 ${
-                    isActiveMenu(item.href) 
-                      ? 'nav-link-active' 
-                      : 'text-gradient-hover'
+                  className={`block text-sm font-medium transition-colors duration-200 ${
+                    isActiveMenu(item.href)
+                      ? 'nav-link-active'
+                      : 'text-white/60 hover:text-white'
                   }`}
                 >
                   {t(`header.nav.${item.label.toLowerCase()}`)}
-                </a>
+                </Link>
               ))}
               <div className="pt-2">
                 <LanguageToggle />
