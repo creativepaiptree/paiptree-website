@@ -34,7 +34,8 @@
       "WebFetch(domain:snowflake.com)",
       "WebFetch(domain:palantir.com)",
       "Bash(npx next dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git:*)"
     ],
     "deny": []
   }

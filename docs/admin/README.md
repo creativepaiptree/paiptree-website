@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.03.06
+last_updated: 26.03.08
 ---
 
 # 문서 운영 허브
@@ -19,11 +19,11 @@ last_updated: 26.03.06
 
 ## 3. 요약
 - 총 라우트 페이지: **17**
-- 페이지 문서 생성됨: **16**
+- 페이지 문서 생성됨: **17**
 - 자동 신규 생성: **0**
-- 자동 메타 갱신(SYNCED): **1**
+- 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
-- 전체 문서 수(`docs/**/*.md`): **41**
+- 전체 문서 수(`docs/**/*.md`): **43**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -33,7 +33,7 @@ last_updated: 26.03.06
 | `/blog` | `src/app/blog/page.tsx` | `docs/pages/blog.page.md` | OK |
 | `/careers` | `src/app/careers/page.tsx` | `docs/pages/careers.page.md` | OK |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
-| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | SYNCED |
+| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | OK |
 | `/dash_2` | `src/app/dash_2/page.tsx` | `docs/pages/dash_2.page.md` | OK |
 | `/dash_3` | `src/app/dash_3/page.tsx` | `docs/pages/dash_3.page.md` | OK |
 | `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
@@ -54,17 +54,17 @@ last_updated: 26.03.06
 | guides | 13 |
 | old | 5 |
 | pages | 17 |
-| root | 2 |
+| root | 4 |
 | templates | 2 |
 
 ## 6. 최근 수정 문서 (상위 10개)
+- `docs/admin/README.md` (26.03.08)
+- `docs/pages/blog.page.md` (26.03.08)
+- `docs/pages/services.page.md` (26.03.07)
+- `docs/pages/newsroom.page.md` (26.03.07)
+- `docs/pages/culture.page.md` (26.03.07)
+- `docs/pages/careers.page.md` (26.03.07)
+- `docs/pages/about.page.md` (26.03.07)
+- `docs/web-design-system.md` (26.03.06)
 - `docs/pages/dash.page.md` (26.03.06)
-- `docs/admin/README.md` (26.03.06)
-- `docs/pages/tms-main.page.md` (26.03.06)
-- `docs/pages/tms.page.md` (26.03.06)
-- `docs/pages/poc.page.md` (26.03.06)
-- `docs/pages/farm.page.md` (26.03.06)
-- `docs/pages/dash_3.page.md` (26.03.06)
-- `docs/pages/dash_2.page.md` (26.03.06)
-- `docs/README.md` (26.03.05)
-- `docs/3.0-design-system.md` (26.03.05)
+- `docs/homepage-design-system.md` (26.03.06)
