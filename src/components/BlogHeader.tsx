@@ -1,24 +1,55 @@
 'use client';
 
-import LanguageToggle from './LanguageToggle';
+import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+const copy = {
+  ko: {
+    blogLabel: 'Blog',
+    links: [
+      { label: '회사 소개', href: '/about' },
+      { label: '뉴스룸', href: '/newsroom' },
+      { label: '채용', href: '/careers' },
+    ],
+  },
+  en: {
+    blogLabel: 'Blog',
+    links: [
+      { label: 'About', href: '/about' },
+      { label: 'Newsroom', href: '/newsroom' },
+      { label: 'Careers', href: '/careers' },
+    ],
+  },
+} as const;
 
 export default function BlogHeader() {
+  const { language, toggleLanguage } = useLanguage();
+  const content = copy[language];
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white" style={{ borderBottom: '1px solid #e5e7eb' }}>
-      <nav className="px-6 container-max">
-        <div className="flex items-center justify-between h-14">
-          {/* Logo + Blog Label */}
-          <div className="flex items-center gap-3">
-            <a href="/" className="text-xl font-gmarket hover:opacity-80 transition-opacity" style={{ fontWeight: 700, color: '#00ABE6' }}>
+    <header className="blog-header-shell">
+      <nav className="container-max px-6">
+        <div className="blog-header-inner">
+          <div className="blog-header-brand">
+            <Link href="/blog" className="blog-header-logo">
               paiptree.
-            </a>
-            <span className="text-base font-medium" style={{ color: '#9CA3AF' }}>
-              Blog
-            </span>
+            </Link>
+            <span className="blog-header-divider" aria-hidden="true" />
+            <span className="blog-header-label">{content.blogLabel}</span>
           </div>
 
-          {/* Language Toggle */}
-          <LanguageToggle />
+          <div className="blog-header-actions">
+            <div className="blog-header-links">
+              {content.links.map((item) => (
+                <Link key={item.href} href={item.href} className="blog-header-link">
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            <button type="button" className="blog-header-lang" onClick={toggleLanguage}>
+              {language === 'ko' ? 'EN' : 'KO'}
+            </button>
+          </div>
         </div>
       </nav>
     </header>
