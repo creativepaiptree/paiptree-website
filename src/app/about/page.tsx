@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import VideoHeroSection from '@/components/VideoHeroSection';
 import StatsSection from '@/components/StatsSection';
+import CommandEcosystemSection from '@/components/CommandEcosystemSection';
 import InfiniteCarouselSection from '@/components/InfiniteCarouselSection';
 import PlatformSection from '@/components/PlatformSection';
 import CaseStudiesSection from '@/components/CaseStudiesSection';
@@ -18,6 +19,7 @@ export default function AboutPage() {
         <main>
           <VideoHeroSection />
           <StatsSection />
+          <CommandEcosystemSection />
           <InfiniteCarouselSection />
           <PlatformSection />
           <CaseStudiesSection />

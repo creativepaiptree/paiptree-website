@@ -39,32 +39,14 @@ type DevDocsResponse = {
   docs: DevDoc[];
 };
 
-type SystemDocKey = 'hub' | 'index' | 'authoring' | 'template' | 'design';
+type SystemDocKey = 'index' | 'design';
 
 const SYSTEM_DOC_BUTTONS: Array<{ key: SystemDocKey; path: string; labelKo: string; labelEn: string }> = [
-  {
-    key: 'hub',
-    path: 'docs/admin/README.md',
-    labelKo: '문서 운영 허브',
-    labelEn: 'Docs Hub',
-  },
   {
     key: 'index',
     path: 'docs/README.md',
     labelKo: '개발문서 인덱스',
     labelEn: 'Docs Index',
-  },
-  {
-    key: 'authoring',
-    path: 'docs/guides/document-authoring.md',
-    labelKo: '개발문서 작성가이드',
-    labelEn: 'Authoring Guide',
-  },
-  {
-    key: 'template',
-    path: 'docs/templates/component-spec.template.md',
-    labelKo: '컴포넌트 템플릿',
-    labelEn: 'Component Spec Template',
   },
   {
     key: 'design',
@@ -228,7 +210,7 @@ const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
   const [docsError, setDocsError] = useState<string | null>(null);
   const [selectedComponentDocId, setSelectedComponentDocId] = useState<string | null>(null);
   const [activeDocSource, setActiveDocSource] = useState<'system' | 'component'>('system');
-  const [activeSystemDocKey, setActiveSystemDocKey] = useState<SystemDocKey>('hub');
+  const [activeSystemDocKey, setActiveSystemDocKey] = useState<SystemDocKey>('index');
   const versionModalRef = useRef<HTMLDivElement>(null);
   const versionCloseButtonRef = useRef<HTMLButtonElement>(null);
   const docsModalRef = useRef<HTMLDivElement>(null);
@@ -491,7 +473,7 @@ const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
               setIsVersionModalOpen(false);
               setIsDocsModalOpen(true);
               setActiveDocSource('system');
-              setActiveSystemDocKey('hub');
+              setActiveSystemDocKey('index');
             }}
             className="hidden lg:inline-flex h-6 items-center text-[10px] leading-relaxed text-[#3fb950] border border-[#3fb950]/40 px-2 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
           >
@@ -626,7 +608,7 @@ const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
                   setIsVersionModalOpen(false);
                   setIsDocsModalOpen(true);
                   setActiveDocSource('system');
-                  setActiveSystemDocKey('hub');
+                  setActiveSystemDocKey('index');
                 }}
                 className="w-full h-8 text-left text-[11px] text-[#3fb950] border border-[#3fb950]/40 px-3 hover:text-[#56d364] hover:border-[#56d364]/50 transition-colors"
               >
@@ -949,8 +931,8 @@ const Navbar = ({ lang, setLang, themeMode, setThemeMode }: NavbarProps) => {
                 </p>
                 <p className="text-left">
                   {lang === 'ko'
-                    ? '3) 컴포넌트 수정처럼 대상이 명확할 때 (예시: document-authoring.md 기준으로 ForecastMatrix 문서 업데이트해)'
-                    : '3) When target is explicit, such as a component update (Example: Update ForecastMatrix docs based on document-authoring.md)'}
+                    ? '3) 컴포넌트 수정처럼 대상이 명확할 때 (예시: README와 해당 페이지 문서 기준으로 ForecastMatrix 관련 문서 업데이트해)'
+                    : '3) When target is explicit, such as a component update (Example: Update ForecastMatrix-related docs based on README and the relevant page doc)'}
                 </p>
               </div>
             </div>

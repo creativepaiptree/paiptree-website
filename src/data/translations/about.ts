@@ -10,19 +10,19 @@ export const aboutTranslations = {
     },
     // Platform Section
     platformSection: {
-      mainTitle: "FarmersMind 에이전트가 양계 밸류체인 데이터를 한눈에 잇습니다",
-      mainSubtitle: "체중·사료·환경 데이터부터 수요 예측, ESG 리포트까지 하나의 운영 화면에서 관리하세요",
+      mainTitle: "운영 팀별로 바로 들어가는 세 개의 워크스페이스",
+      mainSubtitle: "현장 관리자, 공급 계획 담당자, 품질·추적성 담당자가 같은 데이터 기반에서 각자의 의사결정을 실행합니다.",
       ourPlatforms: "우리의 플랫폼",
       platform1: {
-        description: "CCTV·IoT 데이터를 실시간 분석해 체중·건강·환경을 디지털 트윈으로 제공합니다",
+        description: "농장 운영자가 체중, 환경, 건강 신호를 실시간으로 모니터링하고 즉시 대응하는 현장 워크스페이스입니다.",
         title: "FarmersMind"
       },
       platform2: {
-        description: "판매 예측과 사료 입출고 데이터를 기반으로 생산·배송·사료 계획을 제안합니다",
+        description: "생산·사료·배송 계획 담당자가 수요와 재고를 함께 보며 공급 결정을 조정하는 운영 워크스페이스입니다.",
         title: "SCM"
       },
       platform3: {
-        description: "개체 이력·백신·도계 로그를 통합해 추적성과 ESG·HACCP 보고서를 자동 작성합니다",
+        description: "품질·컴플라이언스 담당자가 백신, 출하, 도계 이력을 정리하고 보고 체계를 운영하는 추적성 워크스페이스입니다.",
         title: "TmS"
       }
     },
@@ -34,6 +34,8 @@ export const aboutTranslations = {
     },
     // Infinite Carousel Section
     infiniteCarousel: {
+      sectionTitle: "운영 인텔리전스 모듈",
+      sectionDescription: "예측, 최적화, 경보, 추적 기능이 하나의 운영 흐름으로 연결됩니다.",
       cards: {
         "1": {
           title: "WEIGHT FORECAST",
@@ -57,33 +59,40 @@ export const aboutTranslations = {
         }
       }
     },
-    // Creative Usecases Section
-    creativeUsecases: {
-      title: "FarmersMind 에이전트는 세 가지 운영 영역을 통합합니다.",
-      description: "수요 계획, 농장 운영, 품질 리포트를 하나의 데이터 파이프라인으로 연결합니다.",
-      marketing: {
-        title: "수요·판매 계획",
-        description: "판매 예측과 시장 수요를 기반으로 생산 일정을 추천하고 사료·물류 계획을 자동화합니다."
-      },
-      entertainment: {
-        title: "농장 운영 자동화",
-        description: "CCTV·센서 데이터를 분석해 행동·건강·환경을 모니터링하고 이상 상황을 즉시 알립니다."
-      },
-      gaming: {
-        title: "품질·ESG 리포팅",
-        description: "백신, 도계 로그, 환경 데이터를 집계해 식품 안전과 ESG 보고서를 자동 작성합니다."
-      }
+    missionSection: {
+      title: "문제는 데이터 부족이 아니라 운영 단절입니다",
+      description: "Paiptree는 현장 신호, 공급 계획, 품질 이력이 따로 놀던 양계 운영을 하나의 흐름으로 다시 설계합니다.",
+      linkLabel: "자세히 보기"
     },
-    // Case Studies Section
-    caseStudies: {
-      learnMore: "자세히 알아보기",
-      enterprise: {
-        title: "관리 농장 커버리지 22.63% 달성",
-        description: "국내 양계 농장 22.63%가 FarmersMind로 전환해 CCTV·센서 데이터를 활용한 판매 예측과 사료 계획 최적화를 진행 중입니다. (2025년 2월 기준)"
-      },
-      brands: {
-        title: "글로벌 파트너와 확장하는 공급망",
-        description: "일본 TOHZAI SANGYO BOEKI, 인도네시아 CJ Feed & Care, 대만 Crownmate Tech와 함께 현지 농장 데이터 수집과 물류 혁신을 공동 추진하고 있습니다."
+    ecosystemSection: {
+      eyebrow: "SERVICE ECOSYSTEM",
+      title: "The Ecosystem of Command.",
+      quote: "\"중요한 건 기능을 늘리는 것이 아니라 흐름을 연결하는 것입니다. Paiptree는 현장, 공급, 품질 의사결정이 이어지는 운영 구조를 만듭니다.\"",
+      cards: {
+        farmersmind: {
+          label: "FIELD OS",
+          title: "FARMERSMIND",
+          description: "농장 내부에서 발생하는 체중, 건강, 환경 신호를 가장 먼저 수집하고 판단 가능한 상태로 만드는 현장 운영 레이어입니다.",
+          cta: "FarmersMind 보기"
+        },
+        scm: {
+          label: "SUPPLY ORCHESTRATION",
+          title: "SCM",
+          description: "현장 데이터와 수요 정보를 이어 받아 생산, 사료, 배송 결정을 하나의 공급 흐름으로 묶는 조정 레이어입니다.",
+          cta: "공급망 보기"
+        },
+        tms: {
+          label: "TRACEABILITY",
+          title: "TmS",
+          description: "운영 과정에서 생성된 기록을 표준화해 추적성, 식품 안전, ESG 보고 체계로 전환하는 검증 레이어입니다.",
+          cta: "TmS 보기"
+        },
+        aiOps: {
+          label: "AGENT LAYER",
+          title: "AI OPS",
+          description: "세 레이어를 가로질러 예측, 추천, 경보, 리포트를 실행하며 운영 속도를 끌어올리는 에이전트 레이어입니다.",
+          cta: "도입 상담"
+        }
       }
     },
     // Partners Section
@@ -93,6 +102,8 @@ export const aboutTranslations = {
     // News Section
     news: {
       title: "뉴스",
+      sectionTitle: "현장과 공급망의 최신 업데이트",
+      sectionDescription: "Paiptree의 운영 현장, 파트너십, 기술 업데이트를 한 곳에서 정리합니다.",
       viewAll: "모든 뉴스 보기",
       items: {
         item1: {
@@ -120,19 +131,19 @@ export const aboutTranslations = {
     },
     // Platform Section
     platformSection: {
-      mainTitle: "FarmersMind agents unify poultry value-chain data in one workspace",
-      mainSubtitle: "Monitor weight, feed, and environment data alongside demand forecasts and ESG reports from a single control center.",
+      mainTitle: "Three workspaces mapped to three operating teams",
+      mainSubtitle: "Field operators, supply planners, and traceability owners work from the same data foundation through dedicated control surfaces.",
       ourPlatforms: "Our Platforms",
       platform1: {
-        description: "Analyze CCTV and IoT signals in real time to deliver digital twins of flock weight, health, and environment.",
+        description: "A field workspace where farm operators monitor flock weight, environment, and health signals in real time and act immediately.",
         title: "FarmersMind"
       },
       platform2: {
-        description: "Recommend production, delivery, and feed plans by combining sales forecasts with feed flow data.",
+        description: "An operations workspace where planning teams coordinate production, feed, and delivery decisions against demand and inventory.",
         title: "SCM"
       },
       platform3: {
-        description: "Consolidate flock history, vaccination, and slaughter logs to auto-build traceability and ESG/HACCP reports.",
+        description: "A traceability workspace where quality and compliance teams manage records, reporting, and audit-ready histories.",
         title: "TmS"
       }
     },
@@ -144,6 +155,8 @@ export const aboutTranslations = {
     },
     // Infinite Carousel Section
     infiniteCarousel: {
+      sectionTitle: "Operational intelligence modules",
+      sectionDescription: "Forecasting, optimization, alerting, and traceability modules run as one connected operating flow.",
       cards: {
         "1": {
           title: "WEIGHT FORECAST",
@@ -167,33 +180,40 @@ export const aboutTranslations = {
         }
       }
     },
-    // Creative Usecases Section
-    creativeUsecases: {
-      title: "FarmersMind agents connect three operational domains.",
-      description: "Link demand planning, farm automation, and quality reporting through a single data pipeline.",
-      marketing: {
-        title: "Demand & Sales Planning",
-        description: "Use market forecasts to recommend production schedules and automate feed and logistics plans."
-      },
-      entertainment: {
-        title: "Farm Operations Automation",
-        description: "Analyze CCTV and sensor data to monitor behavior, health, and environment, and alert teams instantly."
-      },
-      gaming: {
-        title: "Quality & ESG Reporting",
-        description: "Aggregate vaccination, slaughter, and environment records to auto-generate food safety and ESG reports."
-      }
+    missionSection: {
+      title: "The problem is not lack of data. It is broken operations.",
+      description: "Paiptree redesigns poultry operations so field signals, supply plans, and quality records move as one connected flow.",
+      linkLabel: "Learn more"
     },
-    // Case Studies Section
-    caseStudies: {
-      learnMore: "Learn more",
-      enterprise: {
-        title: "22.63% managed farm coverage achieved",
-        description: "22.63% of Korean poultry farms operate on FarmersMind, using CCTV and sensor data to optimize sales forecasts and feed planning. (as of Feb 2025)"
-      },
-      brands: {
-        title: "Expanding the supply chain with global partners",
-        description: "Partnering with TOHZAI SANGYO BOEKI (Japan), CJ Feed & Care (Indonesia), and Crownmate Tech (Taiwan) to co-drive farm data capture and logistics transformation."
+    ecosystemSection: {
+      eyebrow: "SERVICE ECOSYSTEM",
+      title: "The Ecosystem of Command.",
+      quote: "\"The goal is not more features. The goal is a connected operating flow. Paiptree turns field, supply, and quality decisions into one structure.\"",
+      cards: {
+        farmersmind: {
+          label: "FIELD OS",
+          title: "FARMERSMIND",
+          description: "The field operating layer that captures flock weight, health, and environmental signals and turns them into a live decision surface.",
+          cta: "Explore FarmersMind"
+        },
+        scm: {
+          label: "SUPPLY ORCHESTRATION",
+          title: "SCM",
+          description: "The coordination layer that turns farm and demand signals into production, feed, and delivery decisions across the supply flow.",
+          cta: "Explore SCM"
+        },
+        tms: {
+          label: "TRACEABILITY",
+          title: "TmS",
+          description: "The verification layer that standardizes operational records into traceability, food safety, and ESG reporting systems.",
+          cta: "Explore TmS"
+        },
+        aiOps: {
+          label: "AGENT LAYER",
+          title: "AI OPS",
+          description: "The agent layer that runs forecasts, recommendations, alerts, and reporting across the full stack to speed up operations.",
+          cta: "Request access"
+        }
       }
     },
     // Partners Section
@@ -203,6 +223,8 @@ export const aboutTranslations = {
     // News Section
     news: {
       title: "News",
+      sectionTitle: "Latest updates from the field and supply chain",
+      sectionDescription: "Track Paiptree operating updates, partnerships, and product signals in one stream.",
       viewAll: "View all news",
       items: {
         item1: {

@@ -1,8 +1,9 @@
 ---
 title: "/tms 페이지 운영 문서"
 author: ZORO
-last_updated: 26.03.06
+last_updated: 26.03.20
 ---
+
 # /tms 페이지 운영 문서
 
 ## 1. 문서 정보
@@ -11,32 +12,24 @@ last_updated: 26.03.06
 - 문서 파일: `docs/pages/tms.page.md`
 
 ## 2. 목적
-- TMS 제품 소개/기능 설명/보안 소개/앱 다운로드를 제공한다.
-- 한국어/영어 전환이 가능한 랜딩 페이지를 운영한다.
+- 이 페이지의 목적과 대상 사용자를 2~3줄로 작성한다.
 
 ## 3. 화면/기능 구성
-- 상단 고정 헤더: 로고, 언어 토글, 햄버거 메뉴(매뉴얼 링크)
-- 본문 섹션:
-  - Hero + 다운로드 CTA
-  - Enterprise Features 그리드
-  - Key Features(교차 배치 블록)
-  - Security 카드 3종
-- 하단: 상세 푸터(데스크탑/모바일 분기)
+- 상단:
+- 본문:
+- 하단:
 
 ## 4. 데이터/상태
-- 클라이언트 상태: `menuOpen`
-- 언어 상태: `useLanguage` (`language`, `toggleLanguage`)
-- 텍스트/이미지 소스: `useTranslation` 키(`tms.*`)
-- 다운로드 API: `http://paipddns.iptime.org:8100/tms/app/deploy/get/apk/gps`
+- 주요 데이터 소스:
+- 클라이언트 상태:
+- 서버/정적 의존성:
 
 ## 5. 인터랙션 규칙
-- Android 다운로드 버튼 클릭 시 APK fetch 후 blob 다운로드를 시도한다.
-- 다운로드 실패 시 동일 URL을 새 탭으로 fallback 오픈한다.
-- 기능 카드 index 5 클릭/키보드 Enter/Space 시 `/tms/tms-schedule.html` 새 탭 오픈.
-- 햄버거 메뉴는 내부 상태(`menuOpen`)로 열고 닫는다.
+- 주요 사용자 액션:
+- 라우팅/네비게이션:
+- 예외 동작:
 
 ## 6. QA 체크리스트
-- [ ] 언어 토글 시 전체 문구가 즉시 전환된다.
-- [ ] 다운로드 버튼의 성공/실패 fallback이 동작한다.
-- [ ] Data Insights 카드 키보드 접근성(Enter/Space)이 동작한다.
-- [ ] 메뉴얼 링크 드롭다운 열림/닫힘이 정상이다.
+- [ ] 핵심 흐름 진입/이탈
+- [ ] 데이터 로딩/에러 상태
+- [ ] 반응형/접근성 기본 동작
