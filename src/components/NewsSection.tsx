@@ -4,15 +4,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { fetchLatestNews, NewsItem } from '@/lib/googleSheets';
-
-const sectionStyle = {
-  backgroundImage: 'url("/news-bg.png")',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-} as const;
+import { useTranslation } from '@/hooks/useTranslation';
+import AboutSectionHeader from '@/components/AboutSectionHeader';
+import MarketingSection from '@/components/site/MarketingSection';
 
 const NewsSection = () => {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,71 +72,130 @@ const NewsSection = () => {
   };
 
   const current = newsItems[currentIndex];
+  const orderedNewsItems = newsItems.length
+    ? newsItems.map((_, offset) => {
+        const index = (currentIndex + offset) % newsItems.length;
+        return {
+          item: newsItems[index],
+          originalIndex: index,
+        };
+      })
+    : [];
+  const visibleNewsItems = orderedNewsItems.slice(0, 4);
+  const previewOpacity = [1, 0.72, 0.48, 0.28];
 
   return (
-    <section className="pt-24 pb-16 relative overflow-hidden" style={{ ...sectionStyle, background: 'var(--color-bg-surface)' }}>
-      <div className="absolute inset-0 bg-black/50" />
+    <MarketingSection surface="surface">
+      <AboutSectionHeader
+        number="/06"
+        label="NEWSROOM"
+        title={t('news.sectionTitle')}
+        description={t('news.sectionDescription')}
+      />
 
-      <div className="container-max px-6 relative z-10">
-        {/* Eyebrow */}
-        <div className="flex items-center gap-3 mb-16">
-          <span className="type-label" style={{ color: 'var(--color-accent)' }}>/05</span>
-          <span className="w-6 h-px" style={{ background: 'var(--color-accent)', opacity: 0.4 }} />
-          <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>NEWSROOM</span>
+      <div className="relative">
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-24 md:block z-10"
+          style={{
+            background: 'linear-gradient(to right, rgba(15,15,15,0), rgba(15,15,15,0.72) 55%, var(--color-bg-surface) 100%)',
+          }}
+        />
+
+        <div
+          className="overflow-hidden"
+          style={{
+            maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 78%, rgba(0,0,0,0.35) 92%, rgba(0,0,0,0) 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 78%, rgba(0,0,0,0.35) 92%, rgba(0,0,0,0) 100%)',
+          }}
+        >
+          <div className="flex items-stretch gap-4 md:gap-6">
+            {loading ? (
+              <div className="marketing-panel-raised w-full max-w-4xl p-8 md:p-12">
+                <p className="type-body-s marketing-text-dim">뉴스를 불러오는 중...</p>
+              </div>
+            ) : !current ? (
+              <div className="marketing-panel-raised w-full max-w-4xl p-8 md:p-12">
+                <p className="type-body-s marketing-text-dim">뉴스를 불러올 수 없습니다.</p>
+              </div>
+            ) : (
+              visibleNewsItems.map(({ item, originalIndex }, orderedIndex) => {
+                const isPrimary = orderedIndex === 0;
+                const cardWidthClassName = isPrimary
+                  ? 'w-[min(82vw,38rem)] md:w-[38rem] lg:w-[40rem]'
+                  : 'w-[min(62vw,20rem)] md:w-[20rem] lg:w-[22rem]';
+                const headlineClassName = isPrimary ? 'type-heading-m' : 'type-heading-s';
+                const bodyClassName = isPrimary ? 'type-body' : 'type-body-s';
+                const cardOpacity = previewOpacity[Math.min(orderedIndex, previewOpacity.length - 1)];
+
+                return (
+                  <article
+                    key={`${item.id}-${orderedIndex}`}
+                    className={`marketing-panel-raised ${cardWidthClassName} flex-shrink-0 p-7 md:p-8 lg:p-10`}
+                    style={{ opacity: cardOpacity }}
+                  >
+                    <div className="flex h-full flex-col">
+                      <div className="mb-8">
+                        <p className="type-label marketing-text-dim marketing-meta-tight mb-4">
+                          {item.category} · {formatDate(item.upload_date)}
+                        </p>
+                        <h3 className={`${headlineClassName} marketing-text-primary ${isPrimary ? 'mb-5' : 'mb-4'} line-clamp-3`}>
+                          {item.title}
+                        </h3>
+                        <p className={`${bodyClassName} marketing-text-sub ${isPrimary ? 'line-clamp-4' : 'line-clamp-5'}`}>
+                          {item.description}
+                        </p>
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between gap-4">
+                        {isPrimary ? (
+                          <Link href={item.original_url} className="btn-site-link marketing-link-subtle">
+                            기사 전문 보기
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => goToSlide(originalIndex)}
+                            className="btn-site-link marketing-link-subtle"
+                          >
+                            이 기사 보기
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        )}
+
+                        <span className="type-mono marketing-text-dim whitespace-nowrap">
+                          {String(orderedIndex + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        <div className="max-w-3xl">
-          {loading ? (
-            <p className="type-body-s" style={{ color: 'var(--color-text-dim)' }}>뉴스를 불러오는 중...</p>
-          ) : !current ? (
-            <p className="type-body-s" style={{ color: 'var(--color-text-dim)' }}>뉴스를 불러올 수 없습니다.</p>
-          ) : (
-            <>
-              {/* Meta */}
-              <p className="type-label mb-4" style={{ color: 'var(--color-text-dim)', letterSpacing: '0.1em' }}>
-                {current.category} · {formatDate(current.upload_date)}
-              </p>
-
-              {/* Headline */}
-              <h2 className="type-heading-l mb-6 line-clamp-2" style={{ color: 'var(--color-text)' }}>
-                {current.title}
-              </h2>
-
-              {/* Description */}
-              <p className="type-body mb-10 line-clamp-3" style={{ color: 'var(--color-text-sub)', maxWidth: '560px' }}>
-                {current.description}
-              </p>
-
-              {/* CTA + Dots row */}
-              <div className="flex items-center gap-8">
-                <Link href={current.original_url} className="btn-site-link" style={{ color: 'var(--color-text-sub)' }}>
-                  기사 전문 보기
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-
-                <div className="flex items-center gap-2">
-                  {newsItems.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToSlide(index)}
-                      aria-label={`슬라이드 ${index + 1}`}
-                      className="transition-all duration-300"
-                      style={{
-                        width: index === currentIndex ? '24px' : '6px',
-                        height: '1px',
-                        background: index === currentIndex ? 'var(--color-accent)' : 'rgba(255,255,255,0.25)',
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+        <div className="mt-8 flex items-center gap-2">
+          {newsItems.map((item, index) => (
+            <button
+              key={item.id ?? index}
+              onClick={() => goToSlide(index)}
+              aria-label={`슬라이드 ${index + 1}`}
+              className="transition-all duration-300"
+              style={{
+                width: index === currentIndex ? '24px' : '6px',
+                height: '1px',
+                background: index === currentIndex ? 'var(--color-accent)' : 'rgba(255,255,255,0.25)',
+              }}
+            />
+          ))}
         </div>
       </div>
-    </section>
+    </MarketingSection>
   );
 };
 

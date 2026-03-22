@@ -6,6 +6,8 @@ export const APP_DIR = path.join(ROOT_DIR, 'src', 'app');
 export const DOCS_DIR = path.join(ROOT_DIR, 'docs');
 export const DOCS_PAGES_DIR = path.join(DOCS_DIR, 'pages');
 export const DOCS_ADMIN_DIR = path.join(DOCS_DIR, 'admin');
+export const ACTIVE_ROOT_DOCS = ['docs/README.md', 'docs/3.0-design-system.md'];
+export const ACTIVE_GUIDE_DOCS = ['docs/guides/marketing-page-style-baseline.md'];
 
 const normalizeRouteValue = (route) => {
   if (!route || route === '/') {

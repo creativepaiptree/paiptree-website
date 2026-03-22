@@ -2,8 +2,12 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslation } from '@/hooks/useTranslation';
+import AboutSectionHeader from '@/components/AboutSectionHeader';
+import MarketingSection from '@/components/site/MarketingSection';
 
 const PartnersSection = () => {
+  const { t } = useTranslation();
   const partnerLogos = [
     { name: '디캠프', src: '/partners/1.디캠프.png', width: 240 },
     { name: '아산나눔재단', src: '/partners/2.아산나눔재단.png', width: 280 },
@@ -28,14 +32,13 @@ const PartnersSection = () => {
   ];
 
   return (
-    <section className="py-20 overflow-hidden" style={{ background: 'var(--color-bg)', borderTop: '1px solid var(--color-line)' }}>
-      <div className="container-max px-6 mb-12">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>/04</span>
-          <span className="w-6 h-px" style={{ background: 'var(--color-line-mid)' }} />
-          <span className="type-label" style={{ color: 'var(--color-text-dim)' }}>PARTNERS</span>
-        </div>
-        <h3 className="type-heading-m" style={{ color: 'var(--color-text)' }}>Global Partners</h3>
+    <MarketingSection surface="base" withContainer={false}>
+      <div className="container-max px-6">
+        <AboutSectionHeader
+          number="/05"
+          label="PARTNERS"
+          title={t('partners.title')}
+        />
       </div>
 
       {/* Partners Carousel — edge fade */}
@@ -60,7 +63,7 @@ const PartnersSection = () => {
           ))}
         </div>
       </div>
-    </section>
+    </MarketingSection>
   );
 };
 

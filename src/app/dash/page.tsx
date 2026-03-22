@@ -370,10 +370,7 @@ const ARCH_LINK_STYLE: Record<
 };
 
 const SYSTEM_DOC_BUTTONS = [
-  { key: 'hub',       path: 'docs/admin/README.md',                          label: '문서 운영 허브'    },
   { key: 'index',     path: 'docs/README.md',                                label: '개발문서 인덱스'   },
-  { key: 'authoring', path: 'docs/guides/document-authoring.md',             label: '개발문서 작성가이드' },
-  { key: 'template',  path: 'docs/templates/component-spec.template.md',     label: '컴포넌트 템플릿'   },
   { key: 'design',    path: 'docs/3.0-design-system.md',                     label: '3.0 디자인 시스템'  },
 ] as const;
 
@@ -498,7 +495,7 @@ export default function DashPage() {
   const [docsLoading, setDocsLoading]                 = useState(false);
   const [docsError, setDocsError]                     = useState<string | null>(null);
   const [activeDocSource, setActiveDocSource]         = useState<'system' | 'component'>('system');
-  const [activeSystemDocKey, setActiveSystemDocKey]   = useState<SystemDocKey>('hub');
+  const [activeSystemDocKey, setActiveSystemDocKey]   = useState<SystemDocKey>('index');
   const [selectedCompDocId, setSelectedCompDocId]     = useState<string | null>(null);
   const docsModalRef                                  = useRef<HTMLDivElement>(null);
   const docsCloseBtnRef                               = useRef<HTMLButtonElement>(null);
@@ -653,7 +650,7 @@ export default function DashPage() {
           </button>
           <button
             type="button"
-            onClick={() => { setIsVersionOpen(false); setActiveDocSource('system'); setActiveSystemDocKey('hub'); setIsDocsOpen(true); }}
+            onClick={() => { setIsVersionOpen(false); setActiveDocSource('system'); setActiveSystemDocKey('index'); setIsDocsOpen(true); }}
             className="hidden sm:inline-flex h-6 items-center text-[10px] font-mono border px-2 transition-colors"
             style={{ color: MEMBER.color, borderColor: `${MEMBER.color}60` }}
           >
@@ -1166,7 +1163,7 @@ export default function DashPage() {
               <div className="text-[11px] text-[#8b949e] space-y-1">
                 <p>1) 문서 구조를 모르는 새 작업 시작할 때 (예시: README.md 먼저 읽고 관련 문서 찾아서 진행해)</p>
                 <p>2) 문서화 작업 자체를 시킬 때 (예시: README 기준으로 필요한 문서 갱신 범위 판단해서 반영해)</p>
-                <p>3) 컴포넌트 수정처럼 대상이 명확할 때 (예시: document-authoring.md 기준으로 해당 컴포넌트 문서 업데이트해)</p>
+                <p>3) 컴포넌트 수정처럼 대상이 명확할 때 (예시: README와 해당 페이지 문서 기준으로 해당 컴포넌트 문서 업데이트해)</p>
               </div>
             </div>
           </div>

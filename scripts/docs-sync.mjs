@@ -95,7 +95,47 @@ const formatSectionCounts = (docs) => {
   return [...countBySection.entries()].sort(([a], [b]) => a.localeCompare(b));
 };
 
-const buildAdminReadme = ({ routes, stats, recentDocs }) => {
+const summarizeArchiveStats = (docs) => {
+  const summary = {
+    activePageDocs: 0,
+    archivedPageDocs: 0,
+    activeGuides: 0,
+    archivedGuides: 0,
+    legacyDocs: 0,
+  };
+
+  docs.forEach((absPath) => {
+    const rel = toPosix(path.relative(ROOT_DIR, absPath));
+
+    if (/^docs\/pages\/[^/]+\.md$/u.test(rel)) {
+      summary.activePageDocs += 1;
+      return;
+    }
+
+    if (/^docs\/pages\/.+\/[^/]+\.md$/u.test(rel)) {
+      summary.archivedPageDocs += 1;
+      return;
+    }
+
+    if (/^docs\/guides\/old\/.+\.md$/u.test(rel)) {
+      summary.archivedGuides += 1;
+      return;
+    }
+
+    if (/^docs\/guides\/[^/]+\.md$/u.test(rel)) {
+      summary.activeGuides += 1;
+      return;
+    }
+
+    if (/^docs\/old\/.+\.md$/u.test(rel)) {
+      summary.legacyDocs += 1;
+    }
+  });
+
+  return summary;
+};
+
+const buildAdminReadme = ({ routes, stats, archiveStats, recentDocs }) => {
   const routeRows = routes
     .map((route) => {
       const statusLabel =
@@ -129,7 +169,14 @@ last_updated: ${today}
 - 페이지 문서 대상: \`src/app/**/page.tsx\` 전체
 - 상단 문서/버전 버튼 노출: \`/PoC\` 상단 UI 전용
 - 페이지 문서 위치: \`docs/pages/*.page.md\`
+- 아카이브 페이지 문서 위치: \`docs/pages/무제 폴더/**/*.page.md\`
+- 활성 가이드 위치: \`docs/guides/*.md\`
+- 아카이브 가이드 위치: \`docs/guides/old/**/*.md\`
 - 레거시 문서 위치: \`docs/old/**/*.md\`
+- root 기준 문서는 \`docs/README.md\`와 \`docs/3.0-design-system.md\` 두 개만 유지한다.
+- 웹/마케팅 기준은 \`docs/README.md\`에서 시작하고, PoC 기준은 \`docs/3.0-design-system.md\`를 사용한다.
+- 이 정책은 \`docs:validate\`에서 allowlist로 강제한다.
+- 아카이브 폴더 문서는 이력 보관용이며 현재 기준으로 사용하지 않는다.
 
 ## 3. 요약
 - 총 라우트 페이지: **${stats.totalRoutes}**
@@ -137,6 +184,11 @@ last_updated: ${today}
 - 자동 신규 생성: **${stats.newRoutes}**
 - 자동 메타 갱신(SYNCED): **${stats.syncedRoutes}**
 - 업데이트 필요(STALE): **${stats.staleRoutes}**
+- 활성 페이지 문서(root): **${archiveStats.activePageDocs}**
+- 아카이브 페이지 문서: **${archiveStats.archivedPageDocs}**
+- 활성 가이드(root): **${archiveStats.activeGuides}**
+- 아카이브 가이드: **${archiveStats.archivedGuides}**
+- 레거시 문서(\`docs/old/**\`): **${archiveStats.legacyDocs}**
 - 전체 문서 수(\`docs/**/*.md\`): **${stats.totalDocs}**
 
 ## 4. 페이지-문서 매핑
@@ -149,7 +201,20 @@ ${routeRows}
 | --- | --- |
 ${sectionRows}
 
-## 6. 최근 수정 문서 (상위 10개)
+## 6. 아카이브 상태
+- \`docs/pages/무제 폴더/**/*.page.md\`
+  - 이전 페이지 문서 아카이브 **${archiveStats.archivedPageDocs}**건
+- \`docs/guides/old/**/*.md\`
+  - 이전 스타일 단계 가이드 아카이브 **${archiveStats.archivedGuides}**건
+- \`docs/old/**/*.md\`
+  - 레거시 컴포넌트/기록성 문서 **${archiveStats.legacyDocs}**건
+
+## 7. 현재 참고 우선순위
+1. 웹/마케팅 작업은 \`docs/README.md\`에서 시작한다.
+2. \`/about\` 상세 기준은 \`docs/guides/marketing-page-style-baseline.md\`, \`docs/pages/about.page.md\`를 본다.
+3. PoC 작업만 \`docs/3.0-design-system.md\`를 기준으로 본다.
+
+## 8. 최근 수정 문서 (상위 10개)
 ${recentRows || '- (없음)'}
 `;
 };
@@ -231,10 +296,12 @@ const run = async () => {
     totalDocs: docsForStats.length,
     bySection: formatSectionCounts(docsForStats),
   };
+  const archiveStats = summarizeArchiveStats(docsForStats);
 
   const adminReadme = buildAdminReadme({
     routes: routesWithStatus,
     stats,
+    archiveStats,
     recentDocs: docsWithStats.slice(0, 10),
   });
 

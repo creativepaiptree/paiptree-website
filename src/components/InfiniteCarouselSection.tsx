@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import AboutSectionHeader from '@/components/AboutSectionHeader';
+import MarketingSection from '@/components/site/MarketingSection';
 
 interface CarouselCard {
   id: string;
   title: string;
   subtitle?: string;
   backgroundImage: string;
-  backgroundColor?: string;
 }
 
 const carouselData: CarouselCard[] = [
@@ -17,35 +18,30 @@ const carouselData: CarouselCard[] = [
     title: 'CYBERNETIC ENTERPRISE',
     subtitle: 'Building Future Digital Infrastructure',
     backgroundImage: '/p1.png',
-    backgroundColor: 'from-gray-100 to-gray-200'
   },
   {
     id: '2',
     title: 'AUTOMATION CORE',
     subtitle: 'Driving Automation Into Every Core Function',
     backgroundImage: '/p2.png',
-    backgroundColor: 'from-gray-200 to-gray-300'
   },
   {
     id: '3',
     title: 'AI TRANSFORMATION',
     subtitle: 'AI is Transforming the Enterprise',
     backgroundImage: '/p3.png',
-    backgroundColor: 'from-gray-100 to-gray-250'
   },
   {
     id: '4',
     title: 'DATA INTELLIGENCE',
     subtitle: 'Smart Analytics for Better Decisions',
     backgroundImage: '/p4.png',
-    backgroundColor: 'from-gray-150 to-gray-200'
   },
   {
     id: '5',
     title: 'DIGITAL WORKFLOW',
     subtitle: 'Streamlined Processes for Maximum Efficiency',
     backgroundImage: '/p5.png',
-    backgroundColor: 'from-gray-200 to-gray-100'
   }
 ];
 
@@ -66,25 +62,25 @@ export default function InfiniteCarouselSection() {
   }, [isPaused]);
 
   return (
-    <section className="py-16 overflow-hidden relative" style={{ background: 'var(--color-light-bg-alt)' }}>
+    <MarketingSection surface="surface" withContainer={false}>
       {/* Top Navigation Buttons */}
       <div className="container-max px-6 mb-8 relative z-10">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>/01</span>
-          <span className="w-6 h-px" style={{ background: 'var(--color-light-line)' }} />
-          <span className="type-label" style={{ color: 'var(--color-light-text-sub)' }}>CAPABILITIES</span>
-        </div>
+        <AboutSectionHeader
+          number="/02"
+          label="CAPABILITIES"
+          title={t('infiniteCarousel.sectionTitle')}
+          description={t('infiniteCarousel.sectionDescription')}
+        />
         <div className="flex gap-2 flex-wrap">
           {carouselData.map((card, index) => (
             <button
               key={card.id}
-              className="relative px-3 py-1.5 text-xs overflow-hidden transition-all duration-200"
+              className={[
+                'marketing-tab',
+                'marketing-interactive',
+                index === currentIndex ? 'marketing-tab--active' : '',
+              ].filter(Boolean).join(' ')}
               onClick={() => setCurrentIndex(index)}
-              style={{
-                border: `1px solid ${index === currentIndex ? 'var(--color-accent)' : 'var(--color-light-line)'}`,
-                color: index === currentIndex ? 'var(--color-accent)' : 'var(--color-light-text-sub)',
-                background: 'transparent',
-              }}
             >
               {/* Background fill animation */}
               <div
@@ -112,10 +108,10 @@ export default function InfiniteCarouselSection() {
             transform: `translateX(calc(50vw - 480px - ${currentIndex * 984}px))`
           }}
         >
-          {carouselData.map((card, index) => (
+          {carouselData.map((card) => (
             <div
               key={card.id}
-              className="flex-shrink-0 w-[960px] h-[560px] relative overflow-hidden group cursor-pointer"
+              className="marketing-panel-raised flex-shrink-0 w-[960px] h-[560px] relative overflow-hidden group cursor-pointer"
             >
               {/* Background image */}
               <div
@@ -162,12 +158,12 @@ export default function InfiniteCarouselSection() {
               </div>
 
               {/* Overlay */}
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
+              <div className="absolute inset-0 bg-black/45 group-hover:bg-black/30 transition-colors duration-300"></div>
 
               {/* Label */}
-              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
-                <p className="type-label mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{t(`infiniteCarousel.cards.${card.id}.title`)}</p>
-                <h3 className="type-heading-s" style={{ color: 'var(--color-text)' }}>{t(`infiniteCarousel.cards.${card.id}.subtitle`)}</h3>
+              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)' }}>
+                <p className="type-label marketing-text-dim mb-2">{t(`infiniteCarousel.cards.${card.id}.title`)}</p>
+                <h3 className="type-heading-s marketing-text-primary">{t(`infiniteCarousel.cards.${card.id}.subtitle`)}</h3>
               </div>
 
               {/* Hover glow effect */}
@@ -176,6 +172,6 @@ export default function InfiniteCarouselSection() {
           ))}
         </div>
       </div>
-    </section>
+    </MarketingSection>
   );
 }

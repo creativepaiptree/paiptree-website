@@ -1,6 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import {
+  ACTIVE_GUIDE_DOCS,
+  ACTIVE_ROOT_DOCS,
   ROOT_DIR,
   collectMarkdownDocs,
   collectRoutePages,
@@ -19,6 +21,37 @@ const warnings = [];
 
 const addError = (message) => errors.push(message);
 const addWarning = (message) => warnings.push(message);
+
+const validateDocPolicy = (docRelPaths) => {
+  const rootDocs = docRelPaths.filter((docRelPath) => /^docs\/[^/]+\.md$/u.test(docRelPath));
+  const activeGuides = docRelPaths.filter((docRelPath) => /^docs\/guides\/[^/]+\.md$/u.test(docRelPath));
+  const rootDocSet = new Set(rootDocs);
+  const activeGuideSet = new Set(activeGuides);
+
+  ACTIVE_ROOT_DOCS.forEach((docRelPath) => {
+    if (!rootDocSet.has(docRelPath)) {
+      addError(`${docRelPath}: 필수 root 기준 문서 누락`);
+    }
+  });
+
+  ACTIVE_GUIDE_DOCS.forEach((docRelPath) => {
+    if (!activeGuideSet.has(docRelPath)) {
+      addError(`${docRelPath}: 필수 활성 가이드 문서 누락`);
+    }
+  });
+
+  rootDocs.forEach((docRelPath) => {
+    if (!ACTIVE_ROOT_DOCS.includes(docRelPath)) {
+      addError(`${docRelPath}: root 기준 문서는 allowlist(${ACTIVE_ROOT_DOCS.join(', ')}) 외 추가할 수 없음`);
+    }
+  });
+
+  activeGuides.forEach((docRelPath) => {
+    if (!ACTIVE_GUIDE_DOCS.includes(docRelPath)) {
+      addError(`${docRelPath}: 활성 guide 문서는 allowlist(${ACTIVE_GUIDE_DOCS.join(', ')}) 외 추가할 수 없음`);
+    }
+  });
+};
 
 const validateFrontmatter = (docRelPath, meta, hasFrontmatter) => {
   if (!hasFrontmatter) {
@@ -122,7 +155,10 @@ const validateRouteCoverage = async () => {
 
 const run = async () => {
   const markdownDocs = await collectMarkdownDocs();
+  const docRelPaths = markdownDocs.map((docAbsPath) => toPosix(path.relative(ROOT_DIR, docAbsPath)));
   const titleSet = new Set();
+
+  validateDocPolicy(docRelPaths);
 
   for (const docAbsPath of markdownDocs) {
     const docRelPath = toPosix(path.relative(ROOT_DIR, docAbsPath));

@@ -1,4 +1,5 @@
 // src/components/StatsSection.tsx
+import MarketingSection from '@/components/site/MarketingSection';
 
 const stats = [
   { value: '22.63%', label: 'DOMESTIC FARM COVERAGE', note: '2025.02 기준' },
@@ -9,47 +10,34 @@ const stats = [
 
 export default function StatsSection() {
   return (
-    <section style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-line)' }}>
-      <div className="container-max px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4">
-          {stats.map(({ value, label, note }, i) => (
-            <div
-              key={label}
-              className={[
-                'py-10 px-6',
-                // 모바일(2col): 홀수번째 → 왼쪽 선, 하단행(i>=2) → 상단 선
-                i % 2 === 1 ? 'border-l'         : '',
-                i >= 2      ? 'border-t md:border-t-0' : '',
-                // 데스크톱(4col): 첫번째 제외 모두 왼쪽 선
-                i > 0       ? 'md:border-l'      : '',
-                i === 0     ? 'pl-0'             : '',
-              ].filter(Boolean).join(' ')}
-              style={{ borderColor: 'var(--color-line)' }}
-            >
-              <div
-                className="type-mono mb-1"
-                style={{ color: 'var(--color-text-dim)', fontSize: '0.6875rem', letterSpacing: '0.1em' }}
-              >
-                {note}
-              </div>
-              <div
-                className="font-bold leading-none mb-3"
-                style={{
-                  fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
-                  fontSize: 'clamp(2rem, 3.5vw, 3rem)',
-                  letterSpacing: '-0.04em',
-                  color: 'var(--color-text)',
-                }}
-              >
-                {value}
-              </div>
-              <div className="type-label" style={{ color: 'var(--color-text-dim)' }}>
-                {label}
-              </div>
+    <MarketingSection surface="base" padding="none" className="marketing-border-bottom">
+      <div className="grid grid-cols-2 md:grid-cols-4">
+        {stats.map(({ value, label, note }, i) => (
+          <div
+            key={label}
+            className={[
+              'marketing-metric-cell',
+              'marketing-border-line',
+              // 모바일(2col): 홀수번째 → 왼쪽 선, 하단행(i>=2) → 상단 선
+              i % 2 === 1 ? 'border-l'         : '',
+              i >= 2      ? 'border-t md:border-t-0' : '',
+              // 데스크톱(4col): 첫번째 제외 모두 왼쪽 선
+              i > 0       ? 'md:border-l'      : '',
+              i === 0     ? 'pl-0'             : '',
+            ].filter(Boolean).join(' ')}
+          >
+            <div className="type-mono marketing-metric-note marketing-text-dim mb-1">
+              {note}
             </div>
-          ))}
-        </div>
+            <div className="marketing-metric-value marketing-text-primary mb-3">
+              {value}
+            </div>
+            <div className="type-label marketing-text-dim">
+              {label}
+            </div>
+          </div>
+        ))}
       </div>
-    </section>
+    </MarketingSection>
   );
 }
