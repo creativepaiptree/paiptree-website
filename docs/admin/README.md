@@ -84,7 +84,7 @@ last_updated: 26.03.22
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.03.21)
+- `docs/admin/README.md` (26.03.22)
 - `docs/pages/git.page.md` (26.03.21)
 - `docs/pages/about.page.md` (26.03.21)
 - `docs/guides/marketing-page-style-baseline.md` (26.03.20)
