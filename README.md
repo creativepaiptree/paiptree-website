@@ -31,6 +31,14 @@ npm run build
 - GitHub Actions builds and deploys to server
 - Static files deployed to `http://52.79.116.76`
 
+### Company GitHub Guard
+- This project declares its required remote in `repo-guard.config.json`
+- Run `npm run repo:guard` before any push-related operation
+- The guard checks:
+  - `origin` must match `creativepaiptree/paiptree-website`
+  - the current `gh` account must have `WRITE` or higher access
+- If either check fails, push should be treated as blocked until auth/remote is fixed
+
 ## 🛠️ Tech Stack
 - **Framework**: Next.js 14
 - **Language**: TypeScript

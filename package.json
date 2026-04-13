@@ -9,6 +9,8 @@
     "docs:validate": "node scripts/docs-validate.mjs",
     "docs:check": "npm run docs:sync && npm run docs:validate",
     "docs:scaffold:page": "node scripts/docs-scaffold-page.mjs",
+    "repo:guard": "node scripts/github-repo-guard.mjs",
+    "push:guard": "npm run repo:guard",
     "storybook": "npx --yes storybook dev -p 6006",
     "build-storybook": "npx --yes storybook build",
     "prebuild": "npm run docs:check",
