@@ -1,9 +1,8 @@
 ---
 title: "/newsroom 페이지 운영 문서"
 author: ZORO
-last_updated: 26.03.20
+last_updated: 26.04.13
 ---
-
 # /newsroom 페이지 운영 문서
 
 ## 1. 문서 정보

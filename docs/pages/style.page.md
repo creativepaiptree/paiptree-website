@@ -1,14 +1,15 @@
 ---
-title: "/tms/main 페이지 운영 문서"
+title: "/style 페이지 운영 문서"
 author: ZORO
-last_updated: 26.04.13
+last_updated: 26.04.14
 ---
-# /tms/main 페이지 운영 문서
+
+# /style 페이지 운영 문서
 
 ## 1. 문서 정보
-- 라우트: `/tms/main`
-- 페이지 파일: `src/app/tms/main/page.tsx`
-- 문서 파일: `docs/pages/tms-main.page.md`
+- 라우트: `/style`
+- 페이지 파일: `src/app/style/page.tsx`
+- 문서 파일: `docs/pages/style.page.md`
 
 ## 2. 목적
 - 이 페이지의 목적과 대상 사용자를 2~3줄로 작성한다.

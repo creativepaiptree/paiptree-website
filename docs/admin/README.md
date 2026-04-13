@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.03.22
+last_updated: 26.04.14
 ---
 
 # 문서 운영 허브
@@ -25,17 +25,17 @@ last_updated: 26.03.22
 - 아카이브 폴더 문서는 이력 보관용이며 현재 기준으로 사용하지 않는다.
 
 ## 3. 요약
-- 총 라우트 페이지: **18**
-- 페이지 문서 생성됨: **18**
+- 총 라우트 페이지: **20**
+- 페이지 문서 생성됨: **20**
 - 자동 신규 생성: **0**
 - 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
-- 활성 페이지 문서(root): **18**
+- 활성 페이지 문서(root): **20**
 - 아카이브 페이지 문서: **16**
 - 활성 가이드(root): **1**
 - 아카이브 가이드: **14**
 - 레거시 문서(`docs/old/**`): **5**
-- 전체 문서 수(`docs/**/*.md`): **60**
+- 전체 문서 수(`docs/**/*.md`): **62**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -51,11 +51,13 @@ last_updated: 26.03.22
 | `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
 | `/git` | `src/app/git/page.tsx` | `docs/pages/git.page.md` | OK |
 | `/i18n` | `src/app/i18n/page.tsx` | `docs/pages/i18n.page.md` | OK |
+| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | OK |
 | `/main` | `src/app/main/page.tsx` | `docs/pages/main.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
 | `/newsroom` | `src/app/newsroom/page.tsx` | `docs/pages/newsroom.page.md` | OK |
 | `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | OK |
 | `/services` | `src/app/services/page.tsx` | `docs/pages/services.page.md` | OK |
+| `/style` | `src/app/style/page.tsx` | `docs/pages/style.page.md` | OK |
 | `/tms` | `src/app/tms/page.tsx` | `docs/pages/tms.page.md` | OK |
 | `/tms/main` | `src/app/tms/main/page.tsx` | `docs/pages/tms-main.page.md` | OK |
 
@@ -66,7 +68,7 @@ last_updated: 26.03.22
 | decisions | 1 |
 | guides | 15 |
 | old | 5 |
-| pages | 34 |
+| pages | 36 |
 | root | 2 |
 | templates | 2 |
 
@@ -84,13 +86,13 @@ last_updated: 26.03.22
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.03.22)
-- `docs/pages/git.page.md` (26.03.21)
-- `docs/pages/about.page.md` (26.03.21)
-- `docs/guides/marketing-page-style-baseline.md` (26.03.20)
-- `docs/README.md` (26.03.20)
-- `docs/pages/dash.page.md` (26.03.20)
-- `docs/pages/tms-main.page.md` (26.03.20)
-- `docs/pages/tms.page.md` (26.03.20)
-- `docs/pages/services.page.md` (26.03.20)
-- `docs/pages/poc.page.md` (26.03.20)
+- `docs/admin/README.md` (26.04.14)
+- `docs/pages/m.page.md` (26.04.14)
+- `docs/pages/style.page.md` (26.04.14)
+- `docs/pages/tms-main.page.md` (26.04.13)
+- `docs/pages/tms.page.md` (26.04.13)
+- `docs/pages/services.page.md` (26.04.13)
+- `docs/pages/poc.page.md` (26.04.13)
+- `docs/pages/newsroom.page.md` (26.04.13)
+- `docs/pages/news.page.md` (26.04.13)
+- `docs/pages/main.page.md` (26.04.13)
