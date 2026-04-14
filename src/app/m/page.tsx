@@ -356,7 +356,10 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-hero-block">
           <div className="linear-hero-copy-wrap">
             <div className="linear-hero-copy">
-              <h1>The product development system for teams and agents</h1>
+              <h1>
+                The product development system<br />
+                for teams and agents
+              </h1>
               <div className="linear-hero-description-row">
                 <p>
                   Purpose-built for planning and building products. Designed for the AI era.

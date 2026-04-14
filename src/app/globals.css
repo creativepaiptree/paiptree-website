@@ -1842,9 +1842,9 @@ a {
 .linear-page-shell {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 50% -10%, rgba(104, 115, 255, 0.1), transparent 32%),
-    linear-gradient(180deg, #08090d 0%, #07080c 52%, #090b10 100%);
-  color: #f7f8fb;
+    radial-gradient(circle at 50% -12%, rgba(255, 255, 255, 0.035), transparent 26%),
+    linear-gradient(180deg, #040405 0%, #050506 52%, #070708 100%);
+  color: #eef1f6;
 }
 
 .linear-main {
@@ -1891,19 +1891,20 @@ a {
 
 .linear-hero-copy h1 {
   margin-top: 16px;
-  font-size: clamp(3.15rem, 5.8vw, 5.75rem);
-  line-height: 0.96;
-  letter-spacing: -0.06em;
-  font-weight: 600;
-  max-width: 11.5ch;
+  font-size: clamp(2.7rem, 4.85vw, 4.8rem);
+  line-height: 1.01;
+  letter-spacing: -0.055em;
+  font-weight: 500;
+  max-width: 18ch;
+  color: #d6dae3;
 }
 
 .linear-hero-copy p {
   margin-top: 0;
-  max-width: 26rem;
+  max-width: 40rem;
   font-size: 0.95rem;
-  line-height: 1.7;
-  color: #9ca3b8;
+  line-height: 1.6;
+  color: #737b8c;
 }
 
 .linear-hero-description-row {
@@ -1919,7 +1920,7 @@ a {
   align-items: center;
   gap: 12px;
   white-space: nowrap;
-  color: #d8ddf0;
+  color: #a7aebd;
   font-size: 0.9rem;
   transition: filter 0.16s ease;
 }
@@ -2814,7 +2815,12 @@ a {
   }
 
   .linear-hero-copy h1 {
-    font-size: clamp(2.9rem, 13vw, 4.7rem);
+    font-size: clamp(2.3rem, 9vw, 3.9rem);
+    max-width: 14ch;
+  }
+
+  .linear-hero-copy p {
+    max-width: 100%;
   }
 
   .linear-roadmap-row,
