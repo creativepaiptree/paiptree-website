@@ -155,13 +155,16 @@ function HeroMockWindow() {
 }
 
 function LogosRow() {
-  const logos = ['OpenAI', 'Vercel', 'Ramp', 'Remote', 'Descript', 'Scale', 'Mercury'];
+  const logos = ['OpenAI', 'Ramp', 'Mercury', 'Remote', 'Descript', 'Perplexity', 'Cursor'];
 
   return (
-    <div className="linear-logo-row">
-      {logos.map((logo) => (
-        <span key={logo}>{logo}</span>
-      ))}
+    <div className="linear-logo-strip">
+      <span className="linear-logo-strip-label">Trusted by teams at</span>
+      <div className="linear-logo-row">
+        {logos.map((logo) => (
+          <span key={logo} className="linear-logo-item">{logo}</span>
+        ))}
+      </div>
     </div>
   );
 }
