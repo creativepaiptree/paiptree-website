@@ -148,7 +148,7 @@ function HeroMockWindow() {
   return (
     <div className="linear-hero-window">
       <div className="linear-hero-frame-shell">
-        <img src={referenceImages.hero} alt="Linear hero product interface" className="linear-reference-image hero" />
+        <img src="/hero/main_bg.webp" alt="Paiptree analytics dashboard hero" className="linear-reference-image hero" />
       </div>
     </div>
   );
