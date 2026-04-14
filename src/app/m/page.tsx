@@ -12,6 +12,7 @@ type Pillar = {
   figure: string;
   title: string;
   body: string;
+  image: string;
 };
 
 type BoardColumn = {
@@ -31,21 +32,30 @@ type FooterColumn = {
   links: string[];
 };
 
+const referenceImages = {
+  hero: 'https://linear.app/cdn-cgi/imagedelivery/fO02fVwohEs9s9UHFwon6A/c7b144b7-4ef0-4991-9bcb-617c6a37d200/f=auto,dpr=2,q=95,fit=scale-down,metadata=none',
+  fig02: 'https://linear.app/cdn-cgi/imagedelivery/fO02fVwohEs9s9UHFwon6A/6600ca96-e49b-4fd9-c03a-7979faddad00/f=auto,dpr=2,q=95,fit=scale-down,metadata=none',
+  fig03: 'https://linear.app/cdn-cgi/imagedelivery/fO02fVwohEs9s9UHFwon6A/c7fa8f5f-d439-4329-6a65-de549b51e300/f=auto,dpr=2,q=95,fit=scale-down,metadata=none',
+};
+
 const pillars: Pillar[] = [
   {
     figure: 'FIG 0.2',
     title: 'Built for purpose',
     body: 'Linear is shaped by the practices and principles of world-class product teams.',
+    image: referenceImages.fig02,
   },
   {
     figure: 'FIG 0.3',
     title: 'Powered by AI agents',
     body: 'Designed for workflows shared by humans and agents, from PRD to PR.',
+    image: referenceImages.fig03,
   },
   {
     figure: 'FIG 0.4',
     title: 'Designed for speed',
     body: 'Reduces noise and restores momentum to help teams ship with high velocity and focus.',
+    image: referenceImages.hero,
   },
 ];
 
@@ -94,24 +104,24 @@ const boardColumns: BoardColumn[] = [
 const agentSteps: AgentStep[] = [
   {
     title: 'Intake',
-    body: 'Turn conversations and customer feedback into actionable work items routed to the right team.',
+    body: 'Turn feedback into work.',
     variant: 'accent',
   },
   {
     title: 'Direction',
-    body: 'Define product direction through roadmaps, initiatives, and project-level planning structures.',
+    body: 'Plan with shared context.',
   },
   {
     title: 'Execution',
-    body: 'Move work forward across people and agents with shared workflows and explicit progress states.',
+    body: 'Move work across teams and agents.',
   },
   {
     title: 'Review',
-    body: 'Review PRs and agent output in one place with clear diffs, comments, and ownership traces.',
+    body: 'Review changes in one place.',
   },
   {
     title: 'Insight',
-    body: 'Understand progress at scale with operational reporting, health signals, and trend visibility.',
+    body: 'See progress clearly.',
   },
 ];
 
@@ -136,7 +146,7 @@ const footerColumns: FooterColumn[] = [
 
 function HeroMockWindow() {
   return (
-    <div className="linear-shell-card linear-hero-window">
+    <div className="linear-shell-card linear-hero-window linear-image-window">
       <div className="linear-window-bar">
         <div className="linear-window-dots">
           <span />
@@ -145,53 +155,7 @@ function HeroMockWindow() {
         </div>
         <div className="linear-window-pill">Linear</div>
       </div>
-      <div className="linear-hero-product-grid">
-        <aside className="linear-sidebar">
-          <div className="linear-sidebar-brand">Linear</div>
-          {['Search workspace', 'New issue', 'Inbox', 'My issues', 'Reviews', 'Pulse', 'Projects'].map((item) => (
-            <div key={item} className="linear-sidebar-item">
-              <span className="linear-sidebar-dot" />
-              <span>{item}</span>
-            </div>
-          ))}
-        </aside>
-        <section className="linear-hero-main-panel">
-          <div className="linear-chip-row">
-            {['Faster app launch', 'Agent tasks', 'UI Refresh', 'Agent Insights'].map((item, index) => (
-              <span key={item} className={`linear-chip ${index === 0 ? 'is-active' : ''}`}>
-                {item}
-              </span>
-            ))}
-          </div>
-          <div className="linear-hero-issue-grid">
-            <div className="linear-issue-panel">
-              <div className="linear-issue-topline">ENG-2703</div>
-              <h3>Faster app launch</h3>
-              <p>
-                Render UI before vehicle_state sync when minimum required state is present, instead of
-                blocking on full refresh during iOS startup.
-              </p>
-              <div className="linear-meta-stack">
-                <span>In Progress</span>
-                <span>High</span>
-                <span>Cursor</span>
-                <span>iOS</span>
-              </div>
-            </div>
-            <div className="linear-agent-chat-panel">
-              <div className="linear-agent-header">Cursor</div>
-              <div className="linear-agent-body">
-                <p>Examining issue ENG-2703</p>
-                <p>Started cloud agent kinetic/kinetic-iOS@master</p>
-                <p>1. Understand why iOS launch blocks on vehicle_state sync</p>
-                <p>2. Find where the app waits on full vehicle state during startup</p>
-                <p>3. Propose a reduced minimum-state launch path</p>
-              </div>
-              <div className="linear-input-bar">Message Cursor…</div>
-            </div>
-          </div>
-        </section>
-      </div>
+      <img src={referenceImages.hero} alt="Linear hero product interface" className="linear-reference-image hero" />
     </div>
   );
 }
@@ -211,6 +175,9 @@ function LogosRow() {
 function PillarCard({ pillar }: { pillar: Pillar }) {
   return (
     <article className="linear-shell-card linear-pillar-card">
+      <div className="linear-pillar-image-wrap">
+        <img src={pillar.image} alt={pillar.title} className="linear-reference-image pillar" />
+      </div>
       <span className="linear-figure-label">{pillar.figure}</span>
       <h3>{pillar.title}</h3>
       <p>{pillar.body}</p>
@@ -273,58 +240,16 @@ function ConversationPanel() {
 
 function DirectionPanel() {
   return (
-    <div className="linear-shell-card linear-direction-grid">
-      <aside className="linear-direction-sidebar">
-        <div className="linear-direction-title">Workspace</div>
-        {['Initiatives', 'Projects', 'Cycles', 'Roadmaps', 'Teams'].map((item, index) => (
-          <div key={item} className={`linear-direction-nav-item ${index === 1 ? 'is-active' : ''}`}>
-            {item}
-          </div>
-        ))}
-      </aside>
-      <section className="linear-roadmap-panel">
-        <div className="linear-roadmap-header">
-          <span>Roadmap</span>
-          <span>Q2 / Q3 / Q4</span>
-        </div>
-        <div className="linear-roadmap-track">
-          {['AI workflow standardization', 'Unified launch system', 'Ops reporting layer', 'Agent review flow'].map((item, index) => (
-            <div key={item} className={`linear-roadmap-row row-${index + 1}`}>
-              <span>{item}</span>
-              <div className="linear-roadmap-bar" />
-            </div>
-          ))}
-        </div>
-      </section>
+    <div className="linear-shell-card linear-visual-panel">
+      <img src={referenceImages.fig02} alt="Linear direction visual" className="linear-reference-image panel" />
     </div>
   );
 }
 
 function AgentOpsPanel() {
   return (
-    <div className="linear-shell-card linear-agent-ops-shell">
-      <div className="linear-agent-ops-header">
-        <span>Move work forward</span>
-        <span>Shared workflows for teams + agents</span>
-      </div>
-      <div className="linear-agent-form-card">
-        <div className="linear-form-row">
-          <label>Agent</label>
-          <div className="linear-form-value">Cursor</div>
-        </div>
-        <div className="linear-form-row">
-          <label>Task</label>
-          <div className="linear-form-value">Review startup performance issue</div>
-        </div>
-        <div className="linear-form-row">
-          <label>Owner</label>
-          <div className="linear-form-value">jori</div>
-        </div>
-        <div className="linear-form-row">
-          <label>Status</label>
-          <div className="linear-form-value accent">In Progress</div>
-        </div>
-      </div>
+    <div className="linear-shell-card linear-visual-panel">
+      <img src={referenceImages.fig03} alt="Linear execution visual" className="linear-reference-image panel" />
     </div>
   );
 }
@@ -460,8 +385,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-intro-section">
           <div className="linear-copy-block large">
             <h2>
-              <strong>A new species of product tool.</strong> Purpose-built for modern teams with AI
-              workflows at its core, Linear sets a new standard for planning and building products.
+              <strong>A new species of product tool.</strong> Purpose-built for modern teams with AI workflows at its core.
             </h2>
           </div>
           <div className="linear-pillars-grid">
@@ -474,7 +398,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-two-col-section">
           <div className="linear-copy-block">
             <div className="linear-section-kicker">Make product operations self-driving</div>
-            <h2>Turn conversations and customer feedback into actionable issues that are routed, labeled, and prioritized for the right team.</h2>
+            <h2>Turn feedback into routed work.</h2>
           </div>
           <div className="linear-showcase-grid two-wide">
             <IntakeBoard />
@@ -485,7 +409,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-two-col-section reverse">
           <div className="linear-copy-block">
             <div className="linear-section-kicker">Define the product direction</div>
-            <h2>Create product direction with shared context, initiatives, and roadmap visibility.</h2>
+            <h2>Create direction with shared context.</h2>
           </div>
           <DirectionPanel />
         </section>
@@ -493,7 +417,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-two-col-section">
           <div className="linear-copy-block narrow">
             <div className="linear-section-kicker">Move work forward across teams and agents</div>
-            <h2>Shared execution states keep ownership clear across humans, agents, and review loops.</h2>
+            <h2>Keep execution clear across people and agents.</h2>
           </div>
           <div className="linear-agent-step-list">
             {agentSteps.map((step) => (
@@ -509,7 +433,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-two-col-section">
           <div className="linear-copy-block narrow">
             <div className="linear-section-kicker">Review PRs and agent output</div>
-            <h2>Bring change review, agent work, and code context into one operating surface.</h2>
+            <h2>Review changes in one surface.</h2>
           </div>
           <DiffPanel />
         </section>
@@ -517,7 +441,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-two-col-section">
           <div className="linear-copy-block narrow">
             <div className="linear-section-kicker">Understand progress at scale</div>
-            <h2>Use trend views, health signals, and reporting layers to see momentum clearly.</h2>
+            <h2>See momentum clearly.</h2>
           </div>
           <InsightPanel />
         </section>
@@ -525,7 +449,7 @@ export default function MainLinearLikePage() {
         <section className="linear-section-frame linear-two-col-section">
           <div className="linear-copy-block narrow">
             <div className="linear-section-kicker">Community</div>
-            <h2>Product teams use Linear because it feels fast, precise, and operationally coherent.</h2>
+            <h2>Used by fast product teams.</h2>
           </div>
           <CommunityTiles />
         </section>
@@ -533,7 +457,7 @@ export default function MainLinearLikePage() {
         <section className="linear-final-cta linear-section-frame">
           <div className="linear-final-copy">
             <h2>Built for the future. Available today.</h2>
-            <p>Use this shell as the visual baseline, then replace every headline, panel, and image with Paiptree-owned content.</p>
+            <p>Use this shell as the visual baseline for the next Paiptree pass.</p>
           </div>
           <div className="linear-hero-actions centered">
             <Link href="/signup" className="linear-primary-button">Sign up</Link>
