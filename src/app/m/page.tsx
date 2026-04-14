@@ -33,9 +33,9 @@ type FooterColumn = {
 };
 
 const referenceImages = {
-  hero: '/m/hero_mockup.png',
-  fig02: '/m/direction_panel.png',
-  fig03: '/m/execution_panel.png',
+  hero: 'https://linear.app/cdn-cgi/imagedelivery/fO02fVwohEs9s9UHFwon6A/c7b144b7-4ef0-4991-9bcb-617c6a37d200/f=auto,dpr=2,q=95,fit=scale-down,metadata=none',
+  fig02: 'https://linear.app/cdn-cgi/imagedelivery/fO02fVwohEs9s9UHFwon6A/6600ca96-e49b-4fd9-c03a-7979faddad00/f=auto,dpr=2,q=95,fit=scale-down,metadata=none',
+  fig03: 'https://linear.app/cdn-cgi/imagedelivery/fO02fVwohEs9s9UHFwon6A/c7fa8f5f-d439-4329-6a65-de549b51e300/f=auto,dpr=2,q=95,fit=scale-down,metadata=none',
 };
 
 const pillars: Pillar[] = [
@@ -147,8 +147,8 @@ const footerColumns: FooterColumn[] = [
 function HeroMockWindow() {
   return (
     <div className="linear-hero-window">
-      <div className="linear-hero-frame-shell glow-accent">
-        <img src="/m/hero_mockup.png" alt="Paiptree analytics dashboard hero" className="linear-reference-image hero" />
+      <div className="linear-hero-frame-shell">
+        <img src="/hero/main_bg.webp" alt="Paiptree analytics dashboard hero" className="linear-reference-image hero" />
       </div>
     </div>
   );
@@ -219,86 +219,59 @@ function Figure02Illustration() {
 }
 
 function Figure03Illustration() {
-  const rails = [0, 1, 2, 3];
-  const nodes = [
-    { x: 86, y: 88 },
-    { x: 132, y: 112 },
-    { x: 178, y: 135 },
-  ];
+  const dots = Array.from({ length: 25 }, (_, index) => ({
+    x: 36 + (index % 5) * 48,
+    y: 34 + Math.floor(index / 5) * 42,
+    opacity: 0.18 + ((index % 5) + Math.floor(index / 5)) * 0.08,
+  }));
 
   return (
     <svg viewBox="0 0 265 262" className="linear-figure-svg" aria-hidden="true">
-      {rails.map((rail) => {
-        const y = 176 - rail * 20;
-        return (
-          <path
-            key={`f3-rail-${rail}`}
-            d={`M42 ${y} L129 ${y + 44} Q132.5 ${y + 46} 136 ${y + 44} L223 ${y}`}
-            fill="none"
-            stroke={rail === 3 ? '#d0d6e0' : '#3e3e44'}
-            strokeWidth="0.8"
-            strokeLinecap="round"
-            opacity={rail === 3 ? 0.95 : 1}
-          />
-        );
-      })}
-      <path d="M86 88 L132 112 L178 135" fill="none" stroke="#d0d6e0" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M86 88 L86 134" fill="none" stroke="#5f6775" strokeWidth="0.8" opacity="0.8" />
-      <path d="M132 112 L132 158" fill="none" stroke="#5f6775" strokeWidth="0.8" opacity="0.8" />
-      <path d="M178 135 L178 181" fill="none" stroke="#5f6775" strokeWidth="0.8" opacity="0.8" />
-      {nodes.map((node, index) => (
-        <g key={`f3-node-${index}`}>
-          <circle cx={node.x} cy={node.y} r="12" fill="#08090A" stroke="#d0d6e0" strokeWidth="0.9" />
-          <circle cx={node.x} cy={node.y} r="3.5" fill="#eef2f8" opacity="0.95" />
-        </g>
+      {dots.map((dot, index) => (
+        <circle key={`dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#e5e7ec" opacity={dot.opacity} />
       ))}
-      <path d="M42 176 L86 198" fill="none" stroke="#272a30" strokeWidth="0.8" strokeLinecap="round" />
-      <path d="M178 244 L223 221" fill="none" stroke="#272a30" strokeWidth="0.8" strokeLinecap="round" />
+      <path d="M41 193 L92 143" stroke="#b9c0ce" strokeWidth="1" opacity="0.7" />
+      <path d="M173 125 L225 69" stroke="#b9c0ce" strokeWidth="1" opacity="0.7" />
+      <rect x="85" y="136" width="96" height="60" rx="18" fill="#0d0f12" stroke="#808796" strokeWidth="0.9" />
+      <rect x="97" y="151" width="72" height="9" rx="4.5" fill="#e9edf5" opacity="0.9" />
+      <rect x="97" y="168" width="53" height="7" rx="3.5" fill="#70798b" opacity="0.65" />
+      <rect x="195" y="40" width="32" height="32" rx="10" fill="#f2f4f8" />
+      <path d="M204 56.5h14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M211 49.5v14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="31" y="178" width="32" height="32" rx="10" fill="#f2f4f8" />
+      <path d="M40 194.5h14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M47 187.5v14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
 
 function Figure04Illustration() {
   const layers = [
-    { y: 181, left: 50, right: 214, edge: '#3e3e44' },
-    { y: 161, left: 62, right: 226, edge: '#4b4e56' },
-    { y: 141, left: 74, right: 238, edge: '#5b606a' },
-    { y: 121, left: 86, right: 250, edge: '#d0d6e0' },
+    { x: 136, y: 112, w: 116, h: 26, stroke: '#62666d' },
+    { x: 128, y: 102, w: 116, h: 40, stroke: '#62666d' },
+    { x: 120, y: 85, w: 116, h: 62, stroke: '#62666d' },
+    { x: 110, y: 66, w: 116, h: 88, stroke: '#929aaa' },
   ];
 
   return (
     <svg viewBox="0 0 265 262" className="linear-figure-svg" aria-hidden="true">
-      {layers.map((layer, index) => {
-        const midLeft = layer.left + 76;
-        const midRight = layer.right - 76;
-        return (
-          <g key={`f4-layer-${index}`} opacity={index === layers.length - 1 ? 1 : 0.92 - index * 0.12}>
-            <path
-              d={`M${layer.left} ${layer.y} L${midLeft} ${layer.y + 38} Q132.5 ${layer.y + 40} ${midRight} ${layer.y + 38} L${layer.right} ${layer.y}`}
-              fill="none"
-              stroke={layer.edge}
-              strokeWidth="0.9"
-              strokeLinecap="round"
-            />
-            <path
-              d={`M${layer.left} ${layer.y} V${layer.y + 25}`}
-              fill="none"
-              stroke="#2e2e32"
-              strokeWidth="0.8"
-              strokeLinecap="round"
-            />
-            <path
-              d={`M${layer.right} ${layer.y} V${layer.y + 25}`}
-              fill="none"
-              stroke="#2e2e32"
-              strokeWidth="0.8"
-              strokeLinecap="round"
-            />
-          </g>
-        );
-      })}
-      <path d="M86 121 L133 145 L180 121" fill="none" stroke="#d0d6e0" strokeWidth="0.95" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-      <path d="M100 129 L133 145 L166 129" fill="none" stroke="#71798a" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+      {layers.map((layer, index) => (
+        <g key={`layer-${index}`} opacity={index === layers.length - 1 ? 1 : 0.9 - index * 0.14}>
+          <path
+            d={`M${layer.x} ${layer.y} l115 58 a3 3 0 0 1 2 2.7 v${layer.h} a1.5 1.5 0 0 1-.9 1.3 l-1.4 .7 a1.5 1.5 0 0 1-1.3 0 l-115-58 a3 3 0 0 1-2-2.7 v-${layer.h} a1.5 1.5 0 0 1 .9-1.3 l1.4-.7 a1.5 1.5 0 0 1 1.3 0Z`}
+            fill="#08090A"
+            stroke={layer.stroke}
+            strokeWidth="0.9"
+          />
+          <path
+            d={`M${layer.x + 2} ${layer.y + 3} l112 56 a3.2 3.2 0 0 1 1.8 2.9 v${Math.max(12, layer.h - 3)}`}
+            fill="none"
+            stroke="#2e2e32"
+            strokeWidth="0.8"
+            strokeLinecap="round"
+          />
+        </g>
+      ))}
     </svg>
   );
 }
