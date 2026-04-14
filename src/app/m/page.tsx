@@ -209,26 +209,69 @@ function Figure02Illustration() {
           strokeLinecap="round"
         />
       </g>
-      <path
-        d="M96 93 L129 76 Q132.5 74.2 136 76 L169 93 Q171.8 94.4 171.8 97.4 V122.8 Q171.8 125.8 169 127.2 L136 144 Q132.5 145.8 129 144 L96 127.2 Q93.2 125.8 93.2 122.8 V97.4 Q93.2 94.4 96 93 Z"
-        fill="url(#figure02Glow)"
-        stroke="#9ea8b9"
-        strokeWidth="0.8"
-      />
-      <path d="M132.5 76 V144" fill="none" stroke="#6c7482" strokeWidth="0.7" opacity="0.8" />
-      <path d="M96 93 L132.5 111 L169 93" fill="none" stroke="#6c7482" strokeWidth="0.7" opacity="0.8" />
-      <circle cx="132.5" cy="110.5" r="6.2" fill="#f3f4f7" opacity="0.96" />
-      <circle cx="132.5" cy="110.5" r="2.1" fill="#8b93a1" />
       <defs>
-        <linearGradient id="figure02Glow" x1="94" y1="74" x2="177" y2="146" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#dce3ef" stopOpacity="0.18" />
-          <stop offset="0.55" stopColor="#98a5ba" stopOpacity="0.1" />
-          <stop offset="1" stopColor="#7d8797" stopOpacity="0.04" />
-        </linearGradient>
         <filter id="figure02Shadow" x="0" y="0" width="265" height="150" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="#040506" floodOpacity="0.45" />
         </filter>
       </defs>
+    </svg>
+  );
+}
+
+function Figure03Illustration() {
+  const dots = Array.from({ length: 25 }, (_, index) => ({
+    x: 36 + (index % 5) * 48,
+    y: 34 + Math.floor(index / 5) * 42,
+    opacity: 0.18 + ((index % 5) + Math.floor(index / 5)) * 0.08,
+  }));
+
+  return (
+    <svg viewBox="0 0 265 262" className="linear-figure-svg" aria-hidden="true">
+      {dots.map((dot, index) => (
+        <circle key={`dot-${index}`} cx={dot.x} cy={dot.y} r="5" fill="#e5e7ec" opacity={dot.opacity} />
+      ))}
+      <path d="M41 193 L92 143" stroke="#b9c0ce" strokeWidth="1" opacity="0.7" />
+      <path d="M173 125 L225 69" stroke="#b9c0ce" strokeWidth="1" opacity="0.7" />
+      <rect x="85" y="136" width="96" height="60" rx="18" fill="#0d0f12" stroke="#808796" strokeWidth="0.9" />
+      <rect x="97" y="151" width="72" height="9" rx="4.5" fill="#e9edf5" opacity="0.9" />
+      <rect x="97" y="168" width="53" height="7" rx="3.5" fill="#70798b" opacity="0.65" />
+      <rect x="195" y="40" width="32" height="32" rx="10" fill="#f2f4f8" />
+      <path d="M204 56.5h14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M211 49.5v14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="31" y="178" width="32" height="32" rx="10" fill="#f2f4f8" />
+      <path d="M40 194.5h14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M47 187.5v14" stroke="#15171b" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Figure04Illustration() {
+  const layers = [
+    { x: 136, y: 112, w: 116, h: 26, stroke: '#62666d' },
+    { x: 128, y: 102, w: 116, h: 40, stroke: '#62666d' },
+    { x: 120, y: 85, w: 116, h: 62, stroke: '#62666d' },
+    { x: 110, y: 66, w: 116, h: 88, stroke: '#929aaa' },
+  ];
+
+  return (
+    <svg viewBox="0 0 265 262" className="linear-figure-svg" aria-hidden="true">
+      {layers.map((layer, index) => (
+        <g key={`layer-${index}`} opacity={index === layers.length - 1 ? 1 : 0.9 - index * 0.14}>
+          <path
+            d={`M${layer.x} ${layer.y} l115 58 a3 3 0 0 1 2 2.7 v${layer.h} a1.5 1.5 0 0 1-.9 1.3 l-1.4 .7 a1.5 1.5 0 0 1-1.3 0 l-115-58 a3 3 0 0 1-2-2.7 v-${layer.h} a1.5 1.5 0 0 1 .9-1.3 l1.4-.7 a1.5 1.5 0 0 1 1.3 0Z`}
+            fill="#08090A"
+            stroke={layer.stroke}
+            strokeWidth="0.9"
+          />
+          <path
+            d={`M${layer.x + 2} ${layer.y + 3} l112 56 a3.2 3.2 0 0 1 1.8 2.9 v${Math.max(12, layer.h - 3)}`}
+            fill="none"
+            stroke="#2e2e32"
+            strokeWidth="0.8"
+            strokeLinecap="round"
+          />
+        </g>
+      ))}
     </svg>
   );
 }
@@ -239,6 +282,10 @@ function PillarCard({ pillar }: { pillar: Pillar }) {
       <div className="linear-pillar-image-wrap">
         {pillar.figure === 'FIG 0.2' ? (
           <Figure02Illustration />
+        ) : pillar.figure === 'FIG 0.3' ? (
+          <Figure03Illustration />
+        ) : pillar.figure === 'FIG 0.4' ? (
+          <Figure04Illustration />
         ) : (
           <img src={pillar.image} alt={pillar.title} className="linear-reference-image pillar" />
         )}

@@ -2332,7 +2332,8 @@ a {
   place-items: center;
 }
 
-.linear-figure-02-svg {
+.linear-figure-02-svg,
+.linear-figure-svg {
   display: block;
   width: 100%;
   height: 100%;
