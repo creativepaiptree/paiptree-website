@@ -2325,9 +2325,18 @@ a {
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%), #111214;
   aspect-ratio: 1.08 / 1;
   margin-bottom: 16px;
+  display: grid;
+  place-items: center;
+}
+
+.linear-figure-02-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 14px;
 }
 
 .linear-pillar-card h3 {

@@ -169,11 +169,79 @@ function LogosRow() {
   );
 }
 
+function Figure02Illustration() {
+  const rails = [0, 1, 2, 3, 4];
+
+  return (
+    <svg viewBox="0 0 265 262" className="linear-figure-02-svg" aria-hidden="true">
+      {rails.map((rail) => {
+        const y = 184 - rail * 18;
+        return (
+          <path
+            key={`rail-${rail}`}
+            d={`M19 ${y} L128 ${y + 54} Q132.5 ${y + 56.5} 137 ${y + 54} L246 ${y}`}
+            fill="none"
+            stroke={rail === 4 ? '#d0d6e0' : '#3e3e44'}
+            strokeWidth="0.8"
+            strokeLinecap="round"
+            opacity={rail === 4 ? 0.9 : 1}
+          />
+        );
+      })}
+      <path
+        d="M14 108 L129 50 Q132.5 48 136 50 L251 108 Q253 109 253 111 V198 Q253 200 251 201 L139 257 Q133 260 127 257 L15 201 Q13 200 13 198 V111 Q13 109 14 108 Z"
+        fill="none"
+        stroke="#d0d6e0"
+        strokeWidth="0.9"
+      />
+      <g filter="url(#figure02Shadow)">
+        <path
+          d="M14 67 L129 9 Q132.5 7 136 9 L251 67 Q253 68 253 70 V79 Q253 81 251 82 L137 139 Q132.5 141.5 128 139 L14 82 Q12 81 12 79 V70 Q12 68 14 67 Z"
+          fill="#08090A"
+          stroke="#d0d6e0"
+          strokeWidth="0.9"
+        />
+        <path
+          d="M22 71 L128 124 Q132.5 126.5 137 124 L243 71"
+          fill="none"
+          stroke="#2b2d31"
+          strokeWidth="0.7"
+          strokeLinecap="round"
+        />
+      </g>
+      <path
+        d="M96 93 L129 76 Q132.5 74.2 136 76 L169 93 Q171.8 94.4 171.8 97.4 V122.8 Q171.8 125.8 169 127.2 L136 144 Q132.5 145.8 129 144 L96 127.2 Q93.2 125.8 93.2 122.8 V97.4 Q93.2 94.4 96 93 Z"
+        fill="url(#figure02Glow)"
+        stroke="#9ea8b9"
+        strokeWidth="0.8"
+      />
+      <path d="M132.5 76 V144" fill="none" stroke="#6c7482" strokeWidth="0.7" opacity="0.8" />
+      <path d="M96 93 L132.5 111 L169 93" fill="none" stroke="#6c7482" strokeWidth="0.7" opacity="0.8" />
+      <circle cx="132.5" cy="110.5" r="6.2" fill="#f3f4f7" opacity="0.96" />
+      <circle cx="132.5" cy="110.5" r="2.1" fill="#8b93a1" />
+      <defs>
+        <linearGradient id="figure02Glow" x1="94" y1="74" x2="177" y2="146" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#dce3ef" stopOpacity="0.18" />
+          <stop offset="0.55" stopColor="#98a5ba" stopOpacity="0.1" />
+          <stop offset="1" stopColor="#7d8797" stopOpacity="0.04" />
+        </linearGradient>
+        <filter id="figure02Shadow" x="0" y="0" width="265" height="150" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="#040506" floodOpacity="0.45" />
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
 function PillarCard({ pillar }: { pillar: Pillar }) {
   return (
     <article className="linear-shell-card linear-pillar-card">
       <div className="linear-pillar-image-wrap">
-        <img src={pillar.image} alt={pillar.title} className="linear-reference-image pillar" />
+        {pillar.figure === 'FIG 0.2' ? (
+          <Figure02Illustration />
+        ) : (
+          <img src={pillar.image} alt={pillar.title} className="linear-reference-image pillar" />
+        )}
       </div>
       <span className="linear-figure-label">{pillar.figure}</span>
       <h3>{pillar.title}</h3>
