@@ -1858,7 +1858,7 @@ a {
 }
 
 .linear-hero-block {
-  padding-top: 276px;
+  padding-top: 184px;
   padding-bottom: 28px;
 }
 
@@ -2032,6 +2032,7 @@ a {
   position: relative;
   overflow: hidden;
   border-radius: 6px;
+  background: #17191d;
 }
 
 .linear-reference-image {
@@ -2815,7 +2816,7 @@ a {
   }
 
   .linear-hero-block {
-    padding-top: 132px;
+    padding-top: 88px;
     padding-bottom: 20px;
   }
 
