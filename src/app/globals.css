@@ -1841,7 +1841,7 @@ a {
    ============================================================ */
 .linear-page-shell {
   min-height: 100vh;
-  background: linear-gradient(180deg, #121212 0%, #141414 48%, #1a1a1a 100%);
+  background: linear-gradient(180deg, #171717 0%, #1a1a1a 48%, #202020 100%);
   color: #eef1f6;
 }
 
@@ -2015,14 +2015,14 @@ a {
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  background: #141414;
+  background: #1a1a1a;
 }
 
 .linear-hero-window {
   width: 100%;
   margin: 0 auto;
   padding-bottom: 56px;
-  background: #141414;
+  background: #1a1a1a;
 }
 
 .linear-hero-frame-shell {
@@ -2032,7 +2032,7 @@ a {
   position: relative;
   overflow: hidden;
   border-radius: 6px;
-  background: #141414;
+  background: #1a1a1a;
 }
 
 .linear-reference-image {
