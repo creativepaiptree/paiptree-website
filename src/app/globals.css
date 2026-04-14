@@ -1889,9 +1889,9 @@ a {
 
 .linear-hero-copy h1 {
   margin-top: 16px;
-  font-size: clamp(2.3rem, 4.2vw, 4.15rem);
-  line-height: 1.03;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.9rem, 3.35vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
   font-weight: 500;
   max-width: 22ch;
   color: #d6dae3;
@@ -2318,16 +2318,16 @@ a {
 
 .linear-pillar-card {
   min-height: 280px;
-  padding: 18px;
+  padding: 8px 2px 0;
 }
 
 .linear-pillar-image-wrap {
-  overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%), #111214;
+  overflow: visible;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
   aspect-ratio: 1.08 / 1;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   display: grid;
   place-items: center;
 }
@@ -2337,7 +2337,7 @@ a {
   display: block;
   width: 100%;
   height: 100%;
-  padding: 14px;
+  padding: 0;
 }
 
 .linear-pillar-card h3 {
@@ -2853,7 +2853,7 @@ a {
   }
 
   .linear-hero-copy h1 {
-    font-size: clamp(1.95rem, 7.2vw, 3.25rem);
+    font-size: clamp(1.55rem, 5.7vw, 2.55rem);
     max-width: 100%;
   }
 

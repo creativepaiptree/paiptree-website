@@ -278,7 +278,7 @@ function Figure04Illustration() {
 
 function PillarCard({ pillar }: { pillar: Pillar }) {
   return (
-    <article className="linear-shell-card linear-pillar-card">
+    <article className="linear-pillar-card">
       <div className="linear-pillar-image-wrap">
         {pillar.figure === 'FIG 0.2' ? (
           <Figure02Illustration />
