@@ -26,9 +26,9 @@ last_updated: 26.04.14
 
 ## 3. 요약
 - 총 라우트 페이지: **20**
-- 페이지 문서 생성됨: **20**
+- 페이지 문서 생성됨: **19**
 - 자동 신규 생성: **0**
-- 자동 메타 갱신(SYNCED): **0**
+- 자동 메타 갱신(SYNCED): **1**
 - 업데이트 필요(STALE): **0**
 - 활성 페이지 문서(root): **20**
 - 아카이브 페이지 문서: **16**
@@ -51,7 +51,7 @@ last_updated: 26.04.14
 | `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
 | `/git` | `src/app/git/page.tsx` | `docs/pages/git.page.md` | OK |
 | `/i18n` | `src/app/i18n/page.tsx` | `docs/pages/i18n.page.md` | OK |
-| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | OK |
+| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | SYNCED |
 | `/main` | `src/app/main/page.tsx` | `docs/pages/main.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
 | `/newsroom` | `src/app/newsroom/page.tsx` | `docs/pages/newsroom.page.md` | OK |
@@ -86,8 +86,8 @@ last_updated: 26.04.14
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.04.14)
 - `docs/pages/m.page.md` (26.04.14)
+- `docs/admin/README.md` (26.04.14)
 - `docs/pages/style.page.md` (26.04.14)
 - `docs/pages/tms-main.page.md` (26.04.13)
 - `docs/pages/tms.page.md` (26.04.13)
