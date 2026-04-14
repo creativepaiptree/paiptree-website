@@ -146,16 +146,10 @@ const footerColumns: FooterColumn[] = [
 
 function HeroMockWindow() {
   return (
-    <div className="linear-shell-card linear-hero-window linear-image-window">
-      <div className="linear-window-bar">
-        <div className="linear-window-dots">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="linear-window-pill">Linear</div>
+    <div className="linear-hero-window">
+      <div className="linear-hero-frame-shell">
+        <img src={referenceImages.hero} alt="Linear hero product interface" className="linear-reference-image hero" />
       </div>
-      <img src={referenceImages.hero} alt="Linear hero product interface" className="linear-reference-image hero" />
     </div>
   );
 }
@@ -359,24 +353,27 @@ export default function MainLinearLikePage() {
     <div data-theme="company-scale" className="linear-page-shell">
       <Header />
       <main className="linear-main">
-        <section className="linear-hero-section linear-section-frame">
-          <div className="linear-hero-copy">
-            <div className="linear-eyebrow">Linear homepage recreation</div>
-            <h1>The product development system for teams and agents</h1>
-            <p>
-              Purpose-built for planning and building products. Designed for the AI era.
-            </p>
-            <div className="linear-hero-actions">
-              <Link href="/next" className="linear-primary-button">
-                Issue tracking is dead →
-              </Link>
-              <Link href="/signup" className="linear-secondary-button">
-                Sign up
-              </Link>
+        <section className="linear-section-frame linear-hero-block">
+          <div className="linear-hero-copy-wrap">
+            <div className="linear-hero-copy">
+              <h1>The product development system for teams and agents</h1>
+              <div className="linear-hero-description-row">
+                <p>
+                  Purpose-built for planning and building products. Designed for the AI era.
+                </p>
+                <Link href="/next" className="linear-hero-feature-link">
+                  <span className="linear-pulse-dot" />
+                  <span>Issue tracking is dead</span>
+                  <span className="linear-feature-domain">linear.app/next →</span>
+                </Link>
+              </div>
             </div>
           </div>
-          <HeroMockWindow />
         </section>
+
+        <div className="linear-bleed-frame-wrap">
+          <HeroMockWindow />
+        </div>
 
         <section className="linear-section-frame linear-logos-section">
           <LogosRow />
