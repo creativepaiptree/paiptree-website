@@ -357,8 +357,8 @@ export default function MainLinearLikePage() {
           <div className="linear-hero-copy-wrap">
             <div className="linear-hero-copy">
               <h1>
-                The product development system<br />
-                for teams and agents
+                <span>The product development system</span>
+                <span>for teams and agents</span>
               </h1>
               <div className="linear-hero-description-row">
                 <p>

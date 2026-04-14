@@ -1891,12 +1891,17 @@ a {
 
 .linear-hero-copy h1 {
   margin-top: 16px;
-  font-size: clamp(2.7rem, 4.85vw, 4.8rem);
-  line-height: 1.01;
-  letter-spacing: -0.055em;
+  font-size: clamp(2.3rem, 4.2vw, 4.15rem);
+  line-height: 1.03;
+  letter-spacing: -0.05em;
   font-weight: 500;
-  max-width: 18ch;
+  max-width: 22ch;
   color: #d6dae3;
+}
+
+.linear-hero-copy h1 span {
+  display: block;
+  white-space: nowrap;
 }
 
 .linear-hero-copy p {
@@ -2815,8 +2820,8 @@ a {
   }
 
   .linear-hero-copy h1 {
-    font-size: clamp(2.3rem, 9vw, 3.9rem);
-    max-width: 14ch;
+    font-size: clamp(1.95rem, 7.2vw, 3.25rem);
+    max-width: 100%;
   }
 
   .linear-hero-copy p {
