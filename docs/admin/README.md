@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.04.14
+last_updated: 26.04.23
 ---
 
 # 문서 운영 허브
@@ -25,17 +25,17 @@ last_updated: 26.04.14
 - 아카이브 폴더 문서는 이력 보관용이며 현재 기준으로 사용하지 않는다.
 
 ## 3. 요약
-- 총 라우트 페이지: **20**
-- 페이지 문서 생성됨: **19**
+- 총 라우트 페이지: **21**
+- 페이지 문서 생성됨: **20**
 - 자동 신규 생성: **0**
 - 자동 메타 갱신(SYNCED): **1**
 - 업데이트 필요(STALE): **0**
-- 활성 페이지 문서(root): **20**
+- 활성 페이지 문서(root): **21**
 - 아카이브 페이지 문서: **16**
 - 활성 가이드(root): **1**
 - 아카이브 가이드: **14**
 - 레거시 문서(`docs/old/**`): **5**
-- 전체 문서 수(`docs/**/*.md`): **62**
+- 전체 문서 수(`docs/**/*.md`): **63**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -44,6 +44,7 @@ last_updated: 26.04.14
 | `/about` | `src/app/about/page.tsx` | `docs/pages/about.page.md` | OK |
 | `/blog` | `src/app/blog/page.tsx` | `docs/pages/blog.page.md` | OK |
 | `/careers` | `src/app/careers/page.tsx` | `docs/pages/careers.page.md` | OK |
+| `/cherry_tms` | `src/app/cherry_tms/page.tsx` | `docs/pages/cherry_tms.page.md` | SYNCED |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
 | `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | OK |
 | `/dash_2` | `src/app/dash_2/page.tsx` | `docs/pages/dash_2.page.md` | OK |
@@ -51,7 +52,7 @@ last_updated: 26.04.14
 | `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
 | `/git` | `src/app/git/page.tsx` | `docs/pages/git.page.md` | OK |
 | `/i18n` | `src/app/i18n/page.tsx` | `docs/pages/i18n.page.md` | OK |
-| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | SYNCED |
+| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | OK |
 | `/main` | `src/app/main/page.tsx` | `docs/pages/main.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
 | `/newsroom` | `src/app/newsroom/page.tsx` | `docs/pages/newsroom.page.md` | OK |
@@ -68,7 +69,7 @@ last_updated: 26.04.14
 | decisions | 1 |
 | guides | 15 |
 | old | 5 |
-| pages | 36 |
+| pages | 37 |
 | root | 2 |
 | templates | 2 |
 
@@ -86,8 +87,9 @@ last_updated: 26.04.14
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
+- `docs/pages/cherry_tms.page.md` (26.04.23)
+- `docs/admin/README.md` (26.04.23)
 - `docs/pages/m.page.md` (26.04.14)
-- `docs/admin/README.md` (26.04.14)
 - `docs/pages/style.page.md` (26.04.14)
 - `docs/pages/tms-main.page.md` (26.04.13)
 - `docs/pages/tms.page.md` (26.04.13)
@@ -95,4 +97,3 @@ last_updated: 26.04.14
 - `docs/pages/poc.page.md` (26.04.13)
 - `docs/pages/newsroom.page.md` (26.04.13)
 - `docs/pages/news.page.md` (26.04.13)
-- `docs/pages/main.page.md` (26.04.13)
