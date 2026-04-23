@@ -61,6 +61,23 @@ type MonthlyCloseItem = {
   status: string;
 };
 
+type ClaimDraftItem = {
+  item: string;
+  basis: string;
+  current: string;
+  previous: string;
+  diff: string;
+  status: string;
+};
+
+type DocumentActionItem = {
+  document: string;
+  basis: string;
+  target: string;
+  status: string;
+  action: string;
+};
+
 export const metadata: Metadata = {
   title: 'Cherrybro TMS Settlement V1',
   description: '체리부로 운행정산센터 시안 / 정산 업무 흐름 중심 workbench',
@@ -172,11 +189,63 @@ const settlementRows: SettlementRow[] = [
   },
 ];
 
-const claimBreakdown = [
-  ['운임 인상분', '₩6.2M'],
-  ['착지수당 차이', '₩1.2M'],
-  ['일요/휴일 차이', '₩1.1M'],
-  ['예외 보정', '₩0.3M'],
+const claimDraftItems: ClaimDraftItem[] = [
+  {
+    item: '운임 인상분',
+    basis: '2026 운임표 - 2025 운임표',
+    current: '₩124.3M',
+    previous: '₩118.1M',
+    diff: '+₩6.2M',
+    status: '초안완료',
+  },
+  {
+    item: '착지수당 차이',
+    basis: '배송현황 착지수당 집계',
+    current: '₩9.8M',
+    previous: '₩8.6M',
+    diff: '+₩1.2M',
+    status: '검토필요',
+  },
+  {
+    item: '경유수당 차이',
+    basis: '배차일보 경유수 입력 기준',
+    current: '₩5.4M',
+    previous: '₩4.7M',
+    diff: '+₩0.7M',
+    status: '근거확인',
+  },
+  {
+    item: '기타 보정',
+    basis: '수기보정/예외 운행 반영',
+    current: '₩1.5M',
+    previous: '₩1.1M',
+    diff: '+₩0.4M',
+    status: '초안완료',
+  },
+];
+
+const documentActionItems: DocumentActionItem[] = [
+  {
+    document: '기사별 월정산표',
+    basis: '월마감 집계표 승인 행 기준',
+    target: '기사 지급 마감용',
+    status: '생성가능',
+    action: '엑셀 내보내기',
+  },
+  {
+    document: 'Green 차액청구 요약서',
+    basis: '당해-전년 차액 합계 기준',
+    target: '거래처 청구 초안',
+    status: '검토후 생성',
+    action: '요약서 생성',
+  },
+  {
+    document: '상세 근거내역 첨부본',
+    basis: '일정산 상세/보정 내역 포함',
+    target: '첨부 증빙 제출용',
+    status: '근거정리 필요',
+    action: '첨부본 생성',
+  },
 ];
 
 const monthlyCloseItems: MonthlyCloseItem[] = [
@@ -210,11 +279,11 @@ const monthlyCloseItems: MonthlyCloseItem[] = [
 ];
 
 const statusTone = (status: string) => {
-  if (status === '검토중') return 'bg-amber-500/12 text-amber-300 border-amber-500/30';
-  if (status === '승인대기') return 'bg-sky-500/12 text-sky-300 border-sky-500/30';
-  if (status === '검토완료') return 'bg-emerald-500/12 text-emerald-300 border-emerald-500/30';
-  if (status === '차액확인') return 'bg-violet-500/12 text-violet-300 border-violet-500/30';
-  if (status === '마감초안') return 'bg-orange-500/12 text-orange-300 border-orange-500/30';
+  if (status === '검토중' || status === '검토필요') return 'bg-amber-500/12 text-amber-300 border-amber-500/30';
+  if (status === '승인대기' || status === '생성가능') return 'bg-sky-500/12 text-sky-300 border-sky-500/30';
+  if (status === '검토완료' || status === '초안완료') return 'bg-emerald-500/12 text-emerald-300 border-emerald-500/30';
+  if (status === '차액확인' || status === '근거확인') return 'bg-violet-500/12 text-violet-300 border-violet-500/30';
+  if (status === '마감초안' || status === '검토후 생성') return 'bg-orange-500/12 text-orange-300 border-orange-500/30';
   return 'bg-rose-500/12 text-rose-300 border-rose-500/30';
 };
 
@@ -228,56 +297,73 @@ export default function CherryTmsPage() {
   return (
     <div data-theme="showcase" className="min-h-screen bg-[var(--surface-bg)] text-[var(--surface-text)]">
       <main className="mx-auto flex min-h-screen w-full max-w-[1720px] flex-col gap-6 px-4 py-6 md:px-6 xl:px-8">
-        <section className="rounded-[28px] border border-white/10 bg-[#0b1220] shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-          <div className="flex flex-col gap-8 border-b border-white/10 px-6 py-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
-            <div className="max-w-3xl">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7aa2ff]">
-                Cherrybro TMS Settlement V1 / Settlement Workbench
-              </p>
-              <h1 className="mb-4 text-3xl font-semibold tracking-[-0.04em] text-white md:text-5xl">
-                정산 실무 흐름이 바로 읽히는 체리부로 시안
-              </h1>
-              <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                일반 TMS 소개 화면이 아니라, 업로드 → 정규화 → 일 정산 → 월 마감 → Green 차액청구까지를
-                정산 실무자 관점에서 빠르게 검토하도록 구성한 내부 workbench 시안입니다.
-              </p>
-            </div>
-            <div className="grid min-w-[280px] gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300 md:min-w-[340px]">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">정산월</span>
-                <strong className="text-white">2026.01</strong>
+        <section className="border border-[#243041] bg-[#0b1220]">
+          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3 md:px-6">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7aa2ff]">
+                  Cherrybro TMS Settlement V1 / ERP Input Draft
+                </p>
+                <h1 className="mt-2 text-xl font-semibold text-white md:text-2xl">
+                  체리부로 차량 정산 등록 / 검토
+                </h1>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">기준 버전</span>
-                <strong className="text-white">당해 2026 / 비교 2025</strong>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">현재 상태</span>
-                <strong className="text-[#7aa2ff]">월마감 준비 단계</strong>
-              </div>
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-wrap gap-2 text-xs md:text-sm">
                 <Link
                   href="/PoC"
-                  className="inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-white transition hover:border-white/20 hover:bg-white/5"
+                  className="inline-flex items-center justify-center border border-[#314056] px-3 py-2 text-slate-200 transition hover:bg-white/5"
                 >
-                  PoC 참조 보기
+                  PoC 참조
                 </Link>
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center rounded-full bg-[#4D7CFF] px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
+                  className="inline-flex items-center justify-center border border-[#4D7CFF] bg-[#1c2c52] px-3 py-2 font-medium text-white transition hover:bg-[#223664]"
                 >
-                  월 마감 시작
+                  정산월 마감
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 px-6 py-6 md:grid-cols-2 xl:grid-cols-4 xl:px-8">
+          <div className="border-b border-[#243041] px-4 py-4 md:px-6">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+              {[
+                ['정산월', '2026.01'],
+                ['운송사', '그린'],
+                ['기사명', '전체'],
+                ['상태', '검토중'],
+                ['기준 버전', '당해 2026 / 비교 2025'],
+                ['조회 키워드', '차량번호 / 거래처'],
+              ].map(([label, value]) => (
+                <label key={label} className="grid gap-2">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">{label}</span>
+                  <div className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-sm text-slate-200">{value}</div>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {['조회', '초기화', '엑셀업로드', '정산생성', '청구초안'].map((action, index) => (
+                <button
+                  key={action}
+                  type="button"
+                  className={`px-3 py-2 text-xs font-medium transition md:text-sm ${
+                    index === 0
+                      ? 'border border-[#4D7CFF] bg-[#1c2c52] text-white hover:bg-[#223664]'
+                      : 'border border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-px bg-[#243041] md:grid-cols-2 xl:grid-cols-4">
             {topStats.map((stat) => (
-              <article key={stat.label} className={`rounded-2xl border p-5 ${cardTone(stat.tone)}`}>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{stat.label}</p>
-                <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white">{stat.value}</p>
-                <p className="mt-3 text-sm text-slate-300">{stat.hint}</p>
+              <article key={stat.label} className={`bg-[#0b1220] px-4 py-4 ${cardTone(stat.tone)}`}>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{stat.label}</p>
+                <p className="mt-3 text-2xl font-semibold text-white">{stat.value}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{stat.hint}</p>
               </article>
             ))}
           </div>
@@ -285,105 +371,133 @@ export default function CherryTmsPage() {
 
         <section className="grid gap-6 xl:grid-cols-[1.15fr_minmax(320px,0.85fr)]">
           <div className="grid gap-6">
-            <article className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-              <div className="mb-5 flex items-center justify-between gap-4">
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex items-center justify-between gap-4 border-b border-[#243041] bg-[#0f1722] px-4 py-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">작업 흐름</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">이번 달 정산 워크벤치</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">작업 흐름</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">정산 진행 현황</h2>
                 </div>
-                <span className="rounded-full border border-[#4D7CFF]/40 bg-[#4D7CFF]/10 px-3 py-1 text-xs font-medium text-[#8eb0ff]">
-                  운영자용 1차 시안
+                <span className="border border-[#314056] bg-[#0a1019] px-3 py-1 text-xs text-slate-300">
+                  ERP 진행표
                 </span>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {workQueues.map((item, index) => (
-                  <div key={item.title} className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">STEP 0{index + 1}</span>
-                      <strong className="text-sm text-white">{item.count}</strong>
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">{item.detail}</p>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="bg-[#111a27] text-slate-400">
+                    <tr>
+                      <th className="border-b border-[#243041] px-4 py-3 font-medium">단계</th>
+                      <th className="border-b border-[#243041] px-4 py-3 font-medium">현재 상태</th>
+                      <th className="border-b border-[#243041] px-4 py-3 font-medium">설명</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {workQueues.map((item, index) => (
+                      <tr key={item.title} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex h-6 min-w-[52px] items-center justify-center border border-[#314056] bg-[#0a1019] px-2 text-[11px] font-medium text-slate-300">
+                              STEP 0{index + 1}
+                            </span>
+                            <span className="font-medium text-white">{item.title}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{item.count}</td>
+                        <td className="px-4 py-3 text-slate-300">{item.detail}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </article>
 
-            <article className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-              <div className="mb-5 flex items-center justify-between gap-3">
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#243041] bg-[#0f1722] px-4 py-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">원천 업로드 / 정규화</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">업로드 묶음과 매핑 대기 항목</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">원천 업로드 / 정규화</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">업로드 파일 및 매핑 대기 현황</h2>
                 </div>
                 <button
                   type="button"
-                  className="rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/5"
+                  className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5"
                 >
                   업로드 상세
                 </button>
               </div>
-              <div className="grid gap-4 xl:grid-cols-[1.05fr_minmax(280px,0.95fr)]">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="mb-4 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">이번 달 파일 번들</p>
-                    <span className="text-xs text-slate-400">raw 보존 + 시트 파싱</span>
-                  </div>
-                  <div className="space-y-3">
-                    {sourceFiles.map((file) => (
-                      <div key={file.name} className="rounded-2xl border border-white/10 bg-[#0b1220]/60 px-4 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium text-white">{file.name}</p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{file.source}</p>
-                          </div>
-                          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-slate-300">
-                            {file.status}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm text-slate-300">{file.rows}</p>
-                      </div>
-                    ))}
+              <div className="grid gap-px bg-[#243041] xl:grid-cols-[1.1fr_minmax(280px,0.9fr)]">
+                <div className="bg-[#0b1220]">
+                  <div className="border-b border-[#243041] px-4 py-3 text-sm font-medium text-white">이번 달 파일 번들</div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse text-left text-sm">
+                      <thead className="bg-[#111a27] text-slate-400">
+                        <tr>
+                          {['파일명', '구분', '상태', '행/시트'].map((head) => (
+                            <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
+                              {head}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sourceFiles.map((file) => (
+                          <tr key={file.name} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                            <td className="px-4 py-3 whitespace-nowrap text-white">{file.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-slate-300">{file.source}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{file.status}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-slate-300">{file.rows}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#4D7CFF]/20 bg-[#4D7CFF]/6 p-4">
-                  <div className="mb-4 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">매핑 대기 큐</p>
+                <div className="bg-[#0b1220]">
+                  <div className="flex items-center justify-between border-b border-[#243041] px-4 py-3">
+                    <span className="text-sm font-medium text-white">매핑 대기 큐</span>
                     <span className="text-xs text-[#9ab6ff]">12건 중 우선 4건</span>
                   </div>
-                  <div className="space-y-3">
-                    {mappingIssues.map((item) => (
-                      <div key={`${item.field}-${item.raw}`} className="rounded-2xl border border-white/10 bg-black/15 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{item.field}</span>
-                          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-200">
-                            {item.state}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm text-slate-300">raw: {item.raw}</p>
-                        <p className="mt-1 text-sm font-medium text-white">suggested: {item.suggested}</p>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse text-left text-sm">
+                      <thead className="bg-[#111a27] text-slate-400">
+                        <tr>
+                          {['필드', 'raw 값', '제안값', '상태'].map((head) => (
+                            <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
+                              {head}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mappingIssues.map((item) => (
+                          <tr key={`${item.field}-${item.raw}`} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                            <td className="px-4 py-3 whitespace-nowrap text-white">{item.field}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-slate-300">{item.raw}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-slate-200">{item.suggested}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-amber-300">{item.state}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             </article>
 
-            <article className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-              <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex flex-col gap-3 border-b border-[#243041] bg-[#0f1722] px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">일 정산</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">검토 대기 행</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">일 정산</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">일 정산 검토 리스트</h2>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
                   {['전체', '검토중', '승인대기', '원천누락'].map((filter, index) => (
                     <button
                       key={filter}
                       type="button"
-                      className={`rounded-full border px-3 py-1.5 transition ${
+                      className={`border px-3 py-1.5 transition ${
                         index === 0
-                          ? 'border-[#4D7CFF]/40 bg-[#4D7CFF]/10 text-[#9ab6ff]'
-                          : 'border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5'
+                          ? 'border-[#4D7CFF] bg-[#1c2c52] text-white'
+                          : 'border-[#314056] bg-[#0a1019] text-slate-300 hover:bg-white/5'
                       }`}
                     >
                       {filter}
@@ -391,128 +505,129 @@ export default function CherryTmsPage() {
                   ))}
                 </div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-white/10">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-                    <thead className="bg-white/[0.04] text-slate-400">
-                      <tr>
-                        {['일자', '차량', '기사', '차수', '지역', 'BOX', '상태', '당해', '전년', '차액'].map((head) => (
-                          <th key={head} className="px-4 py-3 font-medium whitespace-nowrap">
-                            {head}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/10 bg-[#0b1220]/40">
-                      {settlementRows.map((row, index) => {
-                        const isActive = index === 0;
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="bg-[#111a27] text-slate-400">
+                    <tr>
+                      {['일자', '차량', '기사', '차수', '지역', 'BOX', '상태', '당해', '전년', '차액'].map((head) => (
+                        <th key={head} className="border-b border-[#243041] px-3 py-3 font-medium whitespace-nowrap">
+                          {head}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {settlementRows.map((row, index) => {
+                      const isActive = index === 0;
 
-                        return (
-                          <tr
-                            key={`${row.date}-${row.vehicle}-${row.trip}`}
-                            className={`text-slate-200 transition ${
-                              isActive ? 'bg-[#4D7CFF]/8' : 'hover:bg-white/[0.03]'
-                            }`}
-                          >
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                <span className={`h-8 w-1 rounded-full ${isActive ? 'bg-[#4D7CFF]' : 'bg-transparent'}`} />
-                                <span>{row.date}</span>
-                              </div>
-                            </td>
-                            <td className={`px-4 py-3 whitespace-nowrap ${isActive ? 'text-white font-medium' : ''}`}>{row.vehicle}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">{row.driver}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">{row.trip}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">{row.region}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">{row.boxes}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusTone(row.status)}`}>
-                                {row.status}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">{row.current}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-slate-400">{row.previous}</td>
-                            <td className={`px-4 py-3 whitespace-nowrap font-medium ${isActive ? 'text-[#b6caff]' : 'text-[#8eb0ff]'}`}>
-                              {row.diff}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                      return (
+                        <tr
+                          key={`${row.date}-${row.vehicle}-${row.trip}`}
+                          className={`border-b border-[#1b2636] text-slate-200 last:border-b-0 ${
+                            isActive ? 'bg-[#13213a]' : 'hover:bg-white/[0.03]'
+                          }`}
+                        >
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className={`h-6 w-[3px] ${isActive ? 'bg-[#4D7CFF]' : 'bg-transparent'}`} />
+                              <span>{row.date}</span>
+                            </div>
+                          </td>
+                          <td className={`px-3 py-3 whitespace-nowrap ${isActive ? 'font-medium text-white' : ''}`}>{row.vehicle}</td>
+                          <td className="px-3 py-3 whitespace-nowrap">{row.driver}</td>
+                          <td className="px-3 py-3 whitespace-nowrap">{row.trip}</td>
+                          <td className="px-3 py-3 whitespace-nowrap">{row.region}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right">{row.boxes}</td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className={`border px-2 py-1 text-[11px] font-medium ${statusTone(row.status)}`}>
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right">{row.current}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-slate-400">{row.previous}</td>
+                          <td className={`px-3 py-3 whitespace-nowrap text-right font-medium ${isActive ? 'text-[#b6caff]' : 'text-[#8eb0ff]'}`}>
+                            {row.diff}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </article>
 
-            <article className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-              <div className="mb-5 flex items-center justify-between gap-3">
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#243041] bg-[#0f1722] px-4 py-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">일 정산 상세</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">선택 행 상세 패널</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">일 정산 상세</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">선택 행 상세 입력 / 계산</h2>
                 </div>
-                <span className="rounded-full border border-[#4D7CFF]/30 bg-[#4D7CFF]/10 px-3 py-1 text-xs font-medium text-[#9ab6ff]">
+                <span className="border border-[#314056] bg-[#0a1019] px-3 py-1 text-xs text-[#9ab6ff]">
                   {selectedSettlement.vehicle} / {selectedSettlement.trip}
                 </span>
               </div>
-              <div className="grid gap-4 xl:grid-cols-[1fr_minmax(280px,0.9fr)]">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-sm font-semibold text-white">원천 근거</p>
-                  <div className="mt-4 space-y-3">
-                    {selectedSettlement.sourceBasis.map((item, index) => (
-                      <div key={item} className="rounded-2xl border border-white/10 bg-[#0b1220]/60 px-4 py-3">
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">SOURCE 0{index + 1}</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-200">{item}</p>
-                      </div>
-                    ))}
+              <div className="grid gap-px bg-[#243041] xl:grid-cols-[1fr_minmax(300px,0.95fr)]">
+                <div className="bg-[#0b1220]">
+                  <div className="border-b border-[#243041] px-4 py-3 text-sm font-medium text-white">원천 근거</div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse text-left text-sm">
+                      <thead className="bg-[#111a27] text-slate-400">
+                        <tr>
+                          <th className="border-b border-[#243041] px-4 py-3 font-medium">구분</th>
+                          <th className="border-b border-[#243041] px-4 py-3 font-medium">근거 내용</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedSettlement.sourceBasis.map((item, index) => (
+                          <tr key={item} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                            <td className="px-4 py-3 whitespace-nowrap text-slate-400">SOURCE 0{index + 1}</td>
+                            <td className="px-4 py-3 text-slate-200">{item}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <div className="grid gap-4">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-sm font-semibold text-white">입력값</p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {selectedSettlement.inputValues.map((item) => (
-                        <div key={item.label} className="rounded-2xl border border-white/10 bg-[#0b1220]/60 px-4 py-3">
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                          <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+                <div className="bg-[#0b1220]">
+                  <div className="border-b border-[#243041] px-4 py-3 text-sm font-medium text-white">입력값 / 계산결과</div>
+                  <div className="grid gap-px bg-[#243041] md:grid-cols-2">
+                    {selectedSettlement.inputValues.map((item) => (
+                      <div key={item.label} className="bg-[#0b1220] px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
+                        <div className="mt-2 border border-[#314056] bg-[#0a1019] px-3 py-2 text-sm text-white">{item.value}</div>
+                      </div>
+                    ))}
+                    {selectedSettlement.calcValues.map((item) => (
+                      <div key={item.label} className="bg-[#0b1220] px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
+                        <div className={`mt-2 border px-3 py-2 text-sm font-medium ${item.tone === 'accent' ? 'border-[#4D7CFF] bg-[#15233f] text-[#b6caff]' : 'border-[#314056] bg-[#0a1019] text-white'}`}>
+                          {item.value}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-
-                  <div className="rounded-2xl border border-[#4D7CFF]/25 bg-[#4D7CFF]/8 p-4">
-                    <p className="text-sm font-semibold text-white">계산 결과</p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {selectedSettlement.calcValues.map((item) => (
-                        <div key={item.label} className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3">
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                          <p className={`mt-2 text-lg font-semibold ${item.tone === 'accent' ? 'text-[#9ab6ff]' : 'text-white'}`}>
-                            {item.value}
-                          </p>
-                        </div>
-                      ))}
+                  <div className="border-t border-[#243041] px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="border border-[#4D7CFF] bg-[#1c2c52] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#223664]"
+                      >
+                        재계산
+                      </button>
+                      <button
+                        type="button"
+                        className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5"
+                      >
+                        승인
+                      </button>
+                      <button
+                        type="button"
+                        className="border border-[#7a5a23] bg-[#2b2213] px-3 py-2 text-xs text-amber-200 transition hover:bg-[#352a18]"
+                      >
+                        보정 필요 표시
+                      </button>
                     </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-full bg-[#4D7CFF] px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
-                    >
-                      재계산
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/5"
-                    >
-                      승인
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-medium text-amber-200 transition hover:bg-amber-500/15"
-                    >
-                      보정 필요 표시
-                    </button>
                   </div>
                 </div>
               </div>
@@ -520,84 +635,157 @@ export default function CherryTmsPage() {
           </div>
 
           <div className="grid gap-6">
-            <article className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">월 마감</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">기사별 월 합계 초안</h2>
-              <div className="mt-5 space-y-3">
-                {monthlyCloseItems.map((item) => (
-                  <div key={`${item.driver}-${item.vehicle}`} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{item.driver}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{item.vehicle} / {item.trips}</p>
-                      </div>
-                      <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusTone(item.status)}`}>
-                        {item.status}
-                      </span>
-                    </div>
-                    <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                      <div className="rounded-2xl border border-white/10 bg-[#0b1220]/60 px-3 py-3">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">당해</p>
-                        <p className="mt-2 font-semibold text-white">{item.current}</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-[#0b1220]/60 px-3 py-3">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">전년</p>
-                        <p className="mt-2 font-semibold text-slate-300">{item.previous}</p>
-                      </div>
-                      <div className="rounded-2xl border border-[#4D7CFF]/25 bg-[#4D7CFF]/8 px-3 py-3">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-[#9ab6ff]">차액</p>
-                        <p className="mt-2 font-semibold text-[#9ab6ff]">{item.diff}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="rounded-[24px] border border-[#4D7CFF]/25 bg-[#4D7CFF]/8 p-6">
-              <div className="flex items-center justify-between gap-3">
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#243041] bg-[#0f1722] px-4 py-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#9ab6ff]">Green 차액청구 초안</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">청구 요약 / export</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">월 마감</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">기사별 월 합계 초안</h2>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-full border border-white/10 bg-black/15 px-4 py-2 text-xs font-medium text-white transition hover:bg-black/25"
-                >
-                  Excel export
-                </button>
+                <span className="border border-[#314056] bg-[#0a1019] px-3 py-1 text-xs text-slate-300">
+                  월마감 집계표
+                </span>
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-black/15 px-4 py-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">당해 기준 총액</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">₩124.3M</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/15 px-4 py-4">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">전년 기준 총액</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">₩115.8M</p>
-                </div>
-              </div>
-              <div className="mt-4 rounded-2xl border border-dashed border-white/15 px-4 py-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">청구 차액 총액</p>
-                <p className="mt-2 text-3xl font-semibold text-[#9ab6ff]">₩8.5M</p>
-                <p className="mt-2 text-sm leading-6 text-slate-200">기사 지급은 당해 기준으로 마감하고, Green 청구는 당해-전년 차액만 별도 문서화합니다.</p>
-              </div>
-              <div className="mt-5 space-y-3">
-                {claimBreakdown.map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm">
-                    <span className="text-slate-200">{label}</span>
-                    <strong className="text-white">{value}</strong>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="bg-[#111a27] text-slate-400">
+                    <tr>
+                      {['기사명', '차량', '운행건수', '당해', '전년', '차액', '상태'].map((head) => (
+                        <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
+                          {head}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyCloseItems.map((item) => (
+                      <tr key={`${item.driver}-${item.vehicle}`} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                        <td className="px-4 py-3 whitespace-nowrap text-white">{item.driver}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-slate-300">{item.vehicle}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-slate-300">{item.trips}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-white">{item.current}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-slate-400">{item.previous}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-[#9ab6ff]">{item.diff}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`border px-2 py-1 text-[11px] font-medium ${statusTone(item.status)}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </article>
 
-            <article className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">문서 액션</p>
-              <div className="mt-4 grid gap-3 text-sm text-slate-300">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">1. 기사별 월정산표 export</div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">2. Green 차액청구 요약서 export</div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">3. 상세 근거내역 첨부용 export</div>
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#243041] bg-[#10203d] px-4 py-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9ab6ff]">차액청구</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">Green 차액청구 집계표</h2>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="border border-[#4D7CFF] bg-[#1c2c52] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#223664]"
+                  >
+                    청구초안 생성
+                  </button>
+                  <button
+                    type="button"
+                    className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5"
+                  >
+                    요약서 export
+                  </button>
+                </div>
+              </div>
+              <div className="grid gap-px border-b border-[#243041] bg-[#243041] md:grid-cols-3">
+                {[
+                  ['당해 기준 총액', '₩141.0M'],
+                  ['전년 기준 총액', '₩132.5M'],
+                  ['청구 차액 총액', '₩8.5M'],
+                ].map(([label, value], index) => (
+                  <div key={label} className="bg-[#0b1220] px-4 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{label}</p>
+                    <p className={`mt-2 text-xl font-semibold ${index === 2 ? 'text-[#9ab6ff]' : 'text-white'}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="bg-[#111a27] text-slate-400">
+                    <tr>
+                      {['항목', '산출 기준', '당해', '전년', '차액', '상태'].map((head) => (
+                        <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
+                          {head}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {claimDraftItems.map((item) => (
+                      <tr key={item.item} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                        <td className="px-4 py-3 whitespace-nowrap text-white">{item.item}</td>
+                        <td className="px-4 py-3 text-slate-300">{item.basis}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-white">{item.current}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-slate-400">{item.previous}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-[#9ab6ff]">{item.diff}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`border px-2 py-1 text-[11px] font-medium ${statusTone(item.status)}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="border-t border-[#243041] px-4 py-3 text-sm text-slate-300">
+                기사 지급은 당해 기준으로 마감하고, Green 청구는 당해-전년 차액만 별도 문서화합니다.
+              </div>
+            </article>
+
+            <article className="border border-[#243041] bg-[#0b1220]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#243041] bg-[#0f1722] px-4 py-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">문서 액션</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">월마감 문서 생성 작업행</h2>
+                </div>
+                <span className="border border-[#314056] bg-[#0a1019] px-3 py-1 text-xs text-slate-300">export / 생성 / 첨부</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="bg-[#111a27] text-slate-400">
+                    <tr>
+                      {['문서명', '생성 기준', '제출 대상', '상태', '실행'].map((head) => (
+                        <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
+                          {head}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {documentActionItems.map((item) => (
+                      <tr key={item.document} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                        <td className="px-4 py-3 whitespace-nowrap text-white">{item.document}</td>
+                        <td className="px-4 py-3 text-slate-300">{item.basis}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-slate-300">{item.target}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`border px-2 py-1 text-[11px] font-medium ${statusTone(item.status)}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <button
+                            type="button"
+                            className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5"
+                          >
+                            {item.action}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </article>
           </div>

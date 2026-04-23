@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.04.23
+last_updated: 26.04.24
 ---
 
 # 문서 운영 허브
@@ -87,7 +87,7 @@ last_updated: 26.04.23
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/pages/cherry_tms.page.md` (26.04.23)
+- `docs/pages/cherry_tms.page.md` (26.04.24)
 - `docs/admin/README.md` (26.04.23)
 - `docs/pages/m.page.md` (26.04.14)
 - `docs/pages/style.page.md` (26.04.14)

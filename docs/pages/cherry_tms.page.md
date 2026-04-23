@@ -1,7 +1,7 @@
 ---
 title: "/cherry_tms 페이지 운영 문서"
 author: ZORO
-last_updated: 26.04.23
+last_updated: 26.04.24
 ---
 # /cherry_tms 페이지 운영 문서
 
