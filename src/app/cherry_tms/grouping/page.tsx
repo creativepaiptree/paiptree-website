@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 
 import { CherryTmsShell } from '../_shared';
 import { GroupingTable } from './_GroupingTable';
+import { fetchCherryTmsGroupingPageData } from '@/lib/cherryTmsGroupings';
+
 
 export const metadata: Metadata = {
   title: 'Cherrybro TMS Grouping',
@@ -21,6 +23,9 @@ type GroupingPriceVariables = {
 
 type GroupingDetailRow = {
   order: string;
+  transportId: string;
+  transportSeq: string;
+  carSeq: string;
   region: string;
   weight: string;
   destination: string;
@@ -41,11 +46,11 @@ type GroupingRow = {
   details: GroupingDetailRow[];
 };
 
-const groupingStats = [
-  { label: '총 운행건수', value: '105건', hint: '전일 운행완료 raw 기준' },
-  { label: '차량 수', value: '42대', hint: '차량번호 식별 가능 건 기준' },
-  { label: '기사 수', value: '24명', hint: '기사명 또는 차량 연결 기준' },
-  { label: '수동 확인 필요', value: '7건', hint: '자동 묶음/정렬 예외 포함' },
+const fallbackGroupingStats = [
+  { label: '원천 헤더', value: '314건', hint: 'tbl_tms_transport 기준' },
+  { label: '차량 실행행', value: '4,118건', hint: 'tbl_tms_transport_car 기준' },
+  { label: '상세 경로행', value: '369건', hint: 'tbl_tms_transport_detail 기준' },
+  { label: '정산 후보', value: '42묶음', hint: '기사·차량·일자 기준 가공 단위' },
 ];
 
 const groupingRows: GroupingRow[] = [
@@ -70,11 +75,11 @@ const groupingRows: GroupingRow[] = [
       s70MorningDrop: '10,000',
     },
     details: [
-      { order: '1', region: '용인', weight: '420kg', destination: '용인마트', judgement: '정상' },
-      { order: '2', region: '수원', weight: '370kg', destination: '수원영업소', judgement: '정상' },
-      { order: '3', region: '수원', weight: '290kg', destination: '수원영업소', judgement: '병합대상' },
-      { order: '4', region: '광주', weight: '310kg', destination: '광주경유', judgement: '경유후보' },
-      { order: '5', region: '동서울', weight: '430kg', destination: '동서울 아워홈', judgement: '종료지' },
+      { order: '1', transportId: 'TMS-20260423-001', transportSeq: '1', carSeq: '1', region: '용인', weight: '420kg', destination: '용인마트', judgement: '정상' },
+      { order: '2', transportId: 'TMS-20260423-001', transportSeq: '2', carSeq: '1', region: '수원', weight: '370kg', destination: '수원영업소', judgement: '정상' },
+      { order: '3', transportId: 'TMS-20260423-001', transportSeq: '3', carSeq: '1', region: '수원', weight: '290kg', destination: '수원영업소', judgement: '병합대상' },
+      { order: '4', transportId: 'TMS-20260423-001', transportSeq: '4', carSeq: '1', region: '광주', weight: '310kg', destination: '광주경유', judgement: '경유후보' },
+      { order: '5', transportId: 'TMS-20260423-001', transportSeq: '5', carSeq: '1', region: '동서울', weight: '430kg', destination: '동서울 아워홈', judgement: '종료지' },
     ],
   },
   {
@@ -98,10 +103,10 @@ const groupingRows: GroupingRow[] = [
       s70MorningDrop: '0',
     },
     details: [
-      { order: '1', region: '정읍', weight: '610kg', destination: '정읍센터', judgement: '시작지' },
-      { order: '2', region: '익산', weight: '440kg', destination: '익산거점', judgement: '정상' },
-      { order: '3', region: '전주', weight: '520kg', destination: '전주경유', judgement: '순서확인' },
-      { order: '4', region: '광주', weight: '570kg', destination: '광주영업소', judgement: '종료지' },
+      { order: '1', transportId: 'TMS-20260423-014', transportSeq: '1', carSeq: '1', region: '정읍', weight: '610kg', destination: '정읍센터', judgement: '시작지' },
+      { order: '2', transportId: 'TMS-20260423-014', transportSeq: '2', carSeq: '1', region: '익산', weight: '440kg', destination: '익산거점', judgement: '정상' },
+      { order: '3', transportId: 'TMS-20260423-014', transportSeq: '3', carSeq: '1', region: '전주', weight: '520kg', destination: '전주경유', judgement: '순서확인' },
+      { order: '4', transportId: 'TMS-20260423-014', transportSeq: '4', carSeq: '1', region: '광주', weight: '570kg', destination: '광주영업소', judgement: '종료지' },
     ],
   },
   {
@@ -125,9 +130,9 @@ const groupingRows: GroupingRow[] = [
       s70MorningDrop: '0',
     },
     details: [
-      { order: '1', region: '부산', weight: '830kg', destination: '부산영업소', judgement: '시작지' },
-      { order: '2', region: '김해', weight: '710kg', destination: '김해경유', judgement: '정렬검토' },
-      { order: '3', region: '양산', weight: '830kg', destination: '양산센터', judgement: '종료지' },
+      { order: '1', transportId: 'TMS-20260423-021', transportSeq: '1', carSeq: '1', region: '부산', weight: '830kg', destination: '부산영업소', judgement: '시작지' },
+      { order: '2', transportId: 'TMS-20260423-021', transportSeq: '2', carSeq: '1', region: '김해', weight: '710kg', destination: '김해경유', judgement: '정렬검토' },
+      { order: '3', transportId: 'TMS-20260423-021', transportSeq: '3', carSeq: '1', region: '양산', weight: '830kg', destination: '양산센터', judgement: '종료지' },
     ],
   },
   {
@@ -151,22 +156,34 @@ const groupingRows: GroupingRow[] = [
       s70MorningDrop: '0',
     },
     details: [
-      { order: '1', region: '청주', weight: '580kg', destination: '청주영업소', judgement: '기사확인' },
-      { order: '2', region: '오산', weight: '210kg', destination: '오산경유', judgement: '중간지' },
-      { order: '3', region: '용인', weight: '470kg', destination: '용인센터', judgement: '종료지' },
+      { order: '1', transportId: 'TMS-20260423-033', transportSeq: '1', carSeq: '1', region: '청주', weight: '580kg', destination: '청주영업소', judgement: '기사확인' },
+      { order: '2', transportId: 'TMS-20260423-033', transportSeq: '2', carSeq: '1', region: '오산', weight: '210kg', destination: '오산경유', judgement: '중간지' },
+      { order: '3', transportId: 'TMS-20260423-033', transportSeq: '3', carSeq: '1', region: '용인', weight: '470kg', destination: '용인센터', judgement: '종료지' },
     ],
   },
 ];
 
 const actionButtons = ['자동 묶음 재실행', '정렬 재계산', '예외 내보내기', '묶음 확정'];
 
-export default function CherryTmsGroupingPage() {
+export default async function CherryTmsGroupingPage() {
+  const groupingData = await fetchCherryTmsGroupingPageData();
+  const hasSupabaseData = groupingData !== null;
+  const groupingRowsForRender = hasSupabaseData ? groupingData.rows : groupingRows;
+  const groupingStats = hasSupabaseData
+    ? [
+        { label: '원천 행', value: `${groupingData.sourceRowCount.toLocaleString('ko-KR')}건`, hint: 'Supabase raw Excel rows' },
+        { label: '묶음 후보', value: `${groupingData.candidateCount.toLocaleString('ko-KR')}건`, hint: 'grouping run rows' },
+        { label: '상세 행', value: `${groupingRowsForRender.reduce((sum, row) => sum + row.details.length, 0).toLocaleString('ko-KR')}건`, hint: 'detail row total' },
+        { label: '수동 확인', value: `${groupingData.manualReviewCount.toLocaleString('ko-KR')}건`, hint: '검토 필요 rows' },
+      ]
+    : fallbackGroupingStats;
+
   return (
     <CherryTmsShell
       current="grouping"
       eyebrow="Cherrybro TMS / Grouping"
       title="기사/차량 기준 묶음 생성 및 순서 점검"
-      description="이 단계는 원천 운행건을 기사 또는 차량 기준으로 묶고, 시작·종료 지역 순서와 영업소 연결을 확인해 정산 등록 가능한 단위로 만드는 운영 화면입니다. 각 묶음은 바로 아래에서 실제 원천행을 펼쳐 확인할 수 있습니다."
+      description="이 단계는 tms의 transport_detail과 transport_car 원천행을 기사·차량·운행일 기준으로 묶고, 지역·중량·차량/기사 매칭을 확인해 tms_settlement 등록 후보로 넘기는 작업표입니다."
     >
       <section className="border border-[#243041] bg-[#0b1220]">
         <div className="cherry-light-header border-b border-[#243041] bg-[#0f1722] px-4 py-3">
@@ -175,9 +192,9 @@ export default function CherryTmsGroupingPage() {
         <div className="grid gap-3 px-4 py-4 md:grid-cols-2 xl:grid-cols-6">
           {[
             ['기준일자', '2026-04-23'],
-            ['원천건수', '105건'],
-            ['묶음 기준', '기사 / 차량번호'],
-            ['자동 정렬 기준', '지역 시작 → 종료'],
+            ['원천 테이블', 'detail + car'],
+            ['묶음 키', 'work_date + driver_no + car_no'],
+            ['정렬 필드', 'origin/weight/destination'],
             ['현재 상태', '42대 생성 / 7건 수동 확인'],
             ['다음 단계', '정산 등록으로 전달'],
           ].map(([label, value]) => (
@@ -214,11 +231,18 @@ export default function CherryTmsGroupingPage() {
         ))}
       </section>
 
+      {hasSupabaseData && groupingRowsForRender.length === 0 ? (
+        <section className="border border-[#243041] bg-[#0b1220] px-4 py-4 text-sm text-slate-300">
+          <div className="font-medium text-white">Supabase 연결 완료</div>
+          <div className="mt-2 text-slate-400">지금 view에는 아직 묶음 행이 없어서 빈 상태로 표시됩니다. 엑셀 적재 후 이 영역에 실제 grouping row가 채워집니다.</div>
+        </section>
+      ) : null}
+
       <section className="border border-[#243041] bg-[#0b1220]">
         <div className="cherry-light-header border-b border-[#243041] bg-[#0f1722] px-4 py-3">
           <h2 className="text-lg font-semibold text-white">묶음 생성 메인 테이블</h2>
         </div>
-        <GroupingTable rows={groupingRows} />
+        <GroupingTable rows={groupingRowsForRender} />
       </section>
     </CherryTmsShell>
   );

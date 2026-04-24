@@ -11,6 +11,9 @@ type GroupingPriceVariables = {
 
 type GroupingDetailRow = {
   order: string;
+  transportId: string;
+  transportSeq: string;
+  carSeq: string;
   region: string;
   weight: string;
   destination: string;
@@ -42,7 +45,7 @@ type PriceItem = {
   editable?: boolean;
 };
 
-const columns = ['구분', '기사/차량', '건수', '출발/도착', '영업소', '중량', '운임요약', '조건/수당', '경로', '저장'];
+const columns = ['DB row', '기사/차량', '건수', '출발/도착', '영업소', '중량', '운임요약', '조건/수당', '경로', '저장'];
 const gridClass = 'grid min-w-[1220px] grid-cols-[76px_170px_70px_148px_130px_76px_170px_180px_1fr_96px]';
 const compactCellClass = 'px-3 py-2 whitespace-nowrap';
 const detailCellClass = 'px-2 py-0.5 whitespace-nowrap align-top';
@@ -213,9 +216,13 @@ export function GroupingTable({ rows }: GroupingTableProps) {
 
                     return (
                       <div key={`${rowKey}-${detail.order}-${detail.region}`} className={`${gridClass} cherry-light-detail-row border-b border-[#101a2a] bg-[#07101b] text-[10px] leading-tight last:border-b-0`}>
-                        <div className={`${detailCellClass} text-slate-500`}>원천 {detail.order}</div>
+                        <div className={`${detailCellClass} text-slate-500`}>
+                          <div>원천 {detail.order}</div>
+                          <div className="mt-0.5 text-[9px] text-slate-600">seq {detail.transportSeq}/{detail.carSeq}</div>
+                        </div>
                         <div className={detailCellClass}>
                           <div className="truncate text-slate-300">{row.driver} / {row.vehicle}</div>
+                          <div className="mt-0.5 truncate text-[9px] text-slate-600">{detail.transportId}</div>
                         </div>
                         <div className={`${detailCellClass} text-slate-300`}>1건</div>
                         <div className={detailCellClass}>
@@ -231,7 +238,7 @@ export function GroupingTable({ rows }: GroupingTableProps) {
                           <PriceStack items={allowanceItems} />
                         </div>
                         <div className={detailCellClass}>
-                          <div className="truncate text-slate-300">{detail.judgement} / 경로 -</div>
+                          <div className="truncate text-slate-300">{detail.judgement} / detail+car 연결</div>
                         </div>
                         <div className={`${detailCellClass} text-right`}>
                           <SaveButton />

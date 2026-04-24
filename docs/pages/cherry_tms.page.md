@@ -11,7 +11,9 @@ last_updated: 26.04.24
 - 문서 파일: `docs/pages/cherry_tms.page.md`
 
 ## 2. 목적
-- 이 페이지의 목적과 대상 사용자를 2~3줄로 작성한다.
+- 이 허브는 체리부로 용차 내역 정산 흐름의 진입점이다.
+- 사용자는 intake → grouping → settlement-register → settlement-review → claim-docs 순서로 이동한다.
+- 대시보드 요약이 아니라 운영 단계 이동 허브로 쓴다.
 
 ## 3. 화면/기능 구성
 - 상단:

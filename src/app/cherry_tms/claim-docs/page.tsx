@@ -8,48 +8,48 @@ export const metadata: Metadata = {
 };
 
 const claimStats = [
-  { label: '현재 기준 총액', value: '₩141.0M', hint: '기사 지급 확정 총액' },
-  { label: '계약 기준 총액', value: '₩132.5M', hint: '체리부로 계약 정산 기준' },
-  { label: '차액 청구 총액', value: '₩8.5M', hint: '현재 기준 - 계약 기준' },
-  { label: '문서 생성 대기', value: '3종', hint: '지급용 / 청구용 / 첨부본' },
+  { label: '결과 원천', value: 'dispatch_settlement', hint: 'review 승인 row만 문서 후보' },
+  { label: '유류 정산', value: 'fuel_settlement', hint: '월별 차량 유류비 집계' },
+  { label: '기준표', value: 'freight_rate / allowance_item', hint: '계약 기준·수당 기준 근거' },
+  { label: '문서 생성', value: '3종', hint: '기사 지급표 / 차액청구서 / 첨부본' },
 ];
 
 const claimRows = [
   {
-    item: '운임 인상분',
-    basis: '2026 운임표 - 2025 운임표',
-    current: '₩124.3M',
-    contract: '₩118.1M',
-    diff: '+₩6.2M',
-    status: '초안완료',
-    note: '계약 단가 대비 현재 지급 단가 상승분',
+    item: '운임 기준 차액',
+    source: 'dispatch_settlement + freight_rate',
+    key: 'dispatch_dt / vehicle_type_id / distance',
+    current: '현재 기준 지급 합산',
+    contract: '계약 운임표 재계산',
+    status: '청구 후보',
+    note: 'freight_rate 기준표와 결과 row의 운임 차이',
   },
   {
-    item: '착지수당 차이',
-    basis: '배송현황 착지수당 집계',
-    current: '₩9.8M',
-    contract: '₩8.6M',
-    diff: '+₩1.2M',
-    status: '검토필요',
-    note: '영업소 기준 착지수당 적용 차이',
-  },
-  {
-    item: '경유수당 차이',
-    basis: '배차일보 경유수 입력 기준',
-    current: '₩5.4M',
-    contract: '₩4.7M',
-    diff: '+₩0.7M',
+    item: '경유·유류 정산',
+    source: 'fuel_settlement + fuel_price',
+    key: 'settle_ym + vehicle_no',
+    current: 'fuel_amt',
+    contract: '월 유류 기준',
     status: '근거확인',
-    note: '경유수 원천과 지급 기준 대조 필요',
+    note: '월별 차량 유류비를 차액 청구 근거로 연결',
   },
   {
-    item: '수기보정 누적분',
-    basis: 'register 보정값 월 합산',
-    current: '₩1.5M',
-    contract: '₩1.1M',
-    diff: '+₩0.4M',
-    status: '첨부필수',
-    note: '차액 청구 시 상세 근거 첨부 필요',
+    item: '거래처/착지 수당',
+    source: 'dispatch_dest + region_client',
+    key: 'client_id + region_id',
+    current: 'stop_allowance / box_allowance',
+    contract: 'allowance_item',
+    status: '검토필요',
+    note: '착지·박스·회수 수당의 거래처별 근거',
+  },
+  {
+    item: '휴일/아침/기타 수당',
+    source: 'dispatch_settlement + allowance_item',
+    key: 'base_yr + allowance flags',
+    current: 'daily_extra / morning_off',
+    contract: '수당 기준표',
+    status: '확장확인',
+    note: '왕복·기타수당은 별도 컬럼/규칙 확장 확인 필요',
   },
 ];
 
@@ -78,17 +78,17 @@ const docRows = [
 ];
 
 const approvalRows = [
-  ['기사 지급 기준', '현재 기준 총액으로 확정'],
-  ['청구 기준', '계약 기준 대비 차액만 산출'],
-  ['월마감 반영', 'review 승인 완료 건만 포함'],
-  ['첨부 필요 항목', '경유수당 차이 / 수기보정 누적분'],
+  ['문서 원천', 'review 승인 완료 dispatch_settlement row'],
+  ['청구 기준', 'freight_rate / allowance_item 대비 차액'],
+  ['유류 기준', 'fuel_settlement는 월별 차량 단위로 별도 첨부'],
+  ['연결 원칙', '공유 TMS DB 직접 연결 금지 / 별도 정산 DB 사용'],
 ];
 
 const evidenceRows = [
-  ['정산 review 결과', '월마감 후보 24건 반영'],
-  ['register 보정 이력', '수기보정 6건 / 총 +₩0.4M'],
-  ['grouping 정렬 근거', '영업소/구간 정렬 완료 행만 청구 포함'],
-  ['intake 적재 기준', '우리 DB 적재 완료 96건 기준 집계'],
+  ['tbl_tms_cherrybro_dispatch_settlement', '일별/차량/회차/지역별 승인 결과 row'],
+  ['tbl_tms_cherrybro_fuel_settlement', 'settle_ym + vehicle_no 기준 유류 정산 근거'],
+  ['tbl_tms_cherrybro_freight_rate', '거리·차량타입별 표준/계약 운임 기준'],
+  ['tbl_tms_cherrybro_allowance_item', '경유·박스·회수·휴일·아침하차 수당 기준'],
 ];
 
 const actionButtons = ['기사 지급표 생성', '차액청구서 생성', '첨부본 생성', '차액 메모 출력'];
@@ -99,7 +99,7 @@ export default function CherryTmsClaimDocsPage() {
       current="claim-docs"
       eyebrow="Cherrybro TMS / Claim & Documents"
       title="차액 청구 / 문서 생성"
-      description="기사 지급은 현재 기준으로 확정하고, 그린이 체리부로에 요청할 금액은 계약 기준 대비 차액으로 정리하는 마지막 단계입니다. 이 화면은 결과 요약이 아니라 실제 문서 생성과 청구 근거 정리용 운영 화면입니다."
+      description="review에서 승인된 dispatch_settlement 결과를 기준으로 fuel_settlement, freight_rate, allowance_item 근거를 붙여 지급표·차액청구서·첨부본을 생성하는 마지막 단계입니다. 실제 공유 TMS DB가 아니라 별도 정산 DB 구조를 전제로 합니다."
     >
       <section className="border border-[#243041] bg-[#0b1220]">
         <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
@@ -109,9 +109,9 @@ export default function CherryTmsClaimDocsPage() {
           {[
             ['정산월', '2026-04'],
             ['운송사', '그린'],
-            ['지급 기준', '현재 기준 총액'],
-            ['청구 기준', '계약 기준 대비 차액'],
-            ['현재 상태', '청구 요약서 생성 전'],
+            ['지급 기준', '승인된 dispatch_settlement'],
+            ['청구 기준', 'freight/rate/allowance 비교'],
+            ['현재 상태', '문서 후보 구조 매칭'],
             ['마지막 단계', '문서 생성 / 출력'],
           ].map(([label, value]) => (
             <div key={label} className="grid gap-2">
@@ -158,7 +158,7 @@ export default function CherryTmsClaimDocsPage() {
             <table className="min-w-full border-collapse text-left text-sm">
               <thead className="bg-[#111a27] text-slate-400">
                 <tr>
-                  {['항목', '산출 기준', '현재 기준', '계약 기준', '차액', '상태', '비고'].map((head) => (
+                  {['항목', '원천 테이블', '집계 키', '현재 기준', '계약/기준표', '상태', '비고'].map((head) => (
                     <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">{head}</th>
                   ))}
                 </tr>
@@ -167,10 +167,10 @@ export default function CherryTmsClaimDocsPage() {
                 {claimRows.map((row) => (
                   <tr key={row.item} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
                     <td className="px-4 py-3 whitespace-nowrap text-white">{row.item}</td>
-                    <td className="px-4 py-3 text-slate-300">{row.basis}</td>
+                    <td className="px-4 py-3 text-slate-300">{row.source}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row.key}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.current}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.contract}</td>
-                    <td className="px-4 py-3 whitespace-nowrap font-medium text-[#9ab6ff]">{row.diff}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-amber-300">{row.status}</td>
                     <td className="px-4 py-3 text-slate-300">{row.note}</td>
                   </tr>

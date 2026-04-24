@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 const hubStats = [
-  ['전일 조회 대상', '105건', 'ERP 운행완료 기준'],
-  ['DB 적재 완료', '96건', '중복/예외 제외 반영'],
-  ['묶음 생성 결과', '42대', '기사/차량 단위 생성'],
-  ['등록 미완료', '18건', '변수 선택 및 금액 확정 필요'],
+  ['tms 원천', 'transport/detail/car', '원천 구조 참고 전용, 직접 연결 금지'],
+  ['grouping 후보', '기사·차량·일자', 'work_date + driver_no + car_no 기준'],
+  ['settlement 기준표', '10개 테이블', '별도 정산 DB에 동일 스키마 구성 대상'],
+  ['문서 생성', 'review 승인 후', 'dispatch/fuel/rate/allowance 근거 연결'],
 ];
 
 export default function CherryTmsHubPage() {
@@ -20,7 +20,7 @@ export default function CherryTmsHubPage() {
     <CherryTmsShell
       eyebrow="Cherrybro TMS / Registration-first Hub"
       title="체리부로 운행정산 단계 허브"
-      description="이 화면은 대시보드가 아니라 등록 작업의 진입 허브입니다. 실제 운영 순서대로 데이터 반입 → 묶음 생성 → 정산 등록 → 정산 검토 → 청구/문서 단계로 이동합니다."
+      description="이 화면은 대시보드가 아니라 최초 맥락 순서를 지키는 등록 작업 허브입니다. 확인된 TMS 구조는 참고만 하고, 실제 연결은 별도 동일 스키마 DB를 새로 구성하는 전제로 단계별 화면에 반영합니다."
     >
       <section className="grid gap-px border border-[#243041] bg-[#243041] md:grid-cols-2 xl:grid-cols-4">
         {hubStats.map(([label, value, hint]) => (
@@ -36,13 +36,13 @@ export default function CherryTmsHubPage() {
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">작업 단계</p>
-            <h2 className="mt-1 text-lg font-semibold text-white">등록 중심 운영 순서</h2>
+            <h2 className="mt-1 text-lg font-semibold text-white">DB 구조 반영 운영 순서</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse text-left text-sm">
               <thead className="bg-[#111a27] text-slate-400">
                 <tr>
-                  {['단계', '페이지', '역할', '바로가기'].map((head) => (
+                  {['단계', '페이지', 'DB 구조 반영 역할', '바로가기'].map((head) => (
                     <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
                       {head}
                     </th>
@@ -74,10 +74,10 @@ export default function CherryTmsHubPage() {
           </div>
           <div className="grid gap-px bg-[#243041]">
             {[
-              '1. 어제자 ERP 운행완료 내역을 조회해 우리 DB로 적재한다.',
-              '2. 기사/차량 기준 묶음 생성 결과와 예외 건을 확인한다.',
-              '3. 변수 선택 후 현재 기준 지급 금액을 확정한다.',
-              '4. 계약 기준 대비 차액을 마지막에 문서로 출력한다.',
+              '1. tms 원천 구조는 transport/detail/car 계층으로만 참고한다.',
+              '2. grouping 후보는 원천 DB 직접 연결 없이 기사·차량·일자 묶음 구조로 표현한다.',
+              '3. settlement-register 이후는 별도 tms_settlement 동일 스키마 DB에 저장하는 전제로 본다.',
+              '4. review 승인 결과만 claim-docs 문서 생성 후보로 넘긴다.',
             ].map((item) => (
               <div key={item} className="bg-[#0b1220] px-4 py-4 text-sm leading-6 text-slate-300">
                 {item}

@@ -8,47 +8,44 @@ export const metadata: Metadata = {
 };
 
 const intakeStats = [
-  { label: 'ERP 조회 대상', value: '105건', hint: '2026-04-23 운행완료 기준' },
-  { label: '우리 DB 적재완료', value: '96건', hint: '정산 대상 생성 가능' },
-  { label: '중복 / 보류', value: '9건', hint: '원천 비교 후 재적재 필요' },
-  { label: '미매핑 예외', value: '12건', hint: '지역·영업소·차량번호 확인 필요' },
+  { label: 'tms 운송 헤더', value: '314건', hint: 'tbl_tms_transport 근사 row' },
+  { label: '실행 차량행', value: '4,118건', hint: 'tbl_tms_transport_car 기준' },
+  { label: '운송 상세행', value: '369건', hint: 'tbl_tms_transport_detail 기준' },
+  { label: '미매핑 후보', value: '확인필요', hint: 'location/car/driver -1 또는 null 점검' },
 ];
 
-const sourceRuns = [
+const transportRows = [
   {
-    source: 'ERP 운행완료 조회',
-    executedAt: '2026-04-24 06:10',
-    status: '조회완료',
-    scope: '105행 / 42대',
-    note: '차량번호, 기사명, 중량, 지역, 영업소 포함',
+    table: 'tbl_tms_transport',
+    key: 'transport_id',
+    dateField: 'work_date',
+    typeField: 'transport_input_type',
+    statusField: 'transport_status_client / transport_status_work',
+    pageRole: '운송 헤더, ERP/MANUAL 원천 반입 단위',
   },
   {
-    source: '배송현황 엑셀 업로드',
-    executedAt: '2026-04-24 06:20',
-    status: '적재완료',
-    scope: '31시트 / 1,248행',
-    note: 'ERP 조회 누락 대비 원천 보조본',
+    table: 'tbl_tms_transport_detail',
+    key: 'transport_id + transport_seq',
+    dateField: 'origin_time / destination_time',
+    typeField: 'location_no_origin/weight/destination',
+    statusField: 'detail_status_work',
+    pageRole: '경로·계근·도착지·출고량 원천 상세행',
   },
   {
-    source: '배차일보 업로드',
-    executedAt: '2026-04-24 06:25',
-    status: '정규화중',
-    scope: '864행',
-    note: '경유수 / 배송유형 해석용 보조 소스',
-  },
-  {
-    source: '우리 DB 적재 배치',
-    executedAt: '2026-04-24 06:31',
-    status: '부분완료',
-    scope: '96건 반영 / 9건 보류',
-    note: '중복 추정 및 미매핑 행은 staging 유지',
+    table: 'tbl_tms_transport_car',
+    key: 'transport_id + transport_seq + car_seq',
+    dateField: 'origin_time / destination_time / car_loaded_time',
+    typeField: 'car_no / driver_no',
+    statusField: 'car_status_work',
+    pageRole: '차량·기사·중량 실행행, grouping 후보',
   },
 ];
 
 const dbRows = [
-  ['raw_trip_import', '105건', '96건', '9건', 'ERP/엑셀 원천 보관'],
-  ['trip_staging', '105건', '96건', '9건', '중복/미매핑 검토 전'],
-  ['settlement_candidates', '96건', '96건', '-', '묶음 생성 단계로 이동 가능'],
+  ['tbl_tms_car', '137건', 'car_number', '차량번호·소유·톤급 기준정보'],
+  ['tbl_tms_driver', '136건', 'driver_name / driver_tel', '기사 매칭 기준정보'],
+  ['tbl_tms_location', '313건', 'location_type / location_name', '출발·세척·계근·도착 위치 기준정보'],
+  ['tbl_tms_enum', '118건', '상태 enum', 'ERP/MANUAL, 작업상태, 차량구분 코드'],
 ];
 
 const actionButtons = [
@@ -65,7 +62,7 @@ export default function CherryTmsIntakePage() {
       current="intake"
       eyebrow="Cherrybro TMS / Intake"
       title="전일 운행 데이터 조회 / 반입 / 적재"
-      description="이 단계는 정산 등록 전에 전일 운행완료 내역을 가져와 우리 DB에 적재하는 운영 화면입니다. ERP 직접 조회와 엑셀 반입을 함께 다루고, 적재 결과를 먼저 확인합니다."
+      description="이 단계는 실제 tms 스키마의 운송 헤더·상세·차량 실행행을 기준으로 전일 운행 데이터를 확인하고, grouping으로 넘길 수 있는 원천 row를 정리하는 운영 화면입니다."
     >
       <section className="border border-[#243041] bg-[#0b1220]">
         <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
@@ -76,8 +73,8 @@ export default function CherryTmsIntakePage() {
             ['기준일자', '2026-04-23'],
             ['운송사', '그린'],
             ['반입 기준', '전일 운행완료'],
-            ['원천 소스', 'ERP + 배송현황 + 배차일보'],
-            ['현재 상태', 'DB 적재 완료 / 예외 검토 필요'],
+            ['원천 테이블', 'transport / detail / car'],
+            ['현재 상태', 'tms 원천 구조 확인 / 미매핑 점검'],
             ['다음 단계', '묶음 생성으로 전달'],
           ].map(([label, value]) => (
             <div key={label} className="grid gap-2">
@@ -116,13 +113,13 @@ export default function CherryTmsIntakePage() {
       <section className="grid gap-6 xl:grid-cols-[1.2fr_minmax(340px,0.8fr)]">
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">원천 조회 / 반입 / 적재 이력</h2>
+            <h2 className="text-lg font-semibold text-white">tms 원천 테이블 매칭</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse text-left text-sm">
               <thead className="bg-[#111a27] text-slate-400">
                 <tr>
-                  {['소스', '실행시각', '상태', '범위', '비고'].map((head) => (
+                  {['테이블', '키', '일자/시간 필드', '구분 필드', '화면 역할'].map((head) => (
                     <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
                       {head}
                     </th>
@@ -130,13 +127,13 @@ export default function CherryTmsIntakePage() {
                 </tr>
               </thead>
               <tbody>
-                {sourceRuns.map((row) => (
-                  <tr key={row.source} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
-                    <td className="px-4 py-3 whitespace-nowrap text-white">{row.source}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.executedAt}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row.status}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.scope}</td>
-                    <td className="px-4 py-3 text-slate-300">{row.note}</td>
+                {transportRows.map((row) => (
+                  <tr key={row.table} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
+                    <td className="px-4 py-3 whitespace-nowrap text-white">{row.table}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.key}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.dateField}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row.typeField}</td>
+                    <td className="px-4 py-3 text-slate-300">{row.pageRole}</td>
                   </tr>
                 ))}
               </tbody>
@@ -146,13 +143,13 @@ export default function CherryTmsIntakePage() {
 
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">우리 DB 적재 결과</h2>
+            <h2 className="text-lg font-semibold text-white">기준정보 매칭</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse text-left text-sm">
               <thead className="bg-[#111a27] text-slate-400">
                 <tr>
-                  {['적재 레이어', '수집건수', '반영건수', '보류건수', '설명'].map((head) => (
+                  {['테이블', '근사 row', '핵심 필드', '화면 사용처'].map((head) => (
                     <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
                       {head}
                     </th>
@@ -165,8 +162,7 @@ export default function CherryTmsIntakePage() {
                     <td className="px-4 py-3 whitespace-nowrap text-white">{row[0]}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row[1]}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row[2]}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-amber-300">{row[3]}</td>
-                    <td className="px-4 py-3 text-slate-300">{row[4]}</td>
+                    <td className="px-4 py-3 text-slate-300">{row[3]}</td>
                   </tr>
                 ))}
               </tbody>
