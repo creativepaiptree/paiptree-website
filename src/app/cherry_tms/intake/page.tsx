@@ -65,7 +65,7 @@ export default function CherryTmsIntakePage() {
       current="intake"
       eyebrow="Cherrybro TMS / Intake"
       title="전일 운행 데이터 조회 / 반입 / 적재"
-      description="이 단계는 정산 등록 전에 전일 운행완료 내역을 가져와 우리 DB에 적재하는 운영 화면입니다. ERP 직접 조회와 엑셀 반입을 함께 다루고, 적재 결과·예외·다음 단계 전달 가능 여부를 먼저 확인합니다."
+      description="이 단계는 정산 등록 전에 전일 운행완료 내역을 가져와 우리 DB에 적재하는 운영 화면입니다. ERP 직접 조회와 엑셀 반입을 함께 다루고, 적재 결과를 먼저 확인합니다."
     >
       <section className="border border-[#243041] bg-[#0b1220]">
         <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">

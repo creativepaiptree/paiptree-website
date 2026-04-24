@@ -139,7 +139,7 @@ function PriceStack({ items }: { items: PriceItem[] }) {
 
 function SaveButton({ label = '저장' }: { label?: string }) {
   return (
-    <button type="button" className="border border-[#314056] bg-[#0a1019] px-2 py-0.5 text-[10px] text-slate-200 transition hover:border-[#4D7CFF] hover:text-white">
+    <button type="button" className="cherry-light-badge border border-[#314056] bg-[#0a1019] px-2 py-0.5 text-[10px] text-slate-200 transition hover:border-[#4D7CFF] hover:text-white">
       {label}
     </button>
   );
@@ -149,7 +149,7 @@ export function GroupingTable({ rows }: GroupingTableProps) {
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[1220px] text-left text-xs">
-        <div className={`${gridClass} bg-[#111a27] text-[11px] text-slate-400`}>
+        <div className={`${gridClass} cherry-light-table-head bg-[#111a27] text-[11px] text-slate-400`}>
           {columns.map((head) => (
             <div key={head} className="border-b border-[#243041] px-3 py-2 font-medium whitespace-nowrap">
               {head}
@@ -163,11 +163,11 @@ export function GroupingTable({ rows }: GroupingTableProps) {
             const groupAllowanceItems = getGroupAllowanceItems(row.prices);
 
             return (
-              <details key={rowKey} className="group border-b border-[#1b2636] bg-[#0b1220] text-slate-200">
+              <details key={rowKey} className="cherry-light-row group border-b border-[#1b2636] bg-[#0b1220] text-slate-200">
                 <summary className={`${gridClass} cursor-pointer list-none transition hover:bg-[#101a2a] [&::-webkit-details-marker]:hidden`}>
                   <div className={`${compactCellClass} text-[#9ab6ff]`}>
-                    <span className="inline-block border border-[#314056] bg-[#0a1019] px-2 py-1 text-[11px] font-medium group-open:hidden">상세</span>
-                    <span className="hidden border border-[#4D7CFF] bg-[#13213a] px-2 py-1 text-[11px] font-medium group-open:inline-block">접기</span>
+                    <span className="cherry-light-badge inline-block border border-[#314056] bg-[#0a1019] px-2 py-1 text-[11px] font-medium group-open:hidden">상세</span>
+                    <span className="cherry-light-active hidden border border-[#4D7CFF] bg-[#13213a] px-2 py-1 text-[11px] font-medium group-open:inline-block">접기</span>
                   </div>
                   <div className={`${compactCellClass} text-white`}>
                     <div className="font-semibold">{row.driver}</div>
@@ -206,13 +206,13 @@ export function GroupingTable({ rows }: GroupingTableProps) {
                   </div>
                 </summary>
 
-                <div className="border-t border-[#162131] bg-[#07101b]">
+                <div className="cherry-light-detail-panel border-t border-[#162131] bg-[#07101b]">
                   {row.details.map((detail) => {
                     const fareItems = getSourceFareItems(row.prices, detail);
                     const allowanceItems = getSourceAllowanceItems(row.prices, detail);
 
                     return (
-                      <div key={`${rowKey}-${detail.order}-${detail.region}`} className={`${gridClass} border-b border-[#101a2a] bg-[#07101b] text-[10px] leading-tight last:border-b-0`}>
+                      <div key={`${rowKey}-${detail.order}-${detail.region}`} className={`${gridClass} cherry-light-detail-row border-b border-[#101a2a] bg-[#07101b] text-[10px] leading-tight last:border-b-0`}>
                         <div className={`${detailCellClass} text-slate-500`}>원천 {detail.order}</div>
                         <div className={detailCellClass}>
                           <div className="truncate text-slate-300">{row.driver} / {row.vehicle}</div>

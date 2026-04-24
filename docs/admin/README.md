@@ -93,10 +93,10 @@ last_updated: 26.04.24
 
 ## 8. 최근 수정 문서 (상위 10개)
 - `docs/admin/README.md` (26.04.24)
-- `docs/pages/cherry_tms-intake.page.md` (26.04.24)
 - `docs/pages/cherry_tms-grouping.page.md` (26.04.24)
-- `docs/pages/cherry_tms-settlement-review.page.md` (26.04.24)
+- `docs/pages/cherry_tms-intake.page.md` (26.04.24)
 - `docs/pages/cherry_tms-settlement-register.page.md` (26.04.24)
+- `docs/pages/cherry_tms-settlement-review.page.md` (26.04.24)
 - `docs/pages/cherry_tms-claim-docs.page.md` (26.04.24)
 - `docs/pages/cherry_tms.page.md` (26.04.24)
 - `docs/pages/m.page.md` (26.04.14)

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Suspense } from 'react';
 
 import { stageItems } from './_stage-items';
 import { CherryTmsThemeFrame } from './_ThemeFrame';
@@ -20,8 +21,10 @@ export function CherryTmsShell({
   children: ReactNode;
 }) {
   return (
-    <CherryTmsThemeFrame current={current} eyebrow={eyebrow} title={title} description={description}>
-      {children}
-    </CherryTmsThemeFrame>
+    <Suspense fallback={<div className="min-h-screen bg-[#f8fafc] text-slate-900" />}>
+      <CherryTmsThemeFrame current={current} eyebrow={eyebrow} title={title} description={description}>
+        {children}
+      </CherryTmsThemeFrame>
+    </Suspense>
   );
 }

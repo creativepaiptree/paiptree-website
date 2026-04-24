@@ -169,7 +169,7 @@ export default function CherryTmsGroupingPage() {
       description="이 단계는 원천 운행건을 기사 또는 차량 기준으로 묶고, 시작·종료 지역 순서와 영업소 연결을 확인해 정산 등록 가능한 단위로 만드는 운영 화면입니다. 각 묶음은 바로 아래에서 실제 원천행을 펼쳐 확인할 수 있습니다."
     >
       <section className="border border-[#243041] bg-[#0b1220]">
-        <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
+        <div className="cherry-light-header border-b border-[#243041] bg-[#0f1722] px-4 py-3">
           <h2 className="text-lg font-semibold text-white">묶음 생성 실행 바</h2>
         </div>
         <div className="grid gap-3 px-4 py-4 md:grid-cols-2 xl:grid-cols-6">
@@ -183,7 +183,7 @@ export default function CherryTmsGroupingPage() {
           ].map(([label, value]) => (
             <div key={label} className="grid gap-2">
               <span className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{label}</span>
-              <div className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-sm text-slate-200">{value}</div>
+              <div className="cherry-light-field border border-[#314056] bg-[#0a1019] px-3 py-2 text-sm text-slate-200">{value}</div>
             </div>
           ))}
         </div>
@@ -194,7 +194,7 @@ export default function CherryTmsGroupingPage() {
                 key={label}
                 type="button"
                 className={`border px-3 py-2 transition ${
-                  index === 0 ? 'border-[#4D7CFF] bg-[#1c2c52] text-white hover:bg-[#223664]' : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'
+                  index === 0 ? 'cherry-light-active border-[#4D7CFF] bg-[#1c2c52] text-white hover:bg-[#223664]' : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'
                 }`}
               >
                 {label}
@@ -215,7 +215,7 @@ export default function CherryTmsGroupingPage() {
       </section>
 
       <section className="border border-[#243041] bg-[#0b1220]">
-        <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
+        <div className="cherry-light-header border-b border-[#243041] bg-[#0f1722] px-4 py-3">
           <h2 className="text-lg font-semibold text-white">묶음 생성 메인 테이블</h2>
         </div>
         <GroupingTable rows={groupingRows} />
