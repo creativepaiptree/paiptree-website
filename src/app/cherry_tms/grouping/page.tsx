@@ -1,20 +1,54 @@
 import type { Metadata } from 'next';
 
 import { CherryTmsShell } from '../_shared';
+import { GroupingTable } from './_GroupingTable';
 
 export const metadata: Metadata = {
   title: 'Cherrybro TMS Grouping',
   description: '기사/차량 묶음 생성 화면',
 };
 
+type GroupingPriceVariables = {
+  standardFare: string;
+  g70TransportFare: string;
+  i70FuelFare: string;
+  m70RoundTrip: string;
+  q70CustomerAllowance: string;
+  t70EtcAllowance: string;
+  o70HolidayFare: string;
+  s70MorningDrop: string;
+};
+
+type GroupingDetailRow = {
+  order: string;
+  region: string;
+  weight: string;
+  destination: string;
+  judgement: string;
+};
+
+type GroupingRow = {
+  driver: string;
+  vehicle: string;
+  trips: string;
+  startRegion: string;
+  endRegion: string;
+  businessOffice: string;
+  totalWeight: string;
+  routeOrder: string;
+  autoStatus: string;
+  prices: GroupingPriceVariables;
+  details: GroupingDetailRow[];
+};
+
 const groupingStats = [
   { label: '총 운행건수', value: '105건', hint: '전일 운행완료 raw 기준' },
   { label: '차량 수', value: '42대', hint: '차량번호 식별 가능 건 기준' },
   { label: '기사 수', value: '24명', hint: '기사명 또는 차량 연결 기준' },
-  { label: '수동 확인 필요', value: '7건', hint: '자동 묶음/정렬 예외 큐 포함' },
+  { label: '수동 확인 필요', value: '7건', hint: '자동 묶음/정렬 예외 포함' },
 ];
 
-const groupingRows = [
+const groupingRows: GroupingRow[] = [
   {
     driver: '남명규',
     vehicle: '경기96자1574',
@@ -22,9 +56,26 @@ const groupingRows = [
     startRegion: '용인',
     endRegion: '동서울',
     businessOffice: '동서울 아워홈',
-    totalWeight: '1.82t',
+    totalWeight: '1,820kg',
     routeOrder: '용인 → 수원 → 동서울',
     autoStatus: '자동완료',
+    prices: {
+      standardFare: '106,490',
+      g70TransportFare: '96,000',
+      i70FuelFare: '24,000',
+      m70RoundTrip: '0',
+      q70CustomerAllowance: '15,000',
+      t70EtcAllowance: '0',
+      o70HolidayFare: '0',
+      s70MorningDrop: '10,000',
+    },
+    details: [
+      { order: '1', region: '용인', weight: '420kg', destination: '용인마트', judgement: '정상' },
+      { order: '2', region: '수원', weight: '370kg', destination: '수원영업소', judgement: '정상' },
+      { order: '3', region: '수원', weight: '290kg', destination: '수원영업소', judgement: '병합대상' },
+      { order: '4', region: '광주', weight: '310kg', destination: '광주경유', judgement: '경유후보' },
+      { order: '5', region: '동서울', weight: '430kg', destination: '동서울 아워홈', judgement: '종료지' },
+    ],
   },
   {
     driver: '이정훈',
@@ -33,9 +84,25 @@ const groupingRows = [
     startRegion: '정읍',
     endRegion: '광주',
     businessOffice: '정읍영업소',
-    totalWeight: '2.14t',
+    totalWeight: '2,140kg',
     routeOrder: '정읍 → 익산 → 광주',
     autoStatus: '검토필요',
+    prices: {
+      standardFare: '118,330',
+      g70TransportFare: '112,000',
+      i70FuelFare: '31,500',
+      m70RoundTrip: '20,000',
+      q70CustomerAllowance: '0',
+      t70EtcAllowance: '0',
+      o70HolidayFare: '0',
+      s70MorningDrop: '0',
+    },
+    details: [
+      { order: '1', region: '정읍', weight: '610kg', destination: '정읍센터', judgement: '시작지' },
+      { order: '2', region: '익산', weight: '440kg', destination: '익산거점', judgement: '정상' },
+      { order: '3', region: '전주', weight: '520kg', destination: '전주경유', judgement: '순서확인' },
+      { order: '4', region: '광주', weight: '570kg', destination: '광주영업소', judgement: '종료지' },
+    ],
   },
   {
     driver: '김무경',
@@ -44,9 +111,24 @@ const groupingRows = [
     startRegion: '부산',
     endRegion: '양산',
     businessOffice: '부산영업소',
-    totalWeight: '2.37t',
+    totalWeight: '2,370kg',
     routeOrder: '부산 → 김해 → 양산',
     autoStatus: '순서확인',
+    prices: {
+      standardFare: '159,750',
+      g70TransportFare: '151,000',
+      i70FuelFare: '49,000',
+      m70RoundTrip: '0',
+      q70CustomerAllowance: '0',
+      t70EtcAllowance: '12,000',
+      o70HolidayFare: '50%',
+      s70MorningDrop: '0',
+    },
+    details: [
+      { order: '1', region: '부산', weight: '830kg', destination: '부산영업소', judgement: '시작지' },
+      { order: '2', region: '김해', weight: '710kg', destination: '김해경유', judgement: '정렬검토' },
+      { order: '3', region: '양산', weight: '830kg', destination: '양산센터', judgement: '종료지' },
+    ],
   },
   {
     driver: '김병규',
@@ -55,41 +137,25 @@ const groupingRows = [
     startRegion: '청주',
     endRegion: '용인',
     businessOffice: '청주영업소',
-    totalWeight: '1.26t',
+    totalWeight: '1,260kg',
     routeOrder: '청주 → 오산 → 용인',
     autoStatus: '차량중복확인',
+    prices: {
+      standardFare: '99,390',
+      g70TransportFare: '92,000',
+      i70FuelFare: '18,500',
+      m70RoundTrip: '0',
+      q70CustomerAllowance: '10,000',
+      t70EtcAllowance: '0',
+      o70HolidayFare: '0',
+      s70MorningDrop: '0',
+    },
+    details: [
+      { order: '1', region: '청주', weight: '580kg', destination: '청주영업소', judgement: '기사확인' },
+      { order: '2', region: '오산', weight: '210kg', destination: '오산경유', judgement: '중간지' },
+      { order: '3', region: '용인', weight: '470kg', destination: '용인센터', judgement: '종료지' },
+    ],
   },
-];
-
-const groupingExceptions = [
-  ['동일 차량 다중 기사', '2건', '차량번호 기준 우선 묶음 후 기사명 비교'],
-  ['시작/종료 지역 추정 실패', '3건', 'raw 지역 순서를 수동으로 재정렬'],
-  ['영업소 매핑 미확정', '2건', '거래처/영업소 master 보완 필요'],
-  ['운행건 분할 필요', '1건', '동일 기사라도 별도 영업소는 분리 후보'],
-];
-
-const selectedBundleSummary = [
-  ['선택 기사', '남명규'],
-  ['차량번호', '경기96자1574'],
-  ['원천 행 수', '5건'],
-  ['총 중량', '1.82t'],
-  ['자동 정렬 결과', '용인 → 수원 → 동서울'],
-  ['묶음 상태', '정산 등록 가능'],
-];
-
-const selectedBundleRows = [
-  ['1', '용인', '0.42t', '용인마트', '정상'],
-  ['2', '수원', '0.37t', '수원영업소', '정상'],
-  ['3', '수원', '0.29t', '수원영업소', '병합대상'],
-  ['4', '광주', '0.31t', '광주경유', '경유후보'],
-  ['5', '동서울', '0.43t', '동서울 아워홈', '종료지'],
-];
-
-const nextChecks = [
-  '기사/차량 기준으로 묶인 건만 settlement-register로 넘긴다.',
-  '시작/종료 지역 순서가 불명확한 건은 grouping 단계에서 반드시 확정한다.',
-  '영업소 연결이 안 된 건은 정산 등록으로 넘기지 않는다.',
-  '동일 차량 다중 기사 케이스는 예외로 남기지 말고 기준을 명시한다.',
 ];
 
 const actionButtons = ['자동 묶음 재실행', '정렬 재계산', '예외 내보내기', '묶음 확정'];
@@ -100,7 +166,7 @@ export default function CherryTmsGroupingPage() {
       current="grouping"
       eyebrow="Cherrybro TMS / Grouping"
       title="기사/차량 기준 묶음 생성 및 순서 점검"
-      description="이 단계는 원천 운행건을 기사 또는 차량 기준으로 묶고, 시작·종료 지역 순서와 영업소 연결을 확인해 정산 등록 가능한 단위로 만드는 운영 화면입니다."
+      description="이 단계는 원천 운행건을 기사 또는 차량 기준으로 묶고, 시작·종료 지역 순서와 영업소 연결을 확인해 정산 등록 가능한 단위로 만드는 운영 화면입니다. 각 묶음은 바로 아래에서 실제 원천행을 펼쳐 확인할 수 있습니다."
     >
       <section className="border border-[#243041] bg-[#0b1220]">
         <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
@@ -148,127 +214,11 @@ export default function CherryTmsGroupingPage() {
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_minmax(340px,0.8fr)]">
-        <article className="border border-[#243041] bg-[#0b1220]">
-          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">묶음 생성 메인 테이블</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="bg-[#111a27] text-slate-400">
-                <tr>
-                  {['기사', '차량', '운행건수', '시작 지역', '종료 지역', '영업소', '총 중량', '자동 정렬 결과', '상태'].map((head) => (
-                    <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {groupingRows.map((row) => (
-                  <tr key={row.driver + row.vehicle} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
-                    <td className="px-4 py-3 whitespace-nowrap text-white">{row.driver}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.vehicle}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.trips}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.startRegion}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.endRegion}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.businessOffice}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.totalWeight}</td>
-                    <td className="px-4 py-3 text-slate-200">{row.routeOrder}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row.autoStatus}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <div className="grid gap-6">
-          <article className="border border-[#243041] bg-[#0b1220]">
-            <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-              <h2 className="text-lg font-semibold text-white">예외 큐</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-left text-sm">
-                <thead className="bg-[#111a27] text-slate-400">
-                  <tr>
-                    {['항목', '건수', '조치'].map((head) => (
-                      <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">{head}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {groupingExceptions.map((row) => (
-                    <tr key={row[0]} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
-                      <td className="px-4 py-3 whitespace-nowrap text-white">{row[0]}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-amber-300">{row[1]}</td>
-                      <td className="px-4 py-3 text-slate-300">{row[2]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article className="border border-[#243041] bg-[#0b1220]">
-            <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-              <h2 className="text-lg font-semibold text-white">다음 단계 전달 조건</h2>
-            </div>
-            <div className="grid gap-px bg-[#243041]">
-              {nextChecks.map((item) => (
-                <div key={item} className="bg-[#0b1220] px-4 py-4 text-sm leading-6 text-slate-300">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </article>
+      <section className="border border-[#243041] bg-[#0b1220]">
+        <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
+          <h2 className="text-lg font-semibold text-white">묶음 생성 메인 테이블</h2>
         </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <article className="border border-[#243041] bg-[#0b1220]">
-          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">선택 묶음 요약</h2>
-          </div>
-          <div className="grid gap-px bg-[#243041]">
-            {selectedBundleSummary.map(([label, value]) => (
-              <div key={label} className="bg-[#0b1220] px-4 py-4 text-sm">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">{label}</p>
-                <p className="mt-2 text-slate-200">{value}</p>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="border border-[#243041] bg-[#0b1220]">
-          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">원천 행 순서 / 병합 후보</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="bg-[#111a27] text-slate-400">
-                <tr>
-                  {['순번', '지역', '중량', '영업소/도착지', '판정'].map((head) => (
-                    <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {selectedBundleRows.map((row) => (
-                  <tr key={row[0] + row[1]} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row[0]}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-white">{row[1]}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row[2]}</td>
-                    <td className="px-4 py-3 text-slate-300">{row[3]}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row[4]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
+        <GroupingTable rows={groupingRows} />
       </section>
     </CherryTmsShell>
   );

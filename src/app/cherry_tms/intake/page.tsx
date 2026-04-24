@@ -51,21 +51,6 @@ const dbRows = [
   ['settlement_candidates', '96건', '96건', '-', '묶음 생성 단계로 이동 가능'],
 ];
 
-const exceptions = [
-  ['차량번호 누락', '3건', '배차일보/ERP 원천 비교 후 수동 입력'],
-  ['거래처 / 영업소 미매핑', '4건', '영업소 기준 master 연결 필요'],
-  ['지역명 불일치', '2건', 'raw 지역명과 기준 지역명 대조'],
-  ['중복 추정', '5건', 'ERP 조회건과 엑셀 행 fingerprint 비교'],
-  ['기사명 상이', '2건', '차량 기준으로 우선 확인 후 기사명 보정'],
-];
-
-const nextChecks = [
-  'ERP 조회 결과와 엑셀 원천의 총 건수가 서로 크게 다르지 않은지 확인',
-  '우리 DB 적재 완료 건이 정산 후보 건수와 동일한지 확인',
-  '중복/미매핑 건은 grouping 전에 해소하거나 예외 큐로 명시적으로 넘길 것',
-  '정산 등록으로 바로 넘기는 건은 기사/차량 기준으로 식별 가능한 행만 허용',
-];
-
 const actionButtons = [
   'ERP 조회 실행',
   '엑셀 업로드',
@@ -161,21 +146,6 @@ export default function CherryTmsIntakePage() {
 
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">다음 단계 전달 조건</h2>
-          </div>
-          <div className="grid gap-px bg-[#243041]">
-            {nextChecks.map((item) => (
-              <div key={item} className="bg-[#0b1220] px-4 py-4 text-sm leading-6 text-slate-300">
-                {item}
-              </div>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.05fr_minmax(360px,0.95fr)]">
-        <article className="border border-[#243041] bg-[#0b1220]">
-          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
             <h2 className="text-lg font-semibold text-white">우리 DB 적재 결과</h2>
           </div>
           <div className="overflow-x-auto">
@@ -197,34 +167,6 @@ export default function CherryTmsIntakePage() {
                     <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row[2]}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-amber-300">{row[3]}</td>
                     <td className="px-4 py-3 text-slate-300">{row[4]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <article className="border border-[#243041] bg-[#0b1220]">
-          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">예외 / 보류 큐</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="bg-[#111a27] text-slate-400">
-                <tr>
-                  {['항목', '건수', '조치'].map((head) => (
-                    <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {exceptions.map((row) => (
-                  <tr key={row[0]} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
-                    <td className="px-4 py-3 whitespace-nowrap text-white">{row[0]}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-amber-300">{row[1]}</td>
-                    <td className="px-4 py-3 text-slate-300">{row[2]}</td>
                   </tr>
                 ))}
               </tbody>
