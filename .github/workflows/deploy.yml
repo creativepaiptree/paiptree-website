@@ -73,12 +73,22 @@ jobs:
           EOF
           sudo chmod 600 /etc/paiptree-website.env
 
-          NODE_BIN="$(sudo -u ec2-user bash -lc 'command -v node' || true)"
-          if [ -z "$NODE_BIN" ]; then
-            NODE_BIN="$(command -v node || true)"
+          NODE_VERSION=20.20.2
+          ARCH="$(uname -m)"
+          case "$ARCH" in
+            x86_64|amd64) NODE_DIST="node-v${NODE_VERSION}-linux-x64" ;;
+            aarch64|arm64) NODE_DIST="node-v${NODE_VERSION}-linux-arm64" ;;
+            *) echo "unsupported server architecture: $ARCH" >&2; exit 1 ;;
+          esac
+          NODE_DIR="/opt/${NODE_DIST}"
+          NODE_BIN="${NODE_DIR}/bin/node"
+          if [ ! -x "$NODE_BIN" ]; then
+            tmp_tar="/tmp/${NODE_DIST}.tar.xz"
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${NODE_DIST}.tar.xz" -o "$tmp_tar"
+            sudo tar -xJf "$tmp_tar" -C /opt
           fi
-          if [ -z "$NODE_BIN" ]; then
-            echo "node binary not found on server" >&2
+          if [ ! -x "$NODE_BIN" ]; then
+            echo "node binary install failed" >&2
             exit 1
           fi
           echo "Using node binary: $NODE_BIN"
