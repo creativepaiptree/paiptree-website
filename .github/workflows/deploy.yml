@@ -115,8 +115,8 @@ jobs:
           sudo rm -f /etc/nginx/conf.d/*.conf
           sudo tee /etc/nginx/conf.d/default.conf >/dev/null <<'EOF'
           server {
-              listen 80 default_server;
-              server_name _;
+              listen 80;
+              server_name 52.79.116.76;
 
               location / {
                   proxy_pass http://127.0.0.1:3000;
