@@ -20,9 +20,8 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build runtime bundle
+    - name: Build and Export
       env:
-        PAIPTREE_RUNTIME_SERVER: '1'
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -30,123 +29,31 @@ jobs:
         NEXT_PUBLIC_SUPABASE_EXPORT_VIEW: project_release_notes_export_v1
       run: |
         npm run build
-        rm -rf deploy-runtime
-        mkdir -p deploy-runtime
-        cp -R .next/standalone/. deploy-runtime/
-        mkdir -p deploy-runtime/.next
-        cp -R .next/static deploy-runtime/.next/static
-        cp -R public deploy-runtime/public
+        mkdir -p out
+        touch out/.nojekyll
 
-    - name: Deploy runtime bundle
+    - name: Build Storybook
+      run: npx --yes storybook build --output-dir out/storybook
+
+    - name: Deploy to server
       uses: appleboy/scp-action@v0.1.4
       with:
         host: 52.79.116.76
         username: ec2-user
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "deploy-runtime"
-        target: "/tmp/paiptree-runtime/"
+        source: "out/*"
+        target: "/tmp/paiptree-deploy/"
         strip_components: 1
 
-    - name: Configure and restart runtime service
+    - name: Move files to nginx directory
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: 52.79.116.76
         username: ec2-user
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          set -e
-
-          sudo mkdir -p /opt/paiptree-website
-          sudo rm -rf /opt/paiptree-website/current
-          sudo mv /tmp/paiptree-runtime /opt/paiptree-website/current
-          sudo chown -R ec2-user:ec2-user /opt/paiptree-website/current
-
-          sudo tee /etc/paiptree-website.env >/dev/null <<'EOF'
-          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
-          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
-          NEXT_PUBLIC_SUPABASE_PROJECT_ID=poc
-          NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1
-          PAIPTREE_RUNTIME_SERVER=1
-          PORT=3000
-          HOSTNAME=127.0.0.1
-          EOF
-          sudo chmod 600 /etc/paiptree-website.env
-
-          NODE_VERSION=20.20.2
-          ARCH="$(uname -m)"
-          case "$ARCH" in
-            x86_64|amd64) NODE_DIST="node-v${NODE_VERSION}-linux-x64" ;;
-            aarch64|arm64) NODE_DIST="node-v${NODE_VERSION}-linux-arm64" ;;
-            *) echo "unsupported server architecture: $ARCH" >&2; exit 1 ;;
-          esac
-          NODE_DIR="/opt/${NODE_DIST}"
-          NODE_BIN="${NODE_DIR}/bin/node"
-          if [ ! -x "$NODE_BIN" ]; then
-            tmp_tar="/tmp/${NODE_DIST}.tar.xz"
-            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${NODE_DIST}.tar.xz" -o "$tmp_tar"
-            sudo tar -xJf "$tmp_tar" -C /opt
-          fi
-          if [ ! -x "$NODE_BIN" ]; then
-            echo "node binary install failed" >&2
-            exit 1
-          fi
-          echo "Using node binary: $NODE_BIN"
-
-          sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<EOF
-          [Unit]
-          Description=Paiptree Website Runtime
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=ec2-user
-          Group=ec2-user
-          WorkingDirectory=/opt/paiptree-website/current
-          EnvironmentFile=/etc/paiptree-website.env
-          ExecStart=$NODE_BIN server.js
-          Restart=always
-          RestartSec=5
-
-          [Install]
-          WantedBy=multi-user.target
-          EOF
-
-          sudo rm -f /etc/nginx/conf.d/*.conf
-          sudo tee /etc/nginx/conf.d/default.conf >/dev/null <<'EOF'
-          server {
-              listen 80;
-              server_name 52.79.116.76;
-
-              location / {
-                  proxy_pass http://127.0.0.1:3000;
-                  proxy_http_version 1.1;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-                  proxy_set_header Upgrade $http_upgrade;
-                  proxy_set_header Connection "upgrade";
-                  proxy_cache_bypass $http_upgrade;
-              }
-          }
-          EOF
-
-          sudo systemctl daemon-reload
-          sudo systemctl enable paiptree-website
-          sudo systemctl restart paiptree-website
-          for i in $(seq 1 30); do
-            if curl -fsI http://127.0.0.1:3000/ >/dev/null; then
-              break
-            fi
-            sleep 1
-          done
-          sudo nginx -t
-          sudo systemctl reload nginx
-          sudo systemctl status paiptree-website --no-pager -l || true
-          sudo journalctl -u paiptree-website -n 50 --no-pager || true
-          sudo ss -ltnp | grep ':3000' || true
-          curl -fsI http://127.0.0.1:3000/ || true
-          curl -fsI -H 'Host: 52.79.116.76' http://127.0.0.1:3000/ || true
-          curl -fsI -H 'Host: 52.79.116.76' http://127.0.0.1/ || true
-          rm -rf /tmp/paiptree-runtime/
+          sudo rm -rf /usr/share/nginx/html/*
+          sudo cp -r /tmp/paiptree-deploy/* /usr/share/nginx/html/
+          sudo chown -R nginx:nginx /usr/share/nginx/html/
+          sudo chmod -R 755 /usr/share/nginx/html/
+          rm -rf /tmp/paiptree-deploy/

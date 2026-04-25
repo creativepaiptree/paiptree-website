@@ -173,7 +173,6 @@ export async function fetchCherryTmsGroupingPageData(groupingDate?: string | nul
         Authorization: `Bearer ${DEFAULT_SUPABASE_KEY}`,
         Accept: 'application/json',
       },
-      cache: 'no-store',
     });
 
     if (!response.ok) {

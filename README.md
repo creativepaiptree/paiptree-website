@@ -28,9 +28,9 @@ npm run build
 
 ### Deployment
 - Push to `main` branch triggers automatic deployment
-- GitHub Actions builds a Next.js runtime bundle and deploys it to the company server
-- Nginx proxies the live site at `http://52.79.116.76` to the runtime process
-- Cherry TMS routes can use server-side Supabase access without static export limits
+- GitHub Actions builds a static export and publishes it to the company server
+- Cherry TMS data pages hydrate from Supabase-compatible data at build time
+- The deployment path avoids changing shared nginx/systemd settings
 
 ### Company GitHub Guard
 - This project declares its required remote in `repo-guard.config.json`
