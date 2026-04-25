@@ -112,6 +112,7 @@ jobs:
           WantedBy=multi-user.target
           EOF
 
+          sudo rm -f /etc/nginx/conf.d/*.conf
           sudo tee /etc/nginx/conf.d/default.conf >/dev/null <<'EOF'
           server {
               listen 80 default_server;
