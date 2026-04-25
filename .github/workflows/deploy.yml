@@ -73,16 +73,28 @@ jobs:
           EOF
           sudo chmod 600 /etc/paiptree-website.env
 
-          sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<'EOF'
+          NODE_BIN="$(sudo -u ec2-user bash -lc 'command -v node' || true)"
+          if [ -z "$NODE_BIN" ]; then
+            NODE_BIN="$(command -v node || true)"
+          fi
+          if [ -z "$NODE_BIN" ]; then
+            echo "node binary not found on server" >&2
+            exit 1
+          fi
+          echo "Using node binary: $NODE_BIN"
+
+          sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<EOF
           [Unit]
           Description=Paiptree Website Runtime
           After=network.target
 
           [Service]
           Type=simple
+          User=ec2-user
+          Group=ec2-user
           WorkingDirectory=/opt/paiptree-website/current
           EnvironmentFile=/etc/paiptree-website.env
-          ExecStart=/usr/bin/node server.js
+          ExecStart=$NODE_BIN server.js
           Restart=always
           RestartSec=5
 
