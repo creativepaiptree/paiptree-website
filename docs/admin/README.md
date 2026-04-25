@@ -26,9 +26,9 @@ last_updated: 26.04.25
 
 ## 3. 요약
 - 총 라우트 페이지: **26**
-- 페이지 문서 생성됨: **25**
+- 페이지 문서 생성됨: **26**
 - 자동 신규 생성: **0**
-- 자동 메타 갱신(SYNCED): **1**
+- 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
 - 활성 페이지 문서(root): **26**
 - 아카이브 페이지 문서: **16**
@@ -48,7 +48,7 @@ last_updated: 26.04.25
 | `/cherry_tms/claim-docs` | `src/app/cherry_tms/claim-docs/page.tsx` | `docs/pages/cherry_tms-claim-docs.page.md` | OK |
 | `/cherry_tms/grouping` | `src/app/cherry_tms/grouping/page.tsx` | `docs/pages/cherry_tms-grouping.page.md` | OK |
 | `/cherry_tms/intake` | `src/app/cherry_tms/intake/page.tsx` | `docs/pages/cherry_tms-intake.page.md` | OK |
-| `/cherry_tms/settlement-register` | `src/app/cherry_tms/settlement-register/page.tsx` | `docs/pages/cherry_tms-settlement-register.page.md` | SYNCED |
+| `/cherry_tms/settlement-register` | `src/app/cherry_tms/settlement-register/page.tsx` | `docs/pages/cherry_tms-settlement-register.page.md` | OK |
 | `/cherry_tms/settlement-review` | `src/app/cherry_tms/settlement-review/page.tsx` | `docs/pages/cherry_tms-settlement-review.page.md` | OK |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
 | `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | OK |
@@ -93,8 +93,8 @@ last_updated: 26.04.25
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/pages/cherry_tms-settlement-register.page.md` (26.04.25)
 - `docs/admin/README.md` (26.04.25)
+- `docs/pages/cherry_tms-settlement-register.page.md` (26.04.25)
 - `docs/pages/cherry_tms-grouping.page.md` (26.04.24)
 - `docs/plans/cherry_tms-supabase-rollout.md` (26.04.24)
 - `docs/pages/cherry_tms.page.md` (26.04.24)

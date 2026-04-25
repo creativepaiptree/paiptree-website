@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
+const isRuntimeServer = process.env.PAIPTREE_RUNTIME_SERVER === '1';
+
 const nextConfig = {
-  ...(process.env.NODE_ENV === 'production' && process.env.I18N_STATIC_EXPORT !== '0'
+  ...(process.env.NODE_ENV === 'production'
     ? {
-        output: 'export',
+        output: isRuntimeServer ? 'standalone' : 'export',
       }
     : {}),
   trailingSlash: true,
