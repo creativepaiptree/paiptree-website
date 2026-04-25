@@ -52,8 +52,33 @@ jobs:
         username: ec2-user
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
+          set -e
+
+          sudo systemctl disable --now paiptree-website 2>/dev/null || true
+          sudo rm -f /etc/systemd/system/paiptree-website.service
+          sudo systemctl daemon-reload
+
+          sudo tee /etc/nginx/conf.d/default.conf >/dev/null <<'EOF'
+          server {
+              listen 80 default_server;
+              server_name _;
+
+              root /usr/share/nginx/html;
+              index index.html;
+
+              location / {
+                  try_files $uri $uri/ /index.html;
+              }
+          }
+          EOF
+
+          sudo nginx -t
+
           sudo rm -rf /usr/share/nginx/html/*
           sudo cp -r /tmp/paiptree-deploy/* /usr/share/nginx/html/
           sudo chown -R nginx:nginx /usr/share/nginx/html/
           sudo chmod -R 755 /usr/share/nginx/html/
+          sudo systemctl reload nginx
+          curl -I -sS --max-time 10 http://127.0.0.1/ | head -n 1
+          curl -I -sS --max-time 10 http://127.0.0.1/cherry_tms/grouping/?theme=light | head -n 1
           rm -rf /tmp/paiptree-deploy/
