@@ -114,4 +114,8 @@ jobs:
           sudo systemctl restart paiptree-website
           sudo nginx -t
           sudo systemctl reload nginx
+          sudo systemctl status paiptree-website --no-pager -l || true
+          sudo journalctl -u paiptree-website -n 50 --no-pager || true
+          sudo ss -ltnp | grep ':3000' || true
+          curl -I http://127.0.0.1:3000/ || true
           rm -rf /tmp/paiptree-runtime/
