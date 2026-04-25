@@ -32,7 +32,7 @@ jobs:
         npm run build
         rm -rf deploy-runtime
         mkdir -p deploy-runtime
-        cp -R .next/standalone/* deploy-runtime/
+        cp -R .next/standalone/. deploy-runtime/
         mkdir -p deploy-runtime/.next
         cp -R .next/static deploy-runtime/.next/static
         cp -R public deploy-runtime/public
@@ -43,7 +43,7 @@ jobs:
         host: 52.79.116.76
         username: ec2-user
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "deploy-runtime/*"
+        source: "deploy-runtime"
         target: "/tmp/paiptree-runtime/"
         strip_components: 1
 
