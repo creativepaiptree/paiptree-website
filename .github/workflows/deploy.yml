@@ -147,5 +147,6 @@ jobs:
           sudo journalctl -u paiptree-website -n 50 --no-pager || true
           sudo ss -ltnp | grep ':3000' || true
           curl -fsI http://127.0.0.1:3000/ || true
+          curl -fsI -H 'Host: 52.79.116.76' http://127.0.0.1:3000/ || true
           curl -fsI -H 'Host: 52.79.116.76' http://127.0.0.1/ || true
           rm -rf /tmp/paiptree-runtime/
