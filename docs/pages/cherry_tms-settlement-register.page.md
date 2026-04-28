@@ -1,7 +1,7 @@
 ---
 title: "/cherry_tms/settlement-register 페이지 운영 문서"
 author: ZORO
-last_updated: 26.04.25
+last_updated: 26.04.26
 ---
 # /cherry_tms/settlement-register 페이지 운영 문서
 

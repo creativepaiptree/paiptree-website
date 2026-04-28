@@ -1,5 +1,10 @@
 import { fetchCherryTmsGroupingPageData } from '@/lib/cherryTmsGroupings';
 
+export type CherryTmsSettlementRegisterQuery = {
+  month?: string | null;
+  groupingDate?: string | null;
+};
+
 export type CherryTmsSettlementRegisterRow = {
   dispatchDate: string;
   vehicle: string;
@@ -14,6 +19,8 @@ export type CherryTmsSettlementRegisterRow = {
 
 export type CherryTmsSettlementRegisterPageData = {
   groupingDate: string | null;
+  availableGroupingDates: string[];
+  availableMonths: string[];
   sourceRowCount: number;
   candidateCount: number;
   manualReviewCount: number;
@@ -30,8 +37,8 @@ const asText = (value: unknown): string => {
   return '';
 };
 
-export async function fetchCherryTmsSettlementRegisterPageData(): Promise<CherryTmsSettlementRegisterPageData | null> {
-  const groupingData = await fetchCherryTmsGroupingPageData();
+export async function fetchCherryTmsSettlementRegisterPageData(query: CherryTmsSettlementRegisterQuery = {}): Promise<CherryTmsSettlementRegisterPageData | null> {
+  const groupingData = await fetchCherryTmsGroupingPageData(query);
   if (!groupingData) {
     return null;
   }
@@ -55,6 +62,8 @@ export async function fetchCherryTmsSettlementRegisterPageData(): Promise<Cherry
 
   return {
     groupingDate,
+    availableGroupingDates: groupingData.availableGroupingDates,
+    availableMonths: groupingData.availableMonths,
     sourceRowCount: groupingData.sourceRowCount,
     candidateCount: rows.length,
     manualReviewCount: groupingData.manualReviewCount,

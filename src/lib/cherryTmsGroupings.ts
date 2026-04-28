@@ -21,6 +21,7 @@ export type CherryTmsGroupingDetailRow = {
 };
 
 export type CherryTmsGroupingRow = {
+  groupingDate: string | null;
   driver: string;
   vehicle: string;
   trips: string;
@@ -36,6 +37,8 @@ export type CherryTmsGroupingRow = {
 
 export type CherryTmsGroupingPageData = {
   groupingDate: string | null;
+  availableGroupingDates: string[];
+  availableMonths: string[];
   sourceRowCount: number;
   candidateCount: number;
   manualReviewCount: number;
@@ -69,6 +72,11 @@ type SupabaseGroupingRow = {
   details?: Array<Record<string, unknown>> | null;
 };
 
+type CherryTmsGroupingQuery = {
+  month?: string | null;
+  groupingDate?: string | null;
+};
+
 const DEFAULT_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim() || '';
 const DEFAULT_SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_KEY?.trim() ||
@@ -87,19 +95,18 @@ const asString = (value: unknown): string => {
   return '';
 };
 
-const asNumberString = (value: unknown): string => {
-  if (value === null || value === undefined) {
-    return '0';
-  }
+const asNumber = (value: unknown): number => {
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return value.toLocaleString('ko-KR');
+    return value;
   }
   const normalized = asString(value).replace(/,/g, '');
   const numeric = Number(normalized);
-  if (Number.isFinite(numeric)) {
-    return numeric.toLocaleString('ko-KR');
-  }
-  return asString(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const asNumberString = (value: unknown): string => {
+  const numeric = asNumber(value);
+  return numeric ? numeric.toLocaleString('ko-KR') : (asString(value) || '0');
 };
 
 const toPriceVariables = (row: SupabaseGroupingRow): CherryTmsGroupingPriceVariables => ({
@@ -133,6 +140,7 @@ const toDetails = (details: SupabaseGroupingRow['details']): CherryTmsGroupingDe
 };
 
 const toGroupingRow = (row: SupabaseGroupingRow): CherryTmsGroupingRow => ({
+  groupingDate: normalizeDateKey(row.grouping_date) || null,
   driver: asString(row.driver_label),
   vehicle: asString(row.vehicle_label),
   trips: `${row.trip_count ?? 0}건`,
@@ -146,13 +154,65 @@ const toGroupingRow = (row: SupabaseGroupingRow): CherryTmsGroupingRow => ({
   details: toDetails(row.details),
 });
 
-const compareGroupingDateDesc = (a: string, b: string) => {
-  return new Date(b).getTime() - new Date(a).getTime();
-};
+const compareGroupingDateDesc = (a: string, b: string) => new Date(b).getTime() - new Date(a).getTime();
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
-export async function fetchCherryTmsGroupingPageData(groupingDate?: string | null): Promise<CherryTmsGroupingPageData | null> {
+const toMonthKey = (dateValue: string) => (dateValue.length >= 7 ? dateValue.slice(0, 7) : '');
+
+const normalizeDateKey = (value: unknown): string => {
+  const dateText = asString(value);
+  if (!dateText) {
+    return '';
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+    return dateText;
+  }
+  const excelSerial = asNumber(value);
+  if (excelSerial > 0) {
+    return new Date(Date.UTC(1899, 11, 30 + excelSerial)).toISOString().slice(0, 10);
+  }
+  return dateText;
+};
+
+const uniqueSorted = (values: string[]) => Array.from(new Set(values.filter(Boolean))).sort(compareGroupingDateDesc);
+
+const uniqueMonths = (dates: string[]) => Array.from(new Set(dates.map(toMonthKey).filter(Boolean))).sort(compareGroupingDateDesc);
+
+const sumSelectedSourceRows = (rows: SupabaseGroupingRow[]) => {
+  const byDate = new Map<string, number>();
+  for (const row of rows) {
+    const dateKey = normalizeDateKey(row.grouping_date);
+    if (!dateKey) continue;
+    if (!byDate.has(dateKey)) {
+      const count = asNumber(row.source_row_count) || asNumber(row.raw_row_count);
+      byDate.set(dateKey, count);
+    }
+  }
+  return Array.from(byDate.values()).reduce((sum, count) => sum + count, 0);
+};
+
+const selectRows = (rows: SupabaseGroupingRow[], query: CherryTmsGroupingQuery) => {
+  const allDates = uniqueSorted(rows.map((row) => normalizeDateKey(row.grouping_date)));
+  const allMonths = uniqueMonths(allDates);
+  const normalizedQueryMonth = query.month?.trim() || '';
+  const normalizedQueryDate = query.groupingDate?.trim() || '';
+  const selectedRows = normalizedQueryMonth || normalizedQueryDate
+    ? normalizedQueryDate
+      ? rows.filter((row) => normalizeDateKey(row.grouping_date) === normalizedQueryDate)
+      : rows.filter((row) => toMonthKey(normalizeDateKey(row.grouping_date)) === normalizedQueryMonth)
+    : rows;
+  const selectedDates = uniqueSorted(selectedRows.map((row) => normalizeDateKey(row.grouping_date)));
+  return {
+    selectedRows,
+    allDates,
+    allMonths,
+    activeMonth: normalizedQueryMonth || allMonths[0] || '',
+    selectedDate: normalizedQueryDate || selectedDates[0] || null,
+  };
+};
+
+export async function fetchCherryTmsGroupingPageData(query: CherryTmsGroupingQuery = {}): Promise<CherryTmsGroupingPageData | null> {
   if (!DEFAULT_SUPABASE_URL || !DEFAULT_SUPABASE_KEY) {
     return null;
   }
@@ -161,13 +221,11 @@ export async function fetchCherryTmsGroupingPageData(groupingDate?: string | nul
     const endpoint = new URL(`/rest/v1/${DEFAULT_SUPABASE_VIEW}`, DEFAULT_SUPABASE_URL.endsWith('/') ? DEFAULT_SUPABASE_URL : `${DEFAULT_SUPABASE_URL}/`);
     endpoint.searchParams.set('select', '*');
     endpoint.searchParams.set('order', 'grouping_date.desc,row_order.asc');
-    endpoint.searchParams.set('limit', '200');
-    if (groupingDate) {
-      endpoint.searchParams.set('grouping_date', `eq.${groupingDate}`);
-    }
+    endpoint.searchParams.set('limit', '1000');
 
     const response = await fetch(endpoint.toString(), {
       method: 'GET',
+      cache: 'no-store',
       headers: {
         apikey: DEFAULT_SUPABASE_KEY,
         Authorization: `Bearer ${DEFAULT_SUPABASE_KEY}`,
@@ -183,7 +241,9 @@ export async function fetchCherryTmsGroupingPageData(groupingDate?: string | nul
     const rows = Array.isArray(payload) ? payload.filter(isRecord).map((row) => row as SupabaseGroupingRow) : [];
     if (rows.length === 0) {
       return {
-        groupingDate: groupingDate ?? null,
+        groupingDate: query.groupingDate?.trim() || null,
+        availableGroupingDates: [],
+        availableMonths: [],
         sourceRowCount: 0,
         candidateCount: 0,
         manualReviewCount: 0,
@@ -191,22 +251,20 @@ export async function fetchCherryTmsGroupingPageData(groupingDate?: string | nul
       };
     }
 
-    const latestGroupingDate = groupingDate || rows.map((row) => asString(row.grouping_date)).filter(Boolean).sort(compareGroupingDateDesc)[0] || null;
-    const filteredRows = latestGroupingDate
-      ? rows.filter((row) => asString(row.grouping_date) === latestGroupingDate)
-      : rows;
-
-    const normalizedRows = filteredRows
+    const selection = selectRows(rows, query);
+    const normalizedRows = selection.selectedRows
       .map(toGroupingRow)
       .filter((row) => row.driver.length > 0 || row.vehicle.length > 0)
       .sort((a, b) => Number.parseInt(a.trips, 10) - Number.parseInt(b.trips, 10));
 
-    const sourceRowCount = Number(filteredRows[0]?.source_row_count ?? 0) || normalizedRows.reduce((sum, row) => sum + row.details.length, 0);
-    const candidateCount = Number(filteredRows[0]?.candidate_count ?? 0) || normalizedRows.length;
-    const manualReviewCount = Number(filteredRows[0]?.manual_review_count ?? 0) || normalizedRows.reduce((sum, row) => sum + row.details.filter((detail) => detail.judgement !== '정상').length, 0);
+    const sourceRowCount = sumSelectedSourceRows(selection.selectedRows) || normalizedRows.reduce((sum, row) => sum + row.details.length, 0);
+    const candidateCount = normalizedRows.length;
+    const manualReviewCount = normalizedRows.reduce((sum, row) => sum + row.details.filter((detail) => detail.judgement !== '정상').length, 0);
 
     return {
-      groupingDate: latestGroupingDate,
+      groupingDate: selection.selectedDate,
+      availableGroupingDates: selection.allDates,
+      availableMonths: selection.allMonths,
       sourceRowCount,
       candidateCount,
       manualReviewCount,

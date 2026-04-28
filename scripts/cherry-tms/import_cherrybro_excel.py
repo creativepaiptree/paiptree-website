@@ -311,10 +311,8 @@ def build_route_order(rows: Sequence[ParsedRow]) -> str:
 def build_group_key(row: ParsedRow) -> str:
     normalized = row.normalized
     parts = [
-        clean_text(normalized.get("driver_label")),
-        clean_text(normalized.get("vehicle_ton_class")),
-        clean_text(normalized.get("affiliation")),
         clean_text(normalized.get("work_date")),
+        clean_text(normalized.get("driver_label")),
     ]
     return "|".join(parts)
 

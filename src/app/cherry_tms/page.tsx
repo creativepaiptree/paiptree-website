@@ -85,6 +85,23 @@ export default function CherryTmsHubPage() {
             ))}
           </div>
         </article>
+
+        <article className="border border-[#243041] bg-[#0b1220]">
+          <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">보조 뷰</p>
+            <h2 className="mt-1 text-lg font-semibold text-white">월별 차량 내역</h2>
+          </div>
+          <div className="grid gap-px bg-[#243041]">
+            <div className="bg-[#0b1220] px-4 py-4 text-sm leading-6 text-slate-300">
+              정산월과 차량번호를 먼저 고정해 월 누계, 기사 매칭, 유류/운임 차액을 함께 보는 보조 화면이다.
+            </div>
+            <div className="bg-[#0b1220] px-4 py-4 text-sm leading-6 text-slate-300">
+              <Link href="/cherry_tms/monthly-vehicle" className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
+                월별 차량 내역 열기
+              </Link>
+            </div>
+          </div>
+        </article>
       </section>
     </CherryTmsShell>
   );

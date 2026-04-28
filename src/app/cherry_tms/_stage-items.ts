@@ -36,6 +36,13 @@ export const stageItems: StageItem[] = [
     description: '일별/월별/기사별 기준으로 등록 완료 건을 검토한다.',
   },
   {
+    key: 'monthly-vehicle',
+    href: '/cherry_tms/monthly-vehicle',
+    label: 'STEP 04A',
+    title: '월별 차량',
+    description: '정산월·차량번호 기준 월 누계와 유류/운임 차액을 본다.',
+  },
+  {
     key: 'claim-docs',
     href: '/cherry_tms/claim-docs',
     label: 'STEP 05',

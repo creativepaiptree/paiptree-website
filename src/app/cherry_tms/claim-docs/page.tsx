@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { CherryTmsShell } from '../_shared';
 
@@ -82,6 +83,13 @@ const approvalRows = [
   ['청구 기준', 'freight_rate / allowance_item 대비 차액'],
   ['유류 기준', 'fuel_settlement는 월별 차량 단위로 별도 첨부'],
   ['연결 원칙', '공유 TMS DB 직접 연결 금지 / 별도 정산 DB 사용'],
+];
+
+const monthlyVehicleRows = [
+  ['정산월 + 차량', 'month + vehicle'],
+  ['월 누계 대상', 'grouping 실데이터 집계 결과'],
+  ['청구 전 확인', '기사 교체 / 회차 누락 / 유류 누락'],
+  ['바로가기', 'monthly-vehicle'],
 ];
 
 const evidenceRows = [
@@ -182,7 +190,12 @@ export default function CherryTmsClaimDocsPage() {
 
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">승인 / 산출 기준 요약</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white">승인 / 산출 기준 요약</h2>
+              <Link href="/cherry_tms/monthly-vehicle" className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
+                월별 차량 내역 보기
+              </Link>
+            </div>
           </div>
           <div className="grid gap-px bg-[#243041]">
             {approvalRows.map(([label, value]) => (
@@ -198,29 +211,21 @@ export default function CherryTmsClaimDocsPage() {
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">문서 생성 작업행</h2>
+            <h2 className="text-lg font-semibold text-white">월별 차량 청구 연결</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="bg-[#111a27] text-slate-400">
-                <tr>
-                  {['문서명', '기준', '대상', '상태', '실행'].map((head) => (
-                    <th key={head} className="border-b border-[#243041] px-4 py-3 font-medium whitespace-nowrap">{head}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {docRows.map((row) => (
-                  <tr key={row.document} className="border-b border-[#1b2636] text-slate-200 last:border-b-0">
-                    <td className="px-4 py-3 whitespace-nowrap text-white">{row.document}</td>
-                    <td className="px-4 py-3 text-slate-300">{row.basis}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-300">{row.target}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-amber-300">{row.status}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-[#9ab6ff]">{row.action}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-px bg-[#243041]">
+            {monthlyVehicleRows.map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between bg-[#0b1220] px-4 py-4 text-sm">
+                <span className="text-slate-300">{label}</span>
+                {label === '바로가기' ? (
+                  <Link href="/cherry_tms/monthly-vehicle" className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
+                    {value}
+                  </Link>
+                ) : (
+                  <strong className={label === '정산월 + 차량' ? 'text-[#9ab6ff]' : 'text-white'}>{value}</strong>
+                )}
+              </div>
+            ))}
           </div>
         </article>
 
@@ -249,6 +254,7 @@ export default function CherryTmsClaimDocsPage() {
           </div>
         </article>
       </section>
+
     </CherryTmsShell>
   );
 }

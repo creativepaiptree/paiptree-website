@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { CherryTmsShell } from '../_shared';
 
@@ -201,7 +202,12 @@ export default function CherryTmsSettlementReviewPage() {
 
         <article className="border border-[#243041] bg-[#0b1220]">
           <div className="border-b border-[#243041] bg-[#0f1722] px-4 py-3">
-            <h2 className="text-lg font-semibold text-white">선택 기준 요약</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white">선택 기준 요약</h2>
+              <Link href="/cherry_tms/monthly-vehicle" className="border border-[#314056] bg-[#0a1019] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
+                월별 차량 내역 보기
+              </Link>
+            </div>
           </div>
           <div className="grid gap-px bg-[#243041]">
             {reviewChecks.map(([label, value]) => (
