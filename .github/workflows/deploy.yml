@@ -93,9 +93,23 @@ jobs:
           NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1
           EOF
 
-          NODE_BIN="$(command -v node)"
+          NODE_BIN="$(command -v node || true)"
+          if [ -z "$NODE_BIN" ]; then
+            NODE_BIN="$(sudo bash -lc 'command -v node || true')"
+          fi
+          if [ -z "$NODE_BIN" ]; then
+            for candidate in /usr/bin/node /usr/local/bin/node /opt/homebrew/bin/node; do
+              if [ -x "$candidate" ]; then
+                NODE_BIN="$candidate"
+                break
+              fi
+            done
+          fi
           if [ -z "$NODE_BIN" ]; then
             echo "node binary not found on target host" >&2
+            echo "user=$(whoami)" >&2
+            echo "path=$PATH" >&2
+            sudo bash -lc 'echo root_path=$PATH; command -v node || true' >&2
             exit 1
           fi
 
