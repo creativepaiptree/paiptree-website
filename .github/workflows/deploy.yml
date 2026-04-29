@@ -93,7 +93,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1
           EOF
 
-          sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<'EOF'
+          NODE_BIN="$(command -v node)"
+          if [ -z "$NODE_BIN" ]; then
+            echo "node binary not found on target host" >&2
+            exit 1
+          fi
+
+          sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<EOF
           [Unit]
           Description=Paiptree Website (Next.js standalone)
           After=network.target
@@ -102,7 +108,7 @@ jobs:
           Type=simple
           EnvironmentFile=/etc/paiptree-website.env
           WorkingDirectory=/opt/paiptree-website/current
-          ExecStart=/usr/bin/env node /opt/paiptree-website/current/server.js
+          ExecStart=${NODE_BIN} /opt/paiptree-website/current/server.js
           Restart=always
           RestartSec=5
 
@@ -150,5 +156,8 @@ jobs:
           done
           curl -I -sS --max-time 10 http://127.0.0.1/ | head -n 1
           curl -I -sS --max-time 10 http://127.0.0.1/cctvup/ | head -n 1
+          curl -I -sS --max-time 10 http://127.0.0.1/storybook/ | head -n 1
           curl -I -sS --max-time 10 http://127.0.0.1/cherry_tms/grouping/?theme=light | head -n 1
+          sudo systemctl status paiptree-website --no-pager -l || true
+          sudo journalctl -u paiptree-website -n 50 --no-pager || true
           rm -rf /tmp/paiptree-deploy/
