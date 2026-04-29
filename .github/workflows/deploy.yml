@@ -118,9 +118,10 @@ jobs:
 
           sudo systemctl daemon-reload
           sudo systemctl enable paiptree-website
-          if ! sudo systemctl start paiptree-website; then
-            sudo systemctl status paiptree-website --no-pager -l || true
-            sudo journalctl -u paiptree-website -n 80 --no-pager || true
+          sudo systemctl start paiptree-website || true
+          sudo systemctl status paiptree-website --no-pager -l || true
+          sudo journalctl -u paiptree-website -n 80 --no-pager || true
+          if ! sudo systemctl is-active --quiet paiptree-website; then
             exit 1
           fi
 
