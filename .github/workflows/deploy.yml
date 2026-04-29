@@ -95,22 +95,20 @@ jobs:
 
           NODE_BIN="$(command -v node || true)"
           if [ -z "$NODE_BIN" ]; then
-            NODE_BIN="$(sudo bash -lc 'command -v node || true')"
-          fi
-          if [ -z "$NODE_BIN" ]; then
-            for candidate in /usr/bin/node /usr/local/bin/node /opt/homebrew/bin/node; do
-              if [ -x "$candidate" ]; then
-                NODE_BIN="$candidate"
-                break
-              fi
-            done
-          fi
-          if [ -z "$NODE_BIN" ]; then
-            echo "node binary not found on target host" >&2
-            echo "user=$(whoami)" >&2
-            echo "path=$PATH" >&2
-            sudo bash -lc 'echo root_path=$PATH; command -v node || true' >&2
-            exit 1
+            NODE_VERSION="20.19.2"
+            case "$(uname -m)" in
+              x86_64|amd64) NODE_ARCH="linux-x64" ;;
+              aarch64|arm64) NODE_ARCH="linux-arm64" ;;
+              *) echo "unsupported architecture for node install: $(uname -m)" >&2; exit 1 ;;
+            esac
+            NODE_INSTALL_DIR="/opt/node-$NODE_VERSION-$NODE_ARCH"
+            if [ ! -x "$NODE_INSTALL_DIR/bin/node" ]; then
+              sudo mkdir -p /opt
+              curl -fsSL "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-$NODE_ARCH.tar.xz" -o /tmp/node.tar.xz
+              sudo tar -xJf /tmp/node.tar.xz -C /opt
+              sudo mv "/opt/node-v$NODE_VERSION-$NODE_ARCH" "$NODE_INSTALL_DIR"
+            fi
+            NODE_BIN="$NODE_INSTALL_DIR/bin/node"
           fi
 
           sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<EOF
