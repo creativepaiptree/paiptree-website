@@ -117,7 +117,12 @@ jobs:
           EOF
 
           sudo systemctl daemon-reload
-          sudo systemctl enable --now paiptree-website
+          sudo systemctl enable paiptree-website
+          if ! sudo systemctl start paiptree-website; then
+            sudo systemctl status paiptree-website --no-pager -l || true
+            sudo journalctl -u paiptree-website -n 80 --no-pager || true
+            exit 1
+          fi
 
           sudo tee /etc/nginx/conf.d/default.conf >/dev/null <<'EOF'
           server {
