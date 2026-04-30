@@ -118,8 +118,9 @@ jobs:
           set -a
           source /etc/paiptree-website.env
           set +a
+          : > /tmp/paiptree-website.log
           while true; do
-            ${NODE_BIN} /opt/paiptree-website/current/server.js
+            ${NODE_BIN} /opt/paiptree-website/current/server.js >> /tmp/paiptree-website.log 2>&1
             exit_code=\$?
             echo "\$(date -Is) paiptree runtime exited with code \${exit_code}; restarting in 2s" >> /tmp/paiptree-website.log
             sleep 2
