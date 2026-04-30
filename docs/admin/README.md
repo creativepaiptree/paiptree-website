@@ -35,7 +35,7 @@ last_updated: 26.04.30
 - 활성 가이드(root): **1**
 - 아카이브 가이드: **14**
 - 레거시 문서(`docs/old/**`): **5**
-- 전체 문서 수(`docs/**/*.md`): **71**
+- 전체 문서 수(`docs/**/*.md`): **72**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -77,7 +77,7 @@ last_updated: 26.04.30
 | guides | 15 |
 | old | 5 |
 | pages | 44 |
-| plans | 1 |
+| plans | 2 |
 | root | 2 |
 | templates | 2 |
 
@@ -97,6 +97,7 @@ last_updated: 26.04.30
 ## 8. 최근 수정 문서 (상위 10개)
 - `docs/admin/README.md` (26.04.30)
 - `docs/pages/cctvup.page.md` (26.04.30)
+- `docs/plans/2026-04-30-cctvup-issue-first-switchover.md` (26.04.30)
 - `docs/pages/cherry_tms-grouping.page.md` (26.04.27)
 - `docs/pages/cherry_tms-monthly-vehicle.page.md` (26.04.27)
 - `docs/pages/cherry_tms-claim-docs.page.md` (26.04.26)
@@ -104,4 +105,3 @@ last_updated: 26.04.30
 - `docs/pages/cherry_tms.page.md` (26.04.26)
 - `docs/pages/cherry_tms-settlement-register.page.md` (26.04.26)
 - `docs/plans/cherry_tms-supabase-rollout.md` (26.04.24)
-- `docs/pages/cherry_tms-intake.page.md` (26.04.24)

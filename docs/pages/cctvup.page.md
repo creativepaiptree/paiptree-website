@@ -29,9 +29,10 @@ last_updated: 26.04.28
 - 기록 API: `/api/cctvup/history`는 Supabase history 읽기/적재용 보조 API로 사용한다.
 - checker API: `/api/cctvup/check`는 운영 DB 최신 상태를 읽고 history를 적재하는 서버용 트리거 엔드포인트다.
 - 기준 테이블: `paip.tbl_farm_image`를 1차 수신 원본으로 사용한다.
-- 기록층(별도 Supabase): 문제로그와 에너지바 스냅샷은 운영 DB가 아니라 별도 Supabase 테이블(`tbl_cctvup_check_runs`, `tbl_cctvup_camera_snapshots`, `tbl_cctvup_incident_logs`)에 적재한다.
+- 기록층(별도 Supabase): 문제로그와 에너지바 스냅샷은 운영 DB가 아니라 별도 Supabase 테이블(`tbl_cctvup_check_runs`, `tbl_cctvup_camera_snapshots`, `tbl_cctvup_incident_logs`, `tbl_cctvup_current_issues`)에 적재한다.
+- current issue 규칙: 화면의 1차 기준은 `tbl_cctvup_current_issues`의 `issue_status = 'open'` 이며, 정상은 기본값으로 간주한다.
 - 보관 정책: 스냅샷과 문제로그는 생성 후 30일 보관을 기본값으로 둔다.
-- 체크 주기: 서버 checker는 5분 간격으로 `/api/cctvup/check`를 호출해 history를 누적하는 구성을 권장한다.
+- 체크 주기: GitHub Actions cron 또는 동일한 5분 스케줄러가 `/api/cctvup/check`를 호출해 history를 누적하는 구성을 권장한다.
 - 체크 보안: `CCTVUP_CRON_TRIGGER_SECRET`는 필수이며, `x-cctvup-cron-secret` 헤더와 일치해야 적재를 허용한다.
 - API 환경변수: `CCTVUP_DB_HOST`, `CCTVUP_DB_PORT`, `CCTVUP_DB_USER`, `CCTVUP_DB_PASSWORD`, `CCTVUP_DB_DATABASE`
 - cron 환경변수: `CCTVUP_CRON_TRIGGER_SECRET`

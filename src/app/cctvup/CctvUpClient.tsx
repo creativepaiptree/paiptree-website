@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { type CctvUpPayload, type CctvUpRow, type CctvUpSlotStatus, type CctvUpStatus } from '@/lib/cctvup';
+import { type CctvUpPayload, type CctvUpRow, type CctvUpSlotStatus, type CctvUpStatus, minutesBetween } from '@/lib/cctvup';
 import { type CctvUpHistoryPayload } from '@/lib/cctvup-history';
 import {
   type CctvUpFarmCategory,
@@ -97,7 +97,8 @@ const initialPayload: CctvUpPayload = {
   table: 'paip.tbl_farm_image',
   rows: [],
   incidents: [],
-  summary: { farms: 0, cameras: 0, ok: 0, late: 0, missing: 0, critical: 0, paused: 0 },
+  currentIssues: [],
+  summary: { farms: 0, cameras: 0, ok: 0, late: 0, missing: 0, critical: 0, paused: 0, issueCount: 0 },
   message: '운영 DB 조회 대기 중입니다.',
 };
 
@@ -307,6 +308,7 @@ export default function CctvUpClient() {
     checkRuns: [],
     snapshots: [],
     incidents: [],
+    currentIssues: [],
   });
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [registryPayload, setRegistryPayload] = useState<CctvUpFarmRegistryPayload>(initialRegistryState);
@@ -347,6 +349,7 @@ export default function CctvUpClient() {
           checkRuns: Array.isArray(nextHistory.checkRuns) ? nextHistory.checkRuns : [],
           snapshots: Array.isArray(nextHistory.snapshots) ? nextHistory.snapshots : [],
           incidents: Array.isArray(nextHistory.incidents) ? nextHistory.incidents : [],
+          currentIssues: Array.isArray(nextHistory.currentIssues) ? nextHistory.currentIssues : [],
           message: nextHistory.message,
         });
 
@@ -480,6 +483,20 @@ export default function CctvUpClient() {
       .slice(0, 6);
   }, [historyPayload.incidents, selected]);
 
+  const selectedCurrentIssues = useMemo(() => {
+    if (!selected) return [];
+    return historyPayload.currentIssues
+      .filter((issue) => issue.cameraKey === selected.id)
+      .slice()
+      .sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
+      .slice(0, 6);
+  }, [historyPayload.currentIssues, selected]);
+
+  const latestCheckRun = historyPayload.checkRuns[0];
+  const latestIssueCount = latestCheckRun?.issueCount ?? historyPayload.currentIssues.length;
+  const latestCheckAgeMinutes = latestCheckRun?.checkedAt ? minutesBetween(new Date(), latestCheckRun.checkedAt) : 999;
+  const isStale = latestCheckAgeMinutes >= 15;
+
   const updateRegistryField = (farmId: string, field: keyof CctvUpFarmRegistryEntry, value: string | string[] | boolean | CctvUpFarmCategory) => {
     setRegistryDraft((current) => {
       const sourceRow = monitorRows.find((row) => row.farm === farmId);
@@ -505,7 +522,6 @@ export default function CctvUpClient() {
       };
     });
   };
-
   const resetRegistryForFarm = (farmId: string) => {
     setRegistryDraft((current) => {
       const next = { ...current };
@@ -570,7 +586,7 @@ export default function CctvUpClient() {
             <h1 className="mt-1 flex flex-wrap items-end gap-2 text-2xl font-semibold leading-tight">
               <span>5분 CCTV 데이터 수신 모니터</span>
               <span className={`text-sm font-normal ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                (운영 DB · 농장 {payload.summary.farms}개 · 카메라 {payload.summary.cameras}개 · 확인 {formatClock(payload.checkedAt)})
+                (운영 DB · 농장 {payload.summary.farms}개 · 카메라 {payload.summary.cameras}개 · 확인 {formatClock(payload.checkedAt)} · 문제 {payload.summary.issueCount}개)
               </span>
             </h1>
           </div>
@@ -617,7 +633,7 @@ export default function CctvUpClient() {
                     : '운영 DB와 history 스냅샷을 함께 반영했습니다.'}
               </span>
               <span className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
-                history {isHistoryLoading ? '동기화 중' : historyPayload.source}
+                history {isHistoryLoading ? '동기화 중' : historyPayload.source} · last check {formatEventTime(latestCheckRun?.checkedAt)} · issue {latestIssueCount}{isStale ? ` · stale ${latestCheckAgeMinutes}m` : ''}
               </span>
             </div>
           </div>
@@ -991,6 +1007,29 @@ export default function CctvUpClient() {
                         </span>
                       </div>
                     </div>
+                    <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[11px] uppercase tracking-[0.16em]">현재 issue</span>
+                        <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{selectedCurrentIssues.length}건</span>
+                      </div>
+                      {selectedCurrentIssues.length ? (
+                        <div className="mt-3 space-y-2">
+                          {selectedCurrentIssues.map((issue) => (
+                            <div key={issue.id} className={`border px-3 py-2 text-xs leading-5 ${theme === 'light' ? 'border-slate-200 bg-white text-slate-700' : 'border-[#243041] bg-[#0a1019] text-slate-300'}`}>
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-medium">{issue.issueKind} · {issue.issueStatus}</span>
+                                <span className="tabular-nums">{formatEventTime(issue.lastSeenAt)}</span>
+                              </div>
+                              <p className="mt-1 line-clamp-2">{issue.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className={`mt-3 text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          이 카메라에 열린 issue가 없습니다.
+                        </p>
+                      )}
+                    </div>
                     <div className="grid gap-px md:grid-cols-2">
                       <div className={`${theme === 'light' ? 'bg-white' : 'bg-[#0f1722]'} p-4`}>
                         <p className={`text-[11px] uppercase tracking-[0.16em] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>최근 스냅샷</p>
@@ -1034,7 +1073,7 @@ export default function CctvUpClient() {
                       </div>
                     </div>
                     <div className={`border-t px-4 py-3 text-xs ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-[#243041] text-slate-500'}`}>
-                      현재 상세는 운영 DB에서 읽은 최신 상태이며, 기록은 별도 Supabase history에 누적되는 구조다.
+                      현재 상세는 운영 DB에서 읽은 최신 상태이며, 기록은 별도 Supabase history/currentIssues에 누적되는 구조다.
                     </div>
                   </section>
 

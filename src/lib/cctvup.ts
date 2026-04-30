@@ -33,12 +33,34 @@ export type CctvUpIncident = {
   status: Exclude<CctvUpStatus, 'ok' | 'paused'>;
 };
 
+export type CctvUpCurrentIssue = {
+  id: string;
+  runId?: string | null;
+  cameraKey: string;
+  farmId: string;
+  houseId: string;
+  moduleId: string;
+  farmName?: string | null;
+  houseName?: string | null;
+  cameraName?: string | null;
+  issueKind: Exclude<CctvUpStatus, 'ok' | 'paused'>;
+  issueStatus: 'open' | 'resolved';
+  firstSeenAt: string;
+  lastSeenAt: string;
+  resolvedAt?: string | null;
+  latestAt?: string | null;
+  ageMinutes: number;
+  message: string;
+  expiresAt: string;
+};
+
 export type CctvUpPayload = {
   source: 'db' | 'mock' | 'unavailable';
   checkedAt: string;
   table: string;
   rows: CctvUpRow[];
   incidents: CctvUpIncident[];
+  currentIssues: CctvUpCurrentIssue[];
   summary: {
     farms: number;
     cameras: number;
@@ -47,6 +69,7 @@ export type CctvUpPayload = {
     missing: number;
     critical: number;
     paused: number;
+    issueCount: number;
   };
   message?: string;
 };
@@ -75,6 +98,7 @@ export type CctvUpCheckRun = {
   missingCount: number;
   criticalCount: number;
   pausedCount: number;
+  issueCount: number;
   note: string;
 };
 
@@ -120,6 +144,7 @@ export const CCTVUP_TABLE = 'paip.tbl_farm_image';
 export const CCTVUP_HISTORY_CHECK_RUNS_TABLE = 'public.tbl_cctvup_check_runs';
 export const CCTVUP_HISTORY_CAMERA_SNAPSHOTS_TABLE = 'public.tbl_cctvup_camera_snapshots';
 export const CCTVUP_HISTORY_INCIDENT_LOGS_TABLE = 'public.tbl_cctvup_incident_logs';
+export const CCTVUP_HISTORY_CURRENT_ISSUES_TABLE = 'public.tbl_cctvup_current_issues';
 export const CCTVUP_EXPECTED_1H = 12;
 export const CCTVUP_EXPECTED_24H = 288;
 
@@ -221,14 +246,40 @@ export function buildIncidents(rows: CctvUpRow[]): CctvUpIncident[] {
     }));
 }
 
+export function buildCurrentIssues(rows: CctvUpRow[], checkedAt = new Date().toISOString()): CctvUpCurrentIssue[] {
+  return rows
+    .filter((row): row is CctvUpRow & { status: 'late' | 'missing' | 'critical' } => ['late', 'missing', 'critical'].includes(row.status))
+    .map((row, index) => ({
+      id: `cctvup-current-${index + 1}`,
+      cameraKey: row.id,
+      farmId: row.farm,
+      houseId: row.house,
+      moduleId: row.camera,
+      farmName: row.farmName ?? null,
+      houseName: row.houseName ?? null,
+      cameraName: row.cameraName ?? null,
+      issueKind: row.status,
+      issueStatus: 'open',
+      firstSeenAt: checkedAt,
+      lastSeenAt: checkedAt,
+      resolvedAt: null,
+      latestAt: row.latestAtIso ?? null,
+      ageMinutes: row.ageMinutes,
+      message: row.reason,
+      expiresAt: new Date(Date.parse(checkedAt) + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    }));
+}
+
 export function buildPayload(rows: CctvUpRow[], source: CctvUpPayload['source'], message?: string): CctvUpPayload {
   const farms = new Set(rows.map((row) => row.farm));
+  const currentIssues = buildCurrentIssues(rows);
   return {
     source,
     checkedAt: new Date().toISOString(),
     table: CCTVUP_TABLE,
     rows,
     incidents: buildIncidents(rows),
+    currentIssues,
     summary: {
       farms: farms.size,
       cameras: rows.length,
@@ -237,6 +288,7 @@ export function buildPayload(rows: CctvUpRow[], source: CctvUpPayload['source'],
       missing: rows.filter((row) => row.status === 'missing').length,
       critical: rows.filter((row) => row.status === 'critical').length,
       paused: rows.filter((row) => row.status === 'paused').length,
+      issueCount: currentIssues.length,
     },
     message,
   };

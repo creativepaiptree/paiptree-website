@@ -1,0 +1,32 @@
+name: CCTVUP Check
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Run CCTVUP checker
+        env:
+          CCTVUP_CHECK_URL: ${{ secrets.CCTVUP_CHECK_URL }}
+          CCTVUP_CRON_TRIGGER_SECRET: ${{ secrets.CCTVUP_CRON_TRIGGER_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CCTVUP_CHECK_URL:-}" ]; then
+            echo "CCTVUP_CHECK_URL secret is missing" >&2
+            exit 1
+          fi
+          if [ -z "${CCTVUP_CRON_TRIGGER_SECRET:-}" ]; then
+            echo "CCTVUP_CRON_TRIGGER_SECRET secret is missing" >&2
+            exit 1
+          fi
+
+          curl --fail --silent --show-error --max-time 120 \
+            -H "x-cctvup-cron-secret: ${CCTVUP_CRON_TRIGGER_SECRET}" \
+            "${CCTVUP_CHECK_URL}"

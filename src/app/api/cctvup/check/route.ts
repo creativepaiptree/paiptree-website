@@ -65,6 +65,8 @@ export async function GET(request: Request) {
       runId: result.persistResult.runId,
       snapshotCount: result.persistResult.snapshotCount,
       incidentCount: result.persistResult.incidentCount,
+      currentIssueCount: result.persistResult.currentIssueCount,
+      resolvedIssueCount: result.persistResult.resolvedIssueCount,
       summary: result.payload.summary,
     },
     { headers: { 'Cache-Control': 'no-store' } },

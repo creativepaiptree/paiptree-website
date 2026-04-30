@@ -1,10 +1,12 @@
 import type {
   CctvUpCameraSnapshot,
   CctvUpCheckRun,
+  CctvUpCurrentIssue,
   CctvUpIncidentLog,
   CctvUpPayload,
   CctvUpStatus,
 } from '@/lib/cctvup';
+import { buildCurrentIssues } from '@/lib/cctvup';
 
 export type CctvUpHistorySource = 'supabase' | 'unavailable';
 
@@ -13,6 +15,7 @@ export type CctvUpHistoryPayload = {
   checkRuns: CctvUpCheckRun[];
   snapshots: CctvUpCameraSnapshot[];
   incidents: CctvUpIncidentLog[];
+  currentIssues: CctvUpCurrentIssue[];
   message?: string;
 };
 
@@ -39,6 +42,7 @@ type SupabaseCheckRunRow = {
   missing_count: number;
   critical_count: number;
   paused_count: number;
+  issue_count?: number;
   note: string;
 };
 
@@ -78,6 +82,27 @@ type SupabaseIncidentLogRow = {
   resolved_at?: string | null;
   expires_at: string;
   message: string;
+};
+
+type SupabaseCurrentIssueRow = {
+  id: string;
+  run_id?: string | null;
+  camera_key: string;
+  farm_id: string;
+  house_id: string;
+  module_id: string;
+  farm_name?: string | null;
+  house_name?: string | null;
+  camera_name?: string | null;
+  issue_kind: CctvUpCurrentIssue['issueKind'];
+  issue_status: CctvUpCurrentIssue['issueStatus'];
+  first_seen_at: string;
+  last_seen_at: string;
+  resolved_at?: string | null;
+  latest_at?: string | null;
+  age_minutes: number;
+  message: string;
+  expires_at: string;
 };
 
 const HISTORY_KEEP_DAYS = 30;
@@ -143,6 +168,7 @@ function mapCheckRunFromSupabase(row: SupabaseCheckRunRow): CctvUpCheckRun {
     missingCount: row.missing_count,
     criticalCount: row.critical_count,
     pausedCount: row.paused_count,
+    issueCount: row.issue_count ?? (row.late_count + row.missing_count + row.critical_count),
     note: row.note,
   };
 }
@@ -186,6 +212,52 @@ function mapIncidentFromSupabase(row: SupabaseIncidentLogRow): CctvUpIncidentLog
     resolvedAt: row.resolved_at,
     expiresAt: row.expires_at,
     message: row.message,
+  };
+}
+
+function mapCurrentIssueFromSupabase(row: SupabaseCurrentIssueRow): CctvUpCurrentIssue {
+  return {
+    id: row.id,
+    runId: row.run_id,
+    cameraKey: row.camera_key,
+    farmId: row.farm_id,
+    houseId: row.house_id,
+    moduleId: row.module_id,
+    farmName: row.farm_name,
+    houseName: row.house_name,
+    cameraName: row.camera_name,
+    issueKind: row.issue_kind,
+    issueStatus: row.issue_status,
+    firstSeenAt: row.first_seen_at,
+    lastSeenAt: row.last_seen_at,
+    resolvedAt: row.resolved_at,
+    latestAt: row.latest_at,
+    ageMinutes: row.age_minutes,
+    message: row.message,
+    expiresAt: row.expires_at,
+  };
+}
+
+function mapCurrentIssueToSupabase(issue: CctvUpCurrentIssue) {
+  return {
+    run_id: issue.runId,
+    camera_key: issue.cameraKey,
+    farm_id: issue.farmId,
+    house_id: issue.houseId,
+    module_id: issue.moduleId,
+    farm_name: issue.farmName,
+    house_name: issue.houseName,
+    camera_name: issue.cameraName,
+    issue_kind: issue.issueKind,
+    issue_status: issue.issueStatus,
+    first_seen_at: issue.firstSeenAt,
+    last_seen_at: issue.lastSeenAt,
+    resolved_at: issue.resolvedAt,
+    latest_at: issue.latestAt,
+    age_minutes: issue.ageMinutes,
+    message: issue.message,
+    payload: issue,
+    expires_at: issue.expiresAt,
   };
 }
 
@@ -262,6 +334,7 @@ export function buildCctvUpCapturePayload(payload: CctvUpPayload) {
     missingCount: payload.summary.missing,
     criticalCount: payload.summary.critical,
     pausedCount: payload.summary.paused,
+    issueCount: payload.summary.issueCount,
     note: payload.message || '',
   };
 
@@ -303,7 +376,9 @@ export function buildCctvUpCapturePayload(payload: CctvUpPayload) {
       message: row.reason,
     })) as CctvUpIncidentLog[];
 
-  return { run, snapshots, incidents };
+  const currentIssues = buildCurrentIssues(payload.rows, checkedAt);
+
+  return { run, snapshots, incidents, currentIssues };
 }
 
 export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpHistoryPayload | null> {
@@ -311,7 +386,7 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
   if (!config) return null;
 
   try {
-    const [checkRuns, snapshots, incidents] = await Promise.all([
+    const [checkRuns, snapshots, incidents, currentIssues] = await Promise.all([
       requestSupabase<SupabaseCheckRunRow[]>(config, 'tbl_cctvup_check_runs?order=checked_at.desc', {
         method: 'GET',
         headers: { Prefer: 'count=exact' },
@@ -324,6 +399,10 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
         method: 'GET',
         headers: { Prefer: 'count=exact' },
       }).then((result) => Array.isArray(result.data) ? result.data.slice(0, limit).map(mapIncidentFromSupabase) : []),
+      requestSupabase<SupabaseCurrentIssueRow[]>(config, 'tbl_cctvup_current_issues?order=last_seen_at.desc', {
+        method: 'GET',
+        headers: { Prefer: 'count=exact' },
+      }).then((result) => Array.isArray(result.data) ? result.data.slice(0, limit).map(mapCurrentIssueFromSupabase) : []),
     ]);
 
     return {
@@ -331,6 +410,7 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
       checkRuns,
       snapshots,
       incidents,
+      currentIssues,
     };
   } catch (error) {
     console.error('[cctvup-history] Supabase fetch failed', error);
@@ -339,6 +419,7 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
       checkRuns: [],
       snapshots: [],
       incidents: [],
+      currentIssues: [],
       message: error instanceof Error ? error.message : 'CCTVUP history fetch failed',
     };
   }
@@ -368,14 +449,18 @@ export async function persistCctvUpHistory(payload: CctvUpPayload) {
   const snapshots = capture.snapshots.map((snapshot) => ({ ...snapshot, runId }));
   const incidents = capture.incidents.map((incident) => ({ ...incident, runId }));
 
-  const snapshotResponse = await requestSupabase<unknown>(config, 'tbl_cctvup_camera_snapshots', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
+  const snapshotResponse = await requestSupabase<unknown>(
+    config,
+    'tbl_cctvup_camera_snapshots?on_conflict=camera_key,snapshot_at',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(snapshots.map(mapSnapshotToSupabase)),
     },
-    body: JSON.stringify(snapshots.map(mapSnapshotToSupabase)),
-  });
+  );
 
   if (snapshotResponse.error) {
     return { ok: false as const, message: snapshotResponse.error };
@@ -396,5 +481,74 @@ export async function persistCctvUpHistory(payload: CctvUpPayload) {
     }
   }
 
-  return { ok: true as const, runId, snapshotCount: snapshots.length, incidentCount: incidents.length };
+  const currentIssueLookupResponse = await requestSupabase<SupabaseCurrentIssueRow[]>(
+    config,
+    'tbl_cctvup_current_issues?select=id,camera_key,first_seen_at,issue_status',
+    {
+      method: 'GET',
+      headers: { Prefer: 'count=exact' },
+    },
+  );
+
+  const hasCurrentIssuesTable = !currentIssueLookupResponse.error?.includes('Could not find the table');
+  const existingCurrentIssues = hasCurrentIssuesTable && Array.isArray(currentIssueLookupResponse.data) ? currentIssueLookupResponse.data : [];
+  const existingCurrentIssueMap = new Map(existingCurrentIssues.map((row) => [row.camera_key, row]));
+  const currentIssueKeys = new Set(capture.currentIssues.map((issue) => issue.cameraKey));
+  const nextCurrentIssues = capture.currentIssues.map((issue) => {
+    const existing = existingCurrentIssueMap.get(issue.cameraKey);
+    return {
+      ...issue,
+      runId,
+      firstSeenAt: existing?.first_seen_at ?? issue.firstSeenAt,
+      lastSeenAt: issue.lastSeenAt,
+      issueStatus: 'open' as const,
+      resolvedAt: null,
+    };
+  });
+
+  if (hasCurrentIssuesTable && nextCurrentIssues.length > 0) {
+    const currentIssueResponse = await requestSupabase<unknown>(config, 'tbl_cctvup_current_issues?on_conflict=camera_key', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(nextCurrentIssues.map(mapCurrentIssueToSupabase)),
+    });
+
+    if (currentIssueResponse.error) {
+      return { ok: false as const, message: currentIssueResponse.error };
+    }
+  }
+
+  const resolvedIds = hasCurrentIssuesTable
+    ? existingCurrentIssues
+        .filter((row) => row.issue_status === 'open' && !currentIssueKeys.has(row.camera_key))
+        .map((row) => row.id)
+    : [];
+
+  if (hasCurrentIssuesTable && resolvedIds.length > 0) {
+    const resolvedIssueResponse = await requestSupabase<unknown>(
+      config,
+      `tbl_cctvup_current_issues?id=in.(${resolvedIds.join(',')})`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          issue_status: 'resolved',
+          resolved_at: capture.run.checkedAt,
+          last_seen_at: capture.run.checkedAt,
+        }),
+      },
+    );
+
+    if (resolvedIssueResponse.error) {
+      return { ok: false as const, message: resolvedIssueResponse.error };
+    }
+  }
+
+  return { ok: true as const, runId, snapshotCount: snapshots.length, incidentCount: incidents.length, currentIssueCount: nextCurrentIssues.length, resolvedIssueCount: resolvedIds.length };
 }
