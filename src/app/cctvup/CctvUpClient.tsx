@@ -214,6 +214,8 @@ const statusOrder: Record<CctvUpStatus, number> = {
   ok: 4,
 };
 
+const CHRONIC_AGE_MINUTES = 180;
+
 function compareDisplayRows(a: DisplayRow, b: DisplayRow) {
   const badgeDiff = farmBadgeOrder[a.displayCategory] - farmBadgeOrder[b.displayCategory];
   if (badgeDiff !== 0) return badgeDiff;
@@ -451,8 +453,16 @@ export default function CctvUpClient() {
   }, [farmGroups, query, selected?.farm, statusFilter]);
 
   const problemRows = useMemo(() => {
-    return sortedRows.filter((row) => row.status !== 'ok');
+    return sortedRows.filter((row) => row.status !== 'ok' && row.status !== 'paused');
   }, [sortedRows]);
+
+  const freshProblemRows = useMemo(() => {
+    return problemRows.filter((row) => row.ageMinutes < CHRONIC_AGE_MINUTES);
+  }, [problemRows]);
+
+  const chronicProblemRows = useMemo(() => {
+    return problemRows.filter((row) => row.ageMinutes >= CHRONIC_AGE_MINUTES);
+  }, [problemRows]);
 
   const counts = useMemo(
     () => ({
@@ -1089,11 +1099,31 @@ export default function CctvUpClient() {
             ) : (
               <article className={`border ${panelBg(theme)}`}>
                 <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
-                  <div>
-                    <h2 className="text-lg font-semibold">문제 로그</h2>
-                    <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>정상 제외 항목만 최신 상태로 보여줍니다.</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-semibold">문제 로그</h2>
+                      <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                        최근 문제를 먼저 보여주고, 오래된 문제는 아래 장기 문제로 분리합니다.
+                      </p>
+                    </div>
+                    <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      최근 {freshProblemRows.length} · 장기 {chronicProblemRows.length}
+                    </span>
                   </div>
                 </div>
+
+                <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0f1722]'}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold">최근 문제</h3>
+                      <p className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        지금 확인해야 할 항목만 먼저 노출합니다.
+                      </p>
+                    </div>
+                    <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{freshProblemRows.length}개</span>
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="min-w-full border-collapse text-left text-sm">
                     <thead className={theme === 'light' ? 'bg-slate-50 text-slate-500' : 'bg-[#111a27] text-slate-400'}>
@@ -1106,8 +1136,8 @@ export default function CctvUpClient() {
                       </tr>
                     </thead>
                     <tbody>
-                      {problemRows.length ? (
-                        problemRows.map((row) => {
+                      {freshProblemRows.length ? (
+                        freshProblemRows.map((row) => {
                           const tone = statusTone[row.status];
                           return (
                             <tr
@@ -1141,13 +1171,67 @@ export default function CctvUpClient() {
                       ) : (
                         <tr>
                           <td colSpan={4} className={`px-4 py-10 text-center text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                            현재 지연·누락·장기중단 항목이 없습니다.
+                            최근 확인할 문제는 없습니다.
                           </td>
                         </tr>
                       )}
                     </tbody>
                   </table>
                 </div>
+
+                {chronicProblemRows.length ? (
+                  <details className={`border-t ${theme === 'light' ? 'border-slate-200 bg-slate-50/70' : 'border-[#243041] bg-[#0a1019]'}`}>
+                    <summary className={`cursor-pointer list-none px-4 py-3 text-sm font-medium ${theme === 'light' ? 'text-slate-700' : 'text-slate-200'}`}>
+                      장기 문제 보기 <span className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>({chronicProblemRows.length}개)</span>
+                    </summary>
+                    <div className="overflow-x-auto border-t">
+                      <table className="min-w-full border-collapse text-left text-sm">
+                        <thead className={theme === 'light' ? 'bg-slate-50 text-slate-500' : 'bg-[#111a27] text-slate-400'}>
+                          <tr>
+                            {['이름', '상태', '날짜', '메시지'].map((head) => (
+                              <th key={head} className={`border-b px-4 py-3 font-medium whitespace-nowrap ${theme === 'light' ? 'border-slate-200' : 'border-[#243041]'}`}>
+                                {head}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {chronicProblemRows.map((row) => {
+                            const tone = statusTone[row.status];
+                            return (
+                              <tr
+                                key={row.id}
+                                onClick={() => setSelectedId(row.id)}
+                                className={`cursor-pointer border-b ${theme === 'light' ? 'border-slate-100 hover:bg-slate-50' : 'border-[#1b2636] hover:bg-[#0f1722]'}`}
+                              >
+                                <td className="px-3 py-2 align-top">
+                                  <div className="flex min-w-0 items-center gap-2">
+                                    <div className="shrink-0 truncate text-[12px] font-medium leading-4">
+                                      {row.displayFarmName}
+                                    </div>
+                                    <div className={`min-w-0 truncate text-[10px] leading-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                                      {row.displayHouseName} / {row.displayCameraName} ({row.farm} / {row.house} / {row.camera})
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap align-top">
+                                  <span className="inline-flex items-center gap-1 text-[10px] leading-4">
+                                    <span className={`h-2 w-2 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
+                                    <span className={theme === 'light' ? 'text-slate-600' : 'text-slate-400'}>{tone.label}</span>
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap align-top tabular-nums text-[11px] leading-4">{row.latestAt}</td>
+                                <td className="px-3 py-2 align-top">
+                                  <div className="max-w-[240px] text-[11px] leading-4 text-slate-200">{row.reason}</div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                ) : null}
               </article>
             )}
           </aside>
