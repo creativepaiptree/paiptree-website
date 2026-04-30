@@ -111,6 +111,22 @@ jobs:
             NODE_BIN="$NODE_INSTALL_DIR/bin/node"
           fi
 
+          sudo tee /opt/paiptree-website/current/start-runtime.sh >/dev/null <<EOF
+          #!/usr/bin/env bash
+          set -u
+          cd /opt/paiptree-website/current
+          set -a
+          source /etc/paiptree-website.env
+          set +a
+          while true; do
+            ${NODE_BIN} /opt/paiptree-website/current/server.js
+            exit_code=\$?
+            echo "\$(date -Is) paiptree runtime exited with code \${exit_code}; restarting in 2s" >> /tmp/paiptree-website.log
+            sleep 2
+          done
+          EOF
+          sudo chmod 755 /opt/paiptree-website/current/start-runtime.sh
+
           sudo tee /etc/systemd/system/paiptree-website.service >/dev/null <<EOF
           [Unit]
           Description=Paiptree Website (Next.js standalone)
@@ -120,7 +136,7 @@ jobs:
           Type=simple
           EnvironmentFile=/etc/paiptree-website.env
           WorkingDirectory=/opt/paiptree-website/current
-          ExecStart=${NODE_BIN} /opt/paiptree-website/current/server.js
+          ExecStart=/opt/paiptree-website/current/start-runtime.sh
           Restart=always
           RestartSec=5
 
@@ -135,8 +151,9 @@ jobs:
           sudo journalctl -u paiptree-website -n 80 --no-pager || true
           if ! sudo systemctl is-active --quiet paiptree-website; then
             sudo systemctl disable --now paiptree-website 2>/dev/null || true
+            sudo pkill -f '/opt/paiptree-website/current/start-runtime.sh' 2>/dev/null || true
             sudo pkill -f '/opt/paiptree-website/current/server.js' 2>/dev/null || true
-            sudo bash -lc "set -euxo pipefail; cd /opt/paiptree-website/current && set -a && source /etc/paiptree-website.env && nohup ${NODE_BIN} /opt/paiptree-website/current/server.js >/tmp/paiptree-website.log 2>&1 < /dev/null & echo \$! >/tmp/paiptree-website.pid"
+            sudo nohup /opt/paiptree-website/current/start-runtime.sh >/tmp/paiptree-website.log 2>&1 < /dev/null & echo \$! >/tmp/paiptree-website.pid
             sleep 2
             sudo cat /tmp/paiptree-website.log || true
             if ! curl -fsS --max-time 5 http://127.0.0.1:3000/ >/dev/null; then
