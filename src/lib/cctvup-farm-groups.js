@@ -47,12 +47,17 @@ function pickFreshestIssue(rowA, rowB) {
 
 function getGroupStatus(rows) {
   let winner = 'ok';
+  let sawPaused = false;
   for (const row of rows) {
+    if (row.status === 'paused') {
+      sawPaused = true;
+      continue;
+    }
     if (STATUS_PRIORITY[row.status] < STATUS_PRIORITY[winner]) {
       winner = row.status;
     }
   }
-  return winner;
+  return winner === 'ok' && sawPaused ? 'paused' : winner;
 }
 
 function getGroupCategory(rows) {
