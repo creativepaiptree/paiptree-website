@@ -240,8 +240,25 @@ jobs:
             exit 1
           fi
           sudo tail -n 80 /tmp/paiptree-website.log || true
-          curl -I -sS --max-time 10 http://127.0.0.1/ | head -n 1
-          curl -I -sS --max-time 10 http://127.0.0.1/cctvup/ | head -n 1
-          curl -I -sS --max-time 10 http://127.0.0.1/storybook/ | head -n 1
-          curl -I -sS --max-time 10 http://127.0.0.1/cherry_tms/grouping/?theme=light | head -n 1
+          curl -I -sS --max-time 10 http://${HOST_IP}/ | head -n 1
+          curl -I -sS --max-time 10 http://${HOST_IP}/cctvup/ | head -n 1
+          curl -I -sS --max-time 10 http://${HOST_IP}/storybook/ | head -n 1
+          curl -I -sS --max-time 10 http://${HOST_IP}/cherry_tms/grouping/?theme=light | head -n 1
+
+          echo '=== nginx sockets ==='
+          sudo ss -ltnp | grep -E ':(80|3000)\b' || true
+          echo '=== nginx error log ==='
+          sudo tail -n 80 /var/log/nginx/error.log || true
+          echo '=== nginx merged config (relevant lines) ==='
+          sudo nginx -T 2>&1 | grep -nE 'listen 80|server_name|proxy_pass|root ' || true
+          echo '=== process netns ==='
+          NGINX_PID="$(pgrep -xo nginx || true)"
+          NODE_PID="$(pgrep -fo '/opt/paiptree-website/current/server.js' || true)"
+          if [ -n "$NGINX_PID" ]; then
+            echo "nginx=$NGINX_PID $(readlink /proc/$NGINX_PID/ns/net || true)"
+          fi
+          if [ -n "$NODE_PID" ]; then
+            echo "node=$NODE_PID $(readlink /proc/$NODE_PID/ns/net || true)"
+          fi
+
           rm -rf /tmp/paiptree-deploy/
