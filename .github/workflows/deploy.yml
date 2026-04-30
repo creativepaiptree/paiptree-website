@@ -150,6 +150,34 @@ jobs:
           sudo systemctl start paiptree-website || true
           sudo systemctl status paiptree-website --no-pager -l || true
           sudo journalctl -u paiptree-website -n 80 --no-pager || true
+
+          sudo tee /etc/systemd/system/paiptree-website-watchdog.service >/dev/null <<'EOF'
+          [Unit]
+          Description=Paiptree Website watchdog
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -lc 'if ! curl -fsS --max-time 3 http://127.0.0.1:3000/ >/dev/null; then systemctl restart paiptree-website; fi'
+          EOF
+
+          sudo tee /etc/systemd/system/paiptree-website-watchdog.timer >/dev/null <<'EOF'
+          [Unit]
+          Description=Run Paiptree Website watchdog periodically
+
+          [Timer]
+          OnBootSec=30s
+          OnUnitActiveSec=30s
+          AccuracySec=5s
+          Unit=paiptree-website-watchdog.service
+
+          [Install]
+          WantedBy=timers.target
+          EOF
+
+          sudo systemctl daemon-reload
+          sudo systemctl enable --now paiptree-website-watchdog.timer
+          sudo systemctl start paiptree-website-watchdog.service || true
+
           if ! sudo systemctl is-active --quiet paiptree-website; then
             sudo systemctl disable --now paiptree-website 2>/dev/null || true
             sudo pkill -f '/opt/paiptree-website/current/start-runtime.sh' 2>/dev/null || true
