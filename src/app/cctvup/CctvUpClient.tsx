@@ -1161,7 +1161,9 @@ export default function CctvUpClient() {
                                   <span className={theme === 'light' ? 'text-slate-600' : 'text-slate-400'}>{tone.label}</span>
                                 </span>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap align-top tabular-nums text-[11px] leading-4">{row.latestAt}</td>
+                              <td className="px-3 py-2 whitespace-nowrap align-top tabular-nums text-[11px] leading-4" title={row.latestAtIso || row.latestAt}>
+                                {formatEventTime(row.latestAtIso || row.latestAt)}
+                              </td>
                               <td className="px-3 py-2 align-top">
                                 <div className="max-w-[240px] text-[11px] leading-4 text-slate-200">{row.reason}</div>
                               </td>
@@ -1220,7 +1222,9 @@ export default function CctvUpClient() {
                                     <span className={theme === 'light' ? 'text-slate-600' : 'text-slate-400'}>{tone.label}</span>
                                   </span>
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap align-top tabular-nums text-[11px] leading-4">{row.latestAt}</td>
+                                <td className="px-3 py-2 whitespace-nowrap align-top tabular-nums text-[11px] leading-4" title={row.latestAtIso || row.latestAt}>
+                                  {formatEventTime(row.latestAtIso || row.latestAt)}
+                                </td>
                                 <td className="px-3 py-2 align-top">
                                   <div className="max-w-[240px] text-[11px] leading-4 text-slate-200">{row.reason}</div>
                                 </td>
