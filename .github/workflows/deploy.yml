@@ -111,8 +111,6 @@ jobs:
             NODE_BIN="$NODE_INSTALL_DIR/bin/node"
           fi
 
-          HOST_IP="$(hostname -I | awk '{print $1}')"
-
           sudo tee /opt/paiptree-website/current/start-runtime.sh >/dev/null <<EOF
           #!/usr/bin/env bash
           set -u
@@ -209,7 +207,7 @@ jobs:
               }
 
               location / {
-                  proxy_pass http://${HOST_IP}:3000;
+                  proxy_pass http://127.0.0.1:3000;
                   proxy_http_version 1.1;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
@@ -242,8 +240,8 @@ jobs:
             exit 1
           fi
           sudo tail -n 80 /tmp/paiptree-website.log || true
-          curl -I -sS --max-time 10 http://${HOST_IP}/ | head -n 1
-          curl -I -sS --max-time 10 http://${HOST_IP}/cctvup/ | head -n 1
-          curl -I -sS --max-time 10 http://${HOST_IP}/storybook/ | head -n 1
-          curl -I -sS --max-time 10 http://${HOST_IP}/cherry_tms/grouping/?theme=light | head -n 1
+          curl -I -sS --max-time 10 http://127.0.0.1/ | head -n 1
+          curl -I -sS --max-time 10 http://127.0.0.1/cctvup/ | head -n 1
+          curl -I -sS --max-time 10 http://127.0.0.1/storybook/ | head -n 1
+          curl -I -sS --max-time 10 http://127.0.0.1/cherry_tms/grouping/?theme=light | head -n 1
           rm -rf /tmp/paiptree-deploy/
