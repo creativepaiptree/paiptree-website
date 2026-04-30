@@ -206,22 +206,38 @@ const farmBadgeOrder: Record<CctvUpFarmCategory, number> = {
   other: 3,
 };
 
-const statusOrder: Record<CctvUpStatus, number> = {
+const statusOrder: Record<Exclude<CctvUpStatus, 'paused'>, number> = {
   critical: 0,
   missing: 1,
   late: 2,
-  paused: 3,
-  ok: 4,
+  ok: 3,
 };
 
 const CHRONIC_AGE_MINUTES = 180;
 
+function getRowSortBucket(row: Pick<DisplayRow, 'status' | 'ageMinutes'>) {
+  if (row.status === 'paused') return 3;
+  if (row.status !== 'ok' && row.ageMinutes >= CHRONIC_AGE_MINUTES) return 2;
+  if (row.status === 'ok') return 1;
+  return 0;
+}
+
+function getGroupSortBucket(group: Pick<FarmGroup, 'status' | 'issueAgeMinutes' | 'isProblem'>) {
+  if (group.status === 'paused') return 3;
+  if (group.isProblem && Number.isFinite(group.issueAgeMinutes) && group.issueAgeMinutes >= CHRONIC_AGE_MINUTES) return 2;
+  if (!group.isProblem) return 1;
+  return 0;
+}
+
 function compareDisplayRows(a: DisplayRow, b: DisplayRow) {
+  const bucketDiff = getRowSortBucket(a) - getRowSortBucket(b);
+  if (bucketDiff !== 0) return bucketDiff;
+
+  const statusDiff = statusOrder[a.status === 'paused' ? 'ok' : a.status] - statusOrder[b.status === 'paused' ? 'ok' : b.status];
+  if (statusDiff !== 0) return statusDiff;
+
   const badgeDiff = farmBadgeOrder[a.displayCategory] - farmBadgeOrder[b.displayCategory];
   if (badgeDiff !== 0) return badgeDiff;
-
-  const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-  if (statusDiff !== 0) return statusDiff;
 
   const farmDiff = a.displayFarmName.localeCompare(b.displayFarmName, 'ko-KR');
   if (farmDiff !== 0) return farmDiff;

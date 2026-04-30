@@ -2,8 +2,7 @@ const STATUS_PRIORITY = {
   critical: 0,
   missing: 1,
   late: 2,
-  paused: 3,
-  ok: 4,
+  ok: 3,
 };
 
 const CATEGORY_PRIORITY = {
@@ -14,6 +13,20 @@ const CATEGORY_PRIORITY = {
 };
 
 const CHRONIC_AGE_MINUTES = 180;
+
+function getGroupBucket(group) {
+  if (group.status === 'paused') return 3;
+  if (group.isProblem && Number.isFinite(group.issueAgeMinutes) && group.issueAgeMinutes >= CHRONIC_AGE_MINUTES) return 2;
+  if (!group.isProblem) return 1;
+  return 0;
+}
+
+function getRowBucket(row) {
+  if (row.status === 'paused') return 3;
+  if (row.status !== 'ok' && Number.isFinite(row.ageMinutes) && row.ageMinutes >= CHRONIC_AGE_MINUTES) return 2;
+  if (row.status === 'ok') return 1;
+  return 0;
+}
 
 function compareText(a, b) {
   return String(a || '').localeCompare(String(b || ''), 'ko-KR');
@@ -125,11 +138,14 @@ export function buildCctvUpFarmGroups(rows) {
 }
 
 function compareIssueGroup(a, b) {
+  const bucketDiff = getGroupBucket(a) - getGroupBucket(b);
+  if (bucketDiff !== 0) return bucketDiff;
+
   const problemDiff = Number(b.isProblem) - Number(a.isProblem);
   if (problemDiff !== 0) return problemDiff;
   const freshnessDiff = (a.issueAgeMinutes ?? Number.POSITIVE_INFINITY) - (b.issueAgeMinutes ?? Number.POSITIVE_INFINITY);
   if (freshnessDiff !== 0) return freshnessDiff;
-  const statusDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+  const statusDiff = STATUS_PRIORITY[a.status === 'paused' ? 'ok' : a.status] - STATUS_PRIORITY[b.status === 'paused' ? 'ok' : b.status];
   if (statusDiff !== 0) return statusDiff;
   const categoryDiff = CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
   if (categoryDiff !== 0) return categoryDiff;
@@ -142,9 +158,11 @@ export function compareCctvUpFarmGroups(a, b, sortMode = 'issue') {
   }
 
   if (sortMode === 'category') {
+    const bucketDiff = getGroupBucket(a) - getGroupBucket(b);
+    if (bucketDiff !== 0) return bucketDiff;
     const categoryDiff = CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
     if (categoryDiff !== 0) return categoryDiff;
-    const statusDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+    const statusDiff = STATUS_PRIORITY[a.status === 'paused' ? 'ok' : a.status] - STATUS_PRIORITY[b.status === 'paused' ? 'ok' : b.status];
     if (statusDiff !== 0) return statusDiff;
     const freshnessDiff = (a.issueAgeMinutes ?? Number.POSITIVE_INFINITY) - (b.issueAgeMinutes ?? Number.POSITIVE_INFINITY);
     if (freshnessDiff !== 0) return freshnessDiff;
@@ -152,7 +170,9 @@ export function compareCctvUpFarmGroups(a, b, sortMode = 'issue') {
   }
 
   if (sortMode === 'severity') {
-    const statusDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+    const bucketDiff = getGroupBucket(a) - getGroupBucket(b);
+    if (bucketDiff !== 0) return bucketDiff;
+    const statusDiff = STATUS_PRIORITY[a.status === 'paused' ? 'ok' : a.status] - STATUS_PRIORITY[b.status === 'paused' ? 'ok' : b.status];
     if (statusDiff !== 0) return statusDiff;
     const freshnessDiff = (a.issueAgeMinutes ?? Number.POSITIVE_INFINITY) - (b.issueAgeMinutes ?? Number.POSITIVE_INFINITY);
     if (freshnessDiff !== 0) return freshnessDiff;
