@@ -509,15 +509,6 @@ export default function CctvUpClient() {
       .slice(0, 6);
   }, [historyPayload.incidents, selected]);
 
-  const selectedCurrentIssues = useMemo(() => {
-    if (!selected) return [];
-    return historyPayload.currentIssues
-      .filter((issue) => issue.cameraKey === selected.id)
-      .slice()
-      .sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
-      .slice(0, 6);
-  }, [historyPayload.currentIssues, selected]);
-
   const latestCheckRun = historyPayload.checkRuns[0];
   const latestIssueCount = latestCheckRun?.issueCount ?? historyPayload.currentIssues.length;
   const latestCheckAgeMinutes = latestCheckRun?.checkedAt ? minutesBetween(new Date(), latestCheckRun.checkedAt) : 999;
@@ -1035,24 +1026,27 @@ export default function CctvUpClient() {
                     </div>
                     <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-[11px] uppercase tracking-[0.16em]">현재 issue</span>
-                        <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{selectedCurrentIssues.length}건</span>
+                        <span className="text-[11px] uppercase tracking-[0.16em]">문제로그 · 30일 누적</span>
+                        <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{selectedIncidents.length}건</span>
                       </div>
-                      {selectedCurrentIssues.length ? (
+                      <p className={`mt-1 text-xs leading-5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Supabase incident_log에 쌓인 최근 30일 기록을 보여줍니다.
+                      </p>
+                      {selectedIncidents.length ? (
                         <div className="mt-3 space-y-2">
-                          {selectedCurrentIssues.map((issue) => (
-                            <div key={issue.id} className={`border px-3 py-2 text-xs leading-5 ${theme === 'light' ? 'border-slate-200 bg-white text-slate-700' : 'border-[#243041] bg-[#0a1019] text-slate-300'}`}>
+                          {selectedIncidents.map((incident) => (
+                            <div key={incident.id} className={`border px-3 py-2 text-xs leading-5 ${theme === 'light' ? 'border-slate-200 bg-white text-slate-700' : 'border-[#243041] bg-[#0a1019] text-slate-300'}`}>
                               <div className="flex items-center justify-between gap-3">
-                                <span className="font-medium">{issue.issueKind} · {issue.issueStatus}</span>
-                                <span className="tabular-nums">{formatEventTime(issue.lastSeenAt)}</span>
+                                <span className="font-medium">{incident.incidentKind} · {incident.incidentStatus}</span>
+                                <span className="tabular-nums">{formatEventTime(incident.lastSeenAt)}</span>
                               </div>
-                              <p className="mt-1 line-clamp-2">{issue.message}</p>
+                              <p className="mt-1 line-clamp-2">{incident.message}</p>
                             </div>
                           ))}
                         </div>
                       ) : (
                         <p className={`mt-3 text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                          이 카메라에 열린 issue가 없습니다.
+                          이 카메라의 최근 30일 문제로그가 없습니다.
                         </p>
                       )}
                     </div>
@@ -1099,7 +1093,7 @@ export default function CctvUpClient() {
                       </div>
                     </div>
                     <div className={`border-t px-4 py-3 text-xs ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-[#243041] text-slate-500'}`}>
-                      현재 상세는 운영 DB에서 읽은 최신 상태이며, 기록은 별도 Supabase history/currentIssues에 누적되는 구조다.
+                      현재 상세는 운영 DB에서 읽은 최신 상태이며, 기록은 별도 Supabase history/incidents에 누적되는 구조다.
                     </div>
                   </section>
 

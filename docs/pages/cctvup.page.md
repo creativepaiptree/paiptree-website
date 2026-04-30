@@ -22,7 +22,7 @@ last_updated: 26.04.28
 - 본문 좌측: 농장 그룹 리스트, 문제/전체 필터, 정렬 선택(문제농장 우선/심각도별/카테고리별/가나다순), 검색 입력
 - 농장 row: 농장 대표 상태, 카테고리, 카메라 수, 문제/정상 대수, 최신 수신 시각을 표시한다.
 - 하위 카메라 row: 농장 row를 펼치면 표시하며, 카메라별 상태/최신수신/지연/누락/에너지바를 유지한다.
-- 본문 우측: 선택 카메라 상세, 최근 1시간 5분 슬롯, 분류/메모 registry 편집, 스냅샷/히스토리 요약, 문제 로그, 알람 정책
+- 본문 우측: 선택 카메라 상세, 최근 1시간 5분 슬롯, 분류/메모 registry 편집, 스냅샷/히스토리 요약, Supabase 30일 문제로그, 알람 정책
 
 ## 4. 데이터/상태
 - 주요 데이터 소스: `/api/cctvup` 읽기 전용 API
@@ -30,6 +30,7 @@ last_updated: 26.04.28
 - checker API: `/api/cctvup/check`는 운영 DB 최신 상태를 읽고 history를 적재하는 서버용 트리거 엔드포인트다.
 - 기준 테이블: `paip.tbl_farm_image`를 1차 수신 원본으로 사용한다.
 - 기록층(별도 Supabase): 문제로그와 에너지바 스냅샷은 운영 DB가 아니라 별도 Supabase 테이블(`tbl_cctvup_check_runs`, `tbl_cctvup_camera_snapshots`, `tbl_cctvup_incident_logs`, `tbl_cctvup_current_issues`)에 적재한다.
+- 문제로그 기준: 오른쪽 문제로그는 `tbl_cctvup_incident_logs`의 최근 30일 기록을 보여주는 것이 기준이며, `tbl_cctvup_current_issues`는 열린 issue 보조 표시용이다.
 - current issue 규칙: 화면의 1차 기준은 `tbl_cctvup_current_issues`의 `issue_status = 'open'` 이며, 정상은 기본값으로 간주한다.
 - 보관 정책: 스냅샷과 문제로그는 생성 후 30일 보관을 기본값으로 둔다.
 - 체크 주기: GitHub Actions cron 또는 동일한 5분 스케줄러가 `/api/cctvup/check`를 호출해 history를 누적하는 구성을 권장한다.

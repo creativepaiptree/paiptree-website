@@ -95,8 +95,8 @@ last_updated: 26.04.30
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.04.30)
 - `docs/pages/cctvup.page.md` (26.04.30)
+- `docs/admin/README.md` (26.04.30)
 - `docs/plans/2026-04-30-cctvup-issue-first-switchover.md` (26.04.30)
 - `docs/pages/cherry_tms-grouping.page.md` (26.04.27)
 - `docs/pages/cherry_tms-monthly-vehicle.page.md` (26.04.27)
