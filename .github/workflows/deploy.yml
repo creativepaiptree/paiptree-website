@@ -220,6 +220,10 @@ jobs:
 
           sudo nginx -t
 
+          sudo setsebool -P httpd_can_network_connect on 2>/dev/null || true
+          sudo chcon -R -t httpd_sys_content_t /opt/paiptree-website/current/storybook 2>/dev/null || true
+          sudo chcon -R -t httpd_sys_content_t /opt/paiptree-website/current/public 2>/dev/null || true
+
           sudo systemctl reload nginx
           for i in $(seq 1 24); do
             if curl -fsS --max-time 5 http://127.0.0.1:3000/ >/dev/null; then
