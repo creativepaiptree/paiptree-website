@@ -150,6 +150,7 @@ jobs:
           sudo systemctl start paiptree-website || true
           sudo systemctl status paiptree-website --no-pager -l || true
           sudo journalctl -u paiptree-website -n 80 --no-pager || true
+          sudo tail -n 80 /tmp/paiptree-website.log || true
 
           sudo tee /etc/systemd/system/paiptree-website-watchdog.service >/dev/null <<'EOF'
           [Unit]
@@ -238,6 +239,7 @@ jobs:
             sudo journalctl -u paiptree-website -n 80 --no-pager || true
             exit 1
           fi
+          sudo tail -n 80 /tmp/paiptree-website.log || true
           curl -I -sS --max-time 10 http://127.0.0.1/ | head -n 1
           curl -I -sS --max-time 10 http://127.0.0.1/cctvup/ | head -n 1
           curl -I -sS --max-time 10 http://127.0.0.1/storybook/ | head -n 1
