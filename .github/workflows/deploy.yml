@@ -136,7 +136,7 @@ jobs:
           Type=simple
           EnvironmentFile=/etc/paiptree-website.env
           WorkingDirectory=/opt/paiptree-website/current
-          ExecStart=/opt/paiptree-website/current/start-runtime.sh
+          ExecStart=/bin/bash /opt/paiptree-website/current/start-runtime.sh
           Restart=always
           RestartSec=5
 
@@ -153,7 +153,7 @@ jobs:
             sudo systemctl disable --now paiptree-website 2>/dev/null || true
             sudo pkill -f '/opt/paiptree-website/current/start-runtime.sh' 2>/dev/null || true
             sudo pkill -f '/opt/paiptree-website/current/server.js' 2>/dev/null || true
-            sudo nohup /opt/paiptree-website/current/start-runtime.sh >/tmp/paiptree-website.log 2>&1 < /dev/null & echo \$! >/tmp/paiptree-website.pid
+            sudo nohup /bin/bash /opt/paiptree-website/current/start-runtime.sh >/tmp/paiptree-website.log 2>&1 < /dev/null & echo \$! >/tmp/paiptree-website.pid
             sleep 2
             sudo cat /tmp/paiptree-website.log || true
             if ! curl -fsS --max-time 5 http://127.0.0.1:3000/ >/dev/null; then
