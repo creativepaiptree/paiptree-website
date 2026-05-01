@@ -119,7 +119,7 @@ async function fetchSupabaseLatestCurrentPayload(): Promise<CurrentPayloadResult
   try {
     const result = await requestSupabase<SupabaseLatestCheckRunRow[]>(
       config,
-      'tbl_cctvup_check_runs?select=id,source,checked_at,table_name,payload,note&order=checked_at.desc&limit=1',
+      'tbl_cctvup_check_runs?select=id,source,checked_at,table_name,payload,note&source=eq.db&order=checked_at.desc&limit=1',
       { method: 'GET' },
     );
 

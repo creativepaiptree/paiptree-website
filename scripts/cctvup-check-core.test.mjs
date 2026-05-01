@@ -54,3 +54,30 @@ test('createCctvUpCheckRunner loads payload and persists it once', async () => {
   assert.equal(result.persistResult.runId, 'run-1');
   assert.equal(result.payload, payload);
 });
+
+test('createCctvUpCheckRunner skips persistence for non-db payloads', async () => {
+  const payload = {
+    source: 'unavailable',
+    checkedAt: '2026-04-29T00:00:00.000Z',
+    table: 'paip.tbl_farm_image',
+    rows: [],
+    incidents: [],
+    summary: { farms: 0, cameras: 0, ok: 0, late: 0, missing: 0, critical: 0, paused: 0 },
+  };
+
+  let persistCalls = 0;
+  const runner = createCctvUpCheckRunner({
+    loadCurrentPayload: async () => payload,
+    persistHistory: async () => {
+      persistCalls += 1;
+      return { ok: true };
+    },
+  });
+
+  const result = await runner();
+
+  assert.equal(persistCalls, 0);
+  assert.equal(result.ok, false);
+  assert.equal(result.payload, payload);
+  assert.match(result.persistResult.message, /운영 DB 데이터/);
+});

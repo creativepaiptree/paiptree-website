@@ -48,6 +48,17 @@ export function createCctvUpCheckRunner({ loadCurrentPayload, persistHistory }) 
 
   return async () => {
     const payload = await loadCurrentPayload();
+    if (!payload || payload.source !== 'db') {
+      return {
+        ok: false,
+        payload,
+        persistResult: {
+          ok: false,
+          message: '운영 DB 데이터가 아니라서 history 적재를 건너뜁니다.',
+        },
+      };
+    }
+
     const persistResult = await persistHistory(payload);
 
     return {
