@@ -27,6 +27,17 @@ jobs:
             exit 1
           fi
 
-          curl --fail --silent --show-error --max-time 120 \
+          response_file="$(mktemp)"
+          http_status="$(curl --silent --show-error --max-time 120 \
+            --output "${response_file}" \
+            --write-out '%{http_code}' \
             -H "x-cctvup-cron-secret: ${CCTVUP_CRON_TRIGGER_SECRET}" \
-            "${CCTVUP_CHECK_URL}"
+            "${CCTVUP_CHECK_URL}")"
+
+          cat "${response_file}"
+          echo
+
+          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "CCTVUP checker failed with HTTP ${http_status}" >&2
+            exit 1
+          fi

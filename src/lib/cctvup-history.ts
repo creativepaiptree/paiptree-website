@@ -108,6 +108,11 @@ type SupabaseCurrentIssueRow = {
 const HISTORY_KEEP_DAYS = 30;
 const DEFAULT_LIMIT = 200;
 
+function clampHistoryLimit(limit: number) {
+  if (!Number.isFinite(limit)) return DEFAULT_LIMIT;
+  return Math.min(Math.max(Math.trunc(limit), 1), 500);
+}
+
 export function getCctvUpSupabaseConfig(): SupabaseConfig | null {
   const supabaseUrl = process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const serviceKey = process.env.SUPABASE_SERVICE_KEY?.trim() || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -385,24 +390,22 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
   const config = getCctvUpSupabaseConfig();
   if (!config) return null;
 
+  const safeLimit = clampHistoryLimit(limit);
+
   try {
     const [checkRuns, snapshots, incidents, currentIssues] = await Promise.all([
-      requestSupabase<SupabaseCheckRunRow[]>(config, 'tbl_cctvup_check_runs?order=checked_at.desc', {
+      requestSupabase<SupabaseCheckRunRow[]>(config, `tbl_cctvup_check_runs?order=checked_at.desc&limit=${safeLimit}`, {
         method: 'GET',
-        headers: { Prefer: 'count=exact' },
-      }).then((result) => Array.isArray(result.data) ? result.data.slice(0, limit).map(mapCheckRunFromSupabase) : []),
-      requestSupabase<SupabaseCameraSnapshotRow[]>(config, 'tbl_cctvup_camera_snapshots?order=snapshot_at.desc', {
+      }).then((result) => Array.isArray(result.data) ? result.data.map(mapCheckRunFromSupabase) : []),
+      requestSupabase<SupabaseCameraSnapshotRow[]>(config, `tbl_cctvup_camera_snapshots?order=snapshot_at.desc&limit=${safeLimit}`, {
         method: 'GET',
-        headers: { Prefer: 'count=exact' },
-      }).then((result) => Array.isArray(result.data) ? result.data.slice(0, limit).map(mapSnapshotFromSupabase) : []),
-      requestSupabase<SupabaseIncidentLogRow[]>(config, 'tbl_cctvup_incident_logs?order=last_seen_at.desc', {
+      }).then((result) => Array.isArray(result.data) ? result.data.map(mapSnapshotFromSupabase) : []),
+      requestSupabase<SupabaseIncidentLogRow[]>(config, `tbl_cctvup_incident_logs?order=last_seen_at.desc&limit=${safeLimit}`, {
         method: 'GET',
-        headers: { Prefer: 'count=exact' },
-      }).then((result) => Array.isArray(result.data) ? result.data.slice(0, limit).map(mapIncidentFromSupabase) : []),
-      requestSupabase<SupabaseCurrentIssueRow[]>(config, 'tbl_cctvup_current_issues?order=last_seen_at.desc', {
+      }).then((result) => Array.isArray(result.data) ? result.data.map(mapIncidentFromSupabase) : []),
+      requestSupabase<SupabaseCurrentIssueRow[]>(config, `tbl_cctvup_current_issues?order=last_seen_at.desc&limit=${safeLimit}`, {
         method: 'GET',
-        headers: { Prefer: 'count=exact' },
-      }).then((result) => Array.isArray(result.data) ? result.data.slice(0, limit).map(mapCurrentIssueFromSupabase) : []),
+      }).then((result) => Array.isArray(result.data) ? result.data.map(mapCurrentIssueFromSupabase) : []),
     ]);
 
     return {
@@ -486,7 +489,6 @@ export async function persistCctvUpHistory(payload: CctvUpPayload) {
     'tbl_cctvup_current_issues?select=id,camera_key,first_seen_at,issue_status',
     {
       method: 'GET',
-      headers: { Prefer: 'count=exact' },
     },
   );
 

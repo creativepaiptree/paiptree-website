@@ -116,7 +116,7 @@ async function fetchSupabaseLatestCurrentPayload(): Promise<CurrentPayloadResult
     const result = await requestSupabase<SupabaseLatestCheckRunRow[]>(
       config,
       'tbl_cctvup_check_runs?select=id,source,checked_at,table_name,payload,note&order=checked_at.desc&limit=1',
-      { method: 'GET', headers: { Prefer: 'count=exact' } },
+      { method: 'GET' },
     );
 
     const row = Array.isArray(result.data) ? result.data[0] : null;
