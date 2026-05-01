@@ -10,7 +10,7 @@ const CRON_SECRET_HEADER = 'x-cctvup-cron-secret';
 
 const runCctvUpCheck = createCctvUpCheckRunner({
   loadCurrentPayload: async () => {
-    const { payload } = await fetchCctvUpCurrentPayload();
+    const { payload } = await fetchCctvUpCurrentPayload(1000, { preferSupabaseLatest: false });
     return payload;
   },
   persistHistory: persistCctvUpHistory,

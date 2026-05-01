@@ -15,6 +15,10 @@ type CurrentPayloadResult = {
   status: number;
 };
 
+type FetchCctvUpCurrentPayloadOptions = {
+  preferSupabaseLatest?: boolean;
+};
+
 type SupabaseConfig = {
   supabaseUrl: string;
   serviceKey: string;
@@ -136,9 +140,15 @@ async function fetchSupabaseLatestCurrentPayload(): Promise<CurrentPayloadResult
   }
 }
 
-export async function fetchCctvUpCurrentPayload(limit = 1000): Promise<CurrentPayloadResult> {
-  const supabasePayload = await fetchSupabaseLatestCurrentPayload();
-  if (supabasePayload) return supabasePayload;
+export async function fetchCctvUpCurrentPayload(
+  limit = 1000,
+  options: FetchCctvUpCurrentPayloadOptions = {},
+): Promise<CurrentPayloadResult> {
+  const preferSupabaseLatest = options.preferSupabaseLatest ?? true;
+  if (preferSupabaseLatest) {
+    const supabasePayload = await fetchSupabaseLatestCurrentPayload();
+    if (supabasePayload) return supabasePayload;
+  }
 
   const dbConfig = getDbConfig();
   if (!dbConfig) {
