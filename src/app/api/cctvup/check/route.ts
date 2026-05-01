@@ -10,8 +10,19 @@ const CRON_SECRET_HEADER = 'x-cctvup-cron-secret';
 
 const runCctvUpCheck = createCctvUpCheckRunner({
   loadCurrentPayload: async () => {
-    const { payload } = await fetchCctvUpCurrentPayload(1000, { preferSupabaseLatest: false });
-    return payload;
+    const liveResult = await fetchCctvUpCurrentPayload(1000, { preferSupabaseLatest: false });
+    if (liveResult.payload.source === 'db') return liveResult.payload;
+
+    const fallbackResult = await fetchCctvUpCurrentPayload(1000, { preferSupabaseLatest: true });
+    if (fallbackResult.payload.source === 'db') {
+      return {
+        ...fallbackResult.payload,
+        checkedAt: new Date().toISOString(),
+        message: '운영 DB 직접 조회 실패로 Supabase 최신 DB payload를 checker fallback으로 사용했습니다.',
+      };
+    }
+
+    return liveResult.payload;
   },
   persistHistory: persistCctvUpHistory,
 });
