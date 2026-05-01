@@ -89,6 +89,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
+          CCTVUP_CRON_TRIGGER_SECRET=${{ secrets.CCTVUP_CRON_TRIGGER_SECRET }}
           NEXT_PUBLIC_SUPABASE_PROJECT_ID=poc
           NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1
           EOF
