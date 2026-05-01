@@ -90,6 +90,11 @@ jobs:
           NEXT_PUBLIC_SUPABASE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
           CCTVUP_CRON_TRIGGER_SECRET=${{ secrets.CCTVUP_CRON_TRIGGER_SECRET }}
+          CCTVUP_DB_HOST=${{ secrets.CCTVUP_DB_HOST }}
+          CCTVUP_DB_PORT=${{ secrets.CCTVUP_DB_PORT }}
+          CCTVUP_DB_USER=${{ secrets.CCTVUP_DB_USER }}
+          CCTVUP_DB_PASSWORD=${{ secrets.CCTVUP_DB_PASSWORD }}
+          CCTVUP_DB_DATABASE=${{ secrets.CCTVUP_DB_DATABASE }}
           NEXT_PUBLIC_SUPABASE_PROJECT_ID=poc
           NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1
           EOF
