@@ -243,6 +243,45 @@ function mapCurrentIssueFromSupabase(row: SupabaseCurrentIssueRow): CctvUpCurren
   };
 }
 
+function buildCurrentIssuePayload(issue: CctvUpCurrentIssue) {
+  return {
+    cameraKey: issue.cameraKey,
+    farmId: issue.farmId,
+    houseId: issue.houseId,
+    moduleId: issue.moduleId,
+    farmName: issue.farmName ?? null,
+    houseName: issue.houseName ?? null,
+    cameraName: issue.cameraName ?? null,
+    issueKind: issue.issueKind,
+    issueStatus: issue.issueStatus,
+    firstSeenAt: issue.firstSeenAt,
+    lastSeenAt: issue.lastSeenAt,
+    resolvedAt: issue.resolvedAt ?? null,
+    latestAt: issue.latestAt ?? null,
+    ageMinutes: issue.ageMinutes,
+    message: issue.message,
+  };
+}
+
+function buildIncidentSnapshotPayload(incident: CctvUpIncidentLog) {
+  return {
+    cameraKey: incident.cameraKey,
+    farmId: incident.farmId,
+    houseId: incident.houseId,
+    moduleId: incident.moduleId,
+    farmName: incident.farmName ?? null,
+    houseName: incident.houseName ?? null,
+    cameraName: incident.cameraName ?? null,
+    incidentKind: incident.incidentKind,
+    incidentStatus: incident.incidentStatus,
+    firstSeenAt: incident.firstSeenAt,
+    lastSeenAt: incident.lastSeenAt,
+    resolvedAt: incident.resolvedAt ?? null,
+    expiresAt: incident.expiresAt,
+    message: incident.message,
+  };
+}
+
 function mapCurrentIssueToSupabase(issue: CctvUpCurrentIssue) {
   return {
     run_id: issue.runId,
@@ -261,25 +300,8 @@ function mapCurrentIssueToSupabase(issue: CctvUpCurrentIssue) {
     latest_at: issue.latestAt,
     age_minutes: issue.ageMinutes,
     message: issue.message,
-    payload: issue,
+    payload: buildCurrentIssuePayload(issue),
     expires_at: issue.expiresAt,
-  };
-}
-
-function mapRunToSupabase(run: Partial<CctvUpCheckRun>, payload: CctvUpPayload) {
-  return {
-    source: run.source,
-    checked_at: run.checkedAt,
-    table_name: run.tableName,
-    farm_count: run.farmCount,
-    camera_count: run.cameraCount,
-    ok_count: run.okCount,
-    late_count: run.lateCount,
-    missing_count: run.missingCount,
-    critical_count: run.criticalCount,
-    paused_count: run.pausedCount,
-    payload,
-    note: run.note,
   };
 }
 
@@ -320,7 +342,7 @@ function mapIncidentToSupabase(incident: CctvUpIncidentLog) {
     resolved_at: incident.resolvedAt,
     expires_at: incident.expiresAt,
     message: incident.message,
-    snapshot_payload: incident,
+    snapshot_payload: buildIncidentSnapshotPayload(incident),
   };
 }
 
@@ -386,6 +408,23 @@ export function buildCctvUpCapturePayload(payload: CctvUpPayload) {
   return { run, snapshots, incidents, currentIssues };
 }
 
+function mapRunToSupabase(run: Partial<CctvUpCheckRun>, payload: CctvUpPayload) {
+  return {
+    source: run.source,
+    checked_at: run.checkedAt,
+    table_name: run.tableName,
+    farm_count: run.farmCount,
+    camera_count: run.cameraCount,
+    ok_count: run.okCount,
+    late_count: run.lateCount,
+    missing_count: run.missingCount,
+    critical_count: run.criticalCount,
+    paused_count: run.pausedCount,
+    payload,
+    note: run.note,
+  };
+}
+
 export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpHistoryPayload | null> {
   const config = getCctvUpSupabaseConfig();
   if (!config) return null;
@@ -449,24 +488,48 @@ export async function persistCctvUpHistory(payload: CctvUpPayload) {
   }
 
   const runId = runResponse.data[0].id;
-  const snapshots = capture.snapshots.map((snapshot) => ({ ...snapshot, runId }));
-  const incidents = capture.incidents.map((incident) => ({ ...incident, runId }));
+  const issueRows = payload.rows.filter((row) => row.status !== 'ok' && row.status !== 'paused');
+  const issueCameraKeys = new Set(issueRows.map((row) => row.id));
+  const snapshots = capture.snapshots
+    .filter((snapshot) => issueCameraKeys.has(snapshot.cameraKey))
+    .map((snapshot) => ({ ...snapshot, runId }));
 
-  const snapshotResponse = await requestSupabase<unknown>(
+  const currentIssueLookupResponse = await requestSupabase<SupabaseCurrentIssueRow[]>(
     config,
-    'tbl_cctvup_camera_snapshots?on_conflict=camera_key,snapshot_at',
+    'tbl_cctvup_current_issues?select=id,camera_key,first_seen_at,issue_status,issue_kind',
     {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify(snapshots.map(mapSnapshotToSupabase)),
+      method: 'GET',
     },
   );
 
-  if (snapshotResponse.error) {
-    return { ok: false as const, message: snapshotResponse.error };
+  const hasCurrentIssuesTable = !currentIssueLookupResponse.error?.includes('Could not find the table');
+  const existingCurrentIssues = hasCurrentIssuesTable && Array.isArray(currentIssueLookupResponse.data) ? currentIssueLookupResponse.data : [];
+  const existingCurrentIssueMap = new Map(existingCurrentIssues.map((row) => [row.camera_key, row]));
+  const currentIssueKeys = new Set(capture.currentIssues.map((issue) => issue.cameraKey));
+
+  const incidentCandidates = capture.incidents.filter((incident) => {
+    const existing = existingCurrentIssueMap.get(incident.cameraKey);
+    return !existing || existing.issue_status !== 'open' || existing.issue_kind !== incident.incidentKind;
+  });
+  const incidents = incidentCandidates.map((incident) => ({ ...incident, runId }));
+
+  if (snapshots.length > 0) {
+    const snapshotResponse = await requestSupabase<unknown>(
+      config,
+      'tbl_cctvup_camera_snapshots?on_conflict=camera_key,snapshot_at',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates,return=minimal',
+        },
+        body: JSON.stringify(snapshots.map(mapSnapshotToSupabase)),
+      },
+    );
+
+    if (snapshotResponse.error) {
+      return { ok: false as const, message: snapshotResponse.error };
+    }
   }
 
   if (incidents.length > 0) {
@@ -484,18 +547,6 @@ export async function persistCctvUpHistory(payload: CctvUpPayload) {
     }
   }
 
-  const currentIssueLookupResponse = await requestSupabase<SupabaseCurrentIssueRow[]>(
-    config,
-    'tbl_cctvup_current_issues?select=id,camera_key,first_seen_at,issue_status',
-    {
-      method: 'GET',
-    },
-  );
-
-  const hasCurrentIssuesTable = !currentIssueLookupResponse.error?.includes('Could not find the table');
-  const existingCurrentIssues = hasCurrentIssuesTable && Array.isArray(currentIssueLookupResponse.data) ? currentIssueLookupResponse.data : [];
-  const existingCurrentIssueMap = new Map(existingCurrentIssues.map((row) => [row.camera_key, row]));
-  const currentIssueKeys = new Set(capture.currentIssues.map((issue) => issue.cameraKey));
   const nextCurrentIssues = capture.currentIssues.map((issue) => {
     const existing = existingCurrentIssueMap.get(issue.cameraKey);
     return {
