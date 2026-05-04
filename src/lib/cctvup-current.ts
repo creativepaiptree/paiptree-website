@@ -36,6 +36,10 @@ type SupabaseLatestCheckRunRow = {
 const SUPABASE_FETCH_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
 const DB_QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_DB_QUERY_TIMEOUT_MS || 10000);
 
+function shouldUseMockFallback() {
+  return process.env.CCTVUP_ALLOW_MOCK_FALLBACK === '1' || process.env.NODE_ENV !== 'production';
+}
+
 function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return undefined;
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
@@ -167,6 +171,13 @@ export async function fetchCctvUpCurrentPayload(
 
   const dbConfig = getDbConfig();
   if (!dbConfig) {
+    if (!shouldUseMockFallback()) {
+      return {
+        payload: buildPayload([], 'unavailable', 'CCTVUP_DB_* 환경변수가 없어 실제 농장 목록을 표시하지 못합니다.'),
+        status: 503,
+      };
+    }
+
     return {
       payload: buildPayload(mockCctvUpRows, 'mock', 'CCTVUP_DB_* 환경변수가 없어 mock 데이터로 표시합니다.'),
       status: 200,
@@ -243,7 +254,7 @@ export async function fetchCctvUpCurrentPayload(
     console.error('[cctvup] read-only DB query failed', error);
 
     return {
-      payload: buildPayload(mockCctvUpRows, 'unavailable', 'DB 조회 실패로 mock 데이터로 표시합니다.'),
+      payload: buildPayload([], 'unavailable', '운영 DB 조회 실패로 실제 농장 목록을 표시하지 못합니다.'),
       status: 503,
     };
   } finally {

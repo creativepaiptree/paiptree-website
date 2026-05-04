@@ -43,7 +43,7 @@ last_updated: 26.05.04
 - 체크/관리 보안: `CCTVUP_CRON_TRIGGER_SECRET`는 필수이며, `x-cctvup-cron-secret` 헤더와 일치해야 checker 적재, history/registry 쓰기를 허용한다.
 - API 환경변수: `CCTVUP_DB_HOST`, `CCTVUP_DB_PORT`, `CCTVUP_DB_USER`, `CCTVUP_DB_PASSWORD`, `CCTVUP_DB_DATABASE`
 - cron 환경변수: `CCTVUP_CRON_TRIGGER_SECRET`
-- 환경변수가 없거나 DB 조회가 실패하면 mock/fallback payload를 표시한다.
+- 개발 환경에서 DB 환경변수가 없으면 mock payload를 표시할 수 있지만, 운영 환경에서 DB 환경변수가 없거나 DB 조회가 실패하면 실제 목록 대신 `unavailable` 빈 응답을 반환한다.
 - 클라이언트 상태: 테마, 검색어, 문제/전체 필터, 농장 정렬 모드, 펼친 농장 ID, 선택된 카메라 ID, API payload/loading/error, 5분 폴링 refresh
 - 서버 의존성: Next.js App Router Route Handler, Node runtime, `mysql2`
 - 배포 주의: `/api/cctvup`는 서버 런타임이 필요하므로 기본 빌드는 runtime server 기준이며, 정적 export가 필요하면 `PAIPTREE_STATIC_EXPORT=1`로 명시한다.
