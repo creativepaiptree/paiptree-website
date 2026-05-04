@@ -15,6 +15,38 @@ type CurrentPayloadResult = {
   status: number;
 };
 
+type SafeDbError = {
+  name: string;
+  code?: string;
+  errno?: number;
+  sqlState?: string;
+  fatal?: boolean;
+  message: string;
+};
+
+export type CctvUpDbHealthResult = {
+  ok: boolean;
+  checkedAt: string;
+  elapsedMs: number;
+  env: {
+    hostConfigured: boolean;
+    portConfigured: boolean;
+    userConfigured: boolean;
+    passwordConfigured: boolean;
+    databaseConfigured: boolean;
+  };
+  connection: {
+    ok: boolean;
+    error?: SafeDbError;
+  };
+  query: {
+    ok: boolean;
+    activeFarmCount?: number;
+    activeCameraCount?: number;
+    error?: SafeDbError;
+  };
+};
+
 type FetchCctvUpCurrentPayloadOptions = {
   preferSupabaseLatest?: boolean;
 };
@@ -38,6 +70,37 @@ const DB_QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_DB_QUERY_TIMEOUT_MS || 100
 
 function shouldUseMockFallback() {
   return process.env.CCTVUP_ALLOW_MOCK_FALLBACK === '1' || process.env.NODE_ENV !== 'production';
+}
+
+function getDbEnvState(): CctvUpDbHealthResult['env'] {
+  return {
+    hostConfigured: Boolean(process.env.CCTVUP_DB_HOST?.trim()),
+    portConfigured: Boolean(process.env.CCTVUP_DB_PORT?.trim()),
+    userConfigured: Boolean(process.env.CCTVUP_DB_USER?.trim()),
+    passwordConfigured: Boolean(process.env.CCTVUP_DB_PASSWORD),
+    databaseConfigured: Boolean(process.env.CCTVUP_DB_DATABASE?.trim()),
+  };
+}
+
+function sanitizeDbError(error: unknown): SafeDbError {
+  if (!error || typeof error !== 'object') {
+    return {
+      name: 'UnknownError',
+      message: error instanceof Error ? error.message : 'Unknown DB error',
+    };
+  }
+
+  const record = error as Record<string, unknown>;
+  const message = error instanceof Error ? error.message : String(record.message || 'Unknown DB error');
+
+  return {
+    name: error instanceof Error ? error.name : String(record.name || 'Error'),
+    code: typeof record.code === 'string' ? record.code : undefined,
+    errno: typeof record.errno === 'number' ? record.errno : undefined,
+    sqlState: typeof record.sqlState === 'string' ? record.sqlState : undefined,
+    fatal: typeof record.fatal === 'boolean' ? record.fatal : undefined,
+    message: message.slice(0, 240),
+  };
 }
 
 function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
@@ -156,6 +219,99 @@ async function fetchSupabaseLatestCurrentPayload(): Promise<CurrentPayloadResult
   } catch (error) {
     console.error('[cctvup] Supabase current payload load failed', error);
     return null;
+  }
+}
+
+export async function diagnoseCctvUpDb(): Promise<CctvUpDbHealthResult> {
+  const startedAt = Date.now();
+  const checkedAt = new Date().toISOString();
+  const env = getDbEnvState();
+  const dbConfig = getDbConfig();
+
+  if (!dbConfig) {
+    return {
+      ok: false,
+      checkedAt,
+      elapsedMs: Date.now() - startedAt,
+      env,
+      connection: {
+        ok: false,
+        error: {
+          name: 'ConfigurationError',
+          code: 'CCTVUP_DB_CONFIG_MISSING',
+          message: 'CCTVUP_DB_* 환경변수가 완전하지 않습니다.',
+        },
+      },
+      query: { ok: false },
+    };
+  }
+
+  let connection: mysql.Connection | null = null;
+
+  try {
+    connection = await mysql.createConnection({
+      ...dbConfig,
+      connectTimeout: 3000,
+      supportBigNumbers: true,
+      dateStrings: false,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      checkedAt,
+      elapsedMs: Date.now() - startedAt,
+      env,
+      connection: {
+        ok: false,
+        error: sanitizeDbError(error),
+      },
+      query: { ok: false },
+    };
+  }
+
+  try {
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      {
+        sql: `
+          SELECT
+            COUNT(DISTINCT c.farm_id) AS activeFarmCount,
+            COUNT(*) AS activeCameraCount
+          FROM tbl_farm_cctv c
+          WHERE c.applied = 1
+            AND c.display = 'YES'
+            AND c.is_working = 'Y'
+        `,
+        timeout: DB_QUERY_TIMEOUT_MS,
+      },
+    );
+    const row = rows[0] || {};
+
+    return {
+      ok: true,
+      checkedAt,
+      elapsedMs: Date.now() - startedAt,
+      env,
+      connection: { ok: true },
+      query: {
+        ok: true,
+        activeFarmCount: Number(row.activeFarmCount ?? 0),
+        activeCameraCount: Number(row.activeCameraCount ?? 0),
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      checkedAt,
+      elapsedMs: Date.now() - startedAt,
+      env,
+      connection: { ok: true },
+      query: {
+        ok: false,
+        error: sanitizeDbError(error),
+      },
+    };
+  } finally {
+    await connection.end().catch(() => undefined);
   }
 }
 

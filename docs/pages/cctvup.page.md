@@ -29,6 +29,7 @@ last_updated: 26.05.04
 - 현재 화면 데이터는 운영 DB를 직접 조회하며, Supabase 최신 payload fallback을 기본 경로로 쓰지 않는다.
 - 기록 API: `/api/cctvup/history`는 Supabase history 읽기/적재용 보조 API로 사용한다.
 - checker API: `/api/cctvup/check`는 운영 DB 최신 상태를 읽고 history를 적재하는 서버용 트리거 엔드포인트다.
+- 진단 API: `/api/cctvup/health`는 `x-cctvup-cron-secret`으로 보호하며 운영 DB 연결/쿼리 상태와 안전한 에러 코드만 반환한다.
 - 기준 테이블: `paip.tbl_farm_image`를 1차 수신 원본으로 사용한다.
 - 감시 대상 기준: 운영 DB의 `tbl_farm_cctv` 활성 CCTV 농장 전체를 기준으로 한다.
 - 소속 기준: 운영 DB의 `tbl_farm_service.affiliates`와 `country`를 우선 사용해 신우/체리부로/해외/기타 기본 분류를 잡고, 사용자가 화면에서 바꾼 Supabase registry 값을 최종 override로 사용한다.
