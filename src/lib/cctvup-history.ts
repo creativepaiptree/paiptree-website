@@ -6,7 +6,7 @@ import type {
   CctvUpPayload,
   CctvUpStatus,
 } from '@/lib/cctvup';
-import { buildCurrentIssues } from '@/lib/cctvup';
+import { buildCurrentIssues, isCctvUpLoggableIssueStatus } from '@/lib/cctvup';
 
 export type CctvUpHistorySource = 'supabase' | 'unavailable';
 
@@ -107,6 +107,37 @@ type SupabaseCurrentIssueRow = {
 
 const HISTORY_KEEP_DAYS = 30;
 const DEFAULT_LIMIT = 200;
+const SUPABASE_HISTORY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
+const SUPABASE_HISTORY_WRITE_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_WRITE_TIMEOUT_MS || 8000);
+
+function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return undefined;
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(timeoutMs);
+  }
+
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), timeoutMs);
+  return controller.signal;
+}
+
+function getSupabaseTimeoutMs(method?: string) {
+  return method?.toUpperCase() === 'GET' ? SUPABASE_HISTORY_READ_TIMEOUT_MS : SUPABASE_HISTORY_WRITE_TIMEOUT_MS;
+}
+
+function formatHistoryFetchError(error: unknown) {
+  if (error instanceof Error && error.name === 'TimeoutError') {
+    return `Supabase history 조회가 ${SUPABASE_HISTORY_READ_TIMEOUT_MS}ms 안에 끝나지 않았습니다.`;
+  }
+  if (error instanceof Error && error.name === 'AbortError') {
+    return `Supabase history 조회가 ${SUPABASE_HISTORY_READ_TIMEOUT_MS}ms 안에 중단되었습니다.`;
+  }
+  return error instanceof Error ? error.message : 'CCTVUP history fetch failed';
+}
+
+function getSettledValue<T>(result: PromiseSettledResult<T[]>) {
+  return result.status === 'fulfilled' ? result.value : [];
+}
 
 function clampHistoryLimit(limit: number) {
   if (!Number.isFinite(limit)) return DEFAULT_LIMIT;
@@ -143,6 +174,7 @@ async function requestSupabase<T>(
       Accept: 'application/json',
       ...(init.headers ?? {}),
     },
+    signal: init.signal ?? createTimeoutSignal(getSupabaseTimeoutMs(init.method)),
   });
 
   const text = await response.text();
@@ -384,7 +416,7 @@ export function buildCctvUpCapturePayload(payload: CctvUpPayload) {
   })) as CctvUpCameraSnapshot[];
 
   const incidents = payload.rows
-    .filter((row) => row.status !== 'ok' && row.status !== 'paused')
+    .filter((row) => isCctvUpLoggableIssueStatus(row.status))
     .map((row) => ({
       runId: undefined,
       cameraKey: row.id,
@@ -409,6 +441,14 @@ export function buildCctvUpCapturePayload(payload: CctvUpPayload) {
 }
 
 function mapRunToSupabase(run: Partial<CctvUpCheckRun>, payload: CctvUpPayload) {
+  const issueRows = payload.rows.filter((row) => isCctvUpLoggableIssueStatus(row.status));
+  const storedPayload: CctvUpPayload = {
+    ...payload,
+    rows: issueRows,
+    incidents: payload.incidents.filter((incident) => isCctvUpLoggableIssueStatus(incident.status)),
+    currentIssues: payload.currentIssues.filter((issue) => isCctvUpLoggableIssueStatus(issue.issueKind)),
+  };
+
   return {
     source: run.source,
     checked_at: run.checkedAt,
@@ -420,7 +460,7 @@ function mapRunToSupabase(run: Partial<CctvUpCheckRun>, payload: CctvUpPayload) 
     missing_count: run.missingCount,
     critical_count: run.criticalCount,
     paused_count: run.pausedCount,
-    payload,
+    payload: storedPayload,
     note: run.note,
   };
 }
@@ -432,7 +472,7 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
   const safeLimit = clampHistoryLimit(limit);
 
   try {
-    const [checkRuns, snapshots, incidents, currentIssues] = await Promise.all([
+    const [checkRunsResult, snapshotsResult, incidentsResult, currentIssuesResult] = await Promise.allSettled([
       requestSupabase<SupabaseCheckRunRow[]>(config, `tbl_cctvup_check_runs?order=checked_at.desc&limit=${safeLimit}`, {
         method: 'GET',
       }).then((result) => Array.isArray(result.data) ? result.data.map(mapCheckRunFromSupabase) : []),
@@ -447,22 +487,29 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
       }).then((result) => Array.isArray(result.data) ? result.data.map(mapCurrentIssueFromSupabase) : []),
     ]);
 
+    const rejected = [checkRunsResult, snapshotsResult, incidentsResult, currentIssuesResult]
+      .find((result): result is PromiseRejectedResult => result.status === 'rejected');
+    const message = rejected ? formatHistoryFetchError(rejected.reason) : undefined;
+    if (message) console.warn(`[cctvup-history] ${message}`);
+
     return {
-      source: 'supabase',
-      checkRuns,
-      snapshots,
-      incidents,
-      currentIssues,
+      source: rejected ? 'unavailable' : 'supabase',
+      checkRuns: getSettledValue(checkRunsResult),
+      snapshots: getSettledValue(snapshotsResult),
+      incidents: getSettledValue(incidentsResult),
+      currentIssues: getSettledValue(currentIssuesResult),
+      message,
     };
   } catch (error) {
-    console.error('[cctvup-history] Supabase fetch failed', error);
+    const message = formatHistoryFetchError(error);
+    console.warn(`[cctvup-history] ${message}`);
     return {
       source: 'unavailable',
       checkRuns: [],
       snapshots: [],
       incidents: [],
       currentIssues: [],
-      message: error instanceof Error ? error.message : 'CCTVUP history fetch failed',
+      message,
     };
   }
 }
@@ -488,7 +535,7 @@ export async function persistCctvUpHistory(payload: CctvUpPayload) {
   }
 
   const runId = runResponse.data[0].id;
-  const issueRows = payload.rows.filter((row) => row.status !== 'ok' && row.status !== 'paused');
+  const issueRows = payload.rows.filter((row) => isCctvUpLoggableIssueStatus(row.status));
   const issueCameraKeys = new Set(issueRows.map((row) => row.id));
   const snapshots = capture.snapshots
     .filter((snapshot) => issueCameraKeys.has(snapshot.cameraKey))

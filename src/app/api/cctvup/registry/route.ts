@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCctvUpCronAuthState } from '@/lib/cctvup-check-core.js';
 import {
   fetchCctvUpFarmRegistry,
   upsertCctvUpFarmRegistry,
@@ -7,6 +8,14 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const CRON_SECRET_HEADER = 'x-cctvup-cron-secret';
+
+function readMutationSecret(request: Request) {
+  const expectedSecret = process.env.CCTVUP_CRON_TRIGGER_SECRET?.trim();
+  const providedSecret = request.headers.get(CRON_SECRET_HEADER)?.trim() || '';
+  return getCctvUpCronAuthState({ expectedSecret, providedSecret });
+}
 
 export async function GET() {
   const payload = await fetchCctvUpFarmRegistry();
@@ -27,6 +36,14 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const auth = readMutationSecret(req);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { ok: false, message: auth.message, mode: auth.mode },
+      { status: auth.status, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   try {
     const payload = (await req.json()) as CctvUpFarmRegistryUpsertPayload;
     if (!payload || !Array.isArray(payload.items)) {

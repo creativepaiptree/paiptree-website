@@ -33,6 +33,20 @@ type SupabaseLatestCheckRunRow = {
   note?: string | null;
 };
 
+const SUPABASE_FETCH_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
+const DB_QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_DB_QUERY_TIMEOUT_MS || 10000);
+
+function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return undefined;
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(timeoutMs);
+  }
+
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), timeoutMs);
+  return controller.signal;
+}
+
 function getDbConfig() {
   const host = process.env.CCTVUP_DB_HOST?.trim();
   const user = process.env.CCTVUP_DB_USER?.trim();
@@ -75,6 +89,7 @@ async function requestSupabase<T>(
       Accept: 'application/json',
       ...(init.headers ?? {}),
     },
+    signal: init.signal ?? createTimeoutSignal(SUPABASE_FETCH_TIMEOUT_MS),
   });
 
   const text = await response.text();
@@ -169,42 +184,59 @@ export async function fetchCctvUpCurrentPayload(
     });
 
     const [rows] = await connection.execute<DbSummaryResultRow[]>(
-      `
+      {
+        sql: `
       SELECT
-        i.FARM_ID AS farm_id,
+        c.farm_id,
         s.farm_name,
-        i.HOUSE_ID AS house_id,
+        s.farm_alias,
+        s.affiliates AS farm_affiliates,
+        s.country,
+        s.poultry_type,
+        c.house_id,
         h.house_name,
-        i.MODULE_ID AS module_id,
+        COALESCE(img.module_id, CONCAT(c.cctv_id, ',1')) AS module_id,
         c.cctv_name AS camera_name,
-        MAX(i.CREATE_TIME) AS latest_at,
-        SUM(i.CREATE_TIME >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) AS cnt_1h,
-        COUNT(*) AS cnt_24h
-      FROM tbl_farm_image i FORCE INDEX (idx_farm_house_module_createtime)
+        img.latest_at,
+        COALESCE(img.cnt_1h, 0) AS cnt_1h,
+        COALESCE(img.cnt_24h, 0) AS cnt_24h
+      FROM tbl_farm_cctv c
       LEFT JOIN tbl_farm_service s
-        ON s.farm_id = i.FARM_ID
+        ON s.farm_id = c.farm_id
       LEFT JOIN tbl_farm_house h
-        ON h.farm_id = i.FARM_ID AND h.house_id = i.HOUSE_ID
-      INNER JOIN tbl_farm_cctv c
-        ON c.farm_id = i.FARM_ID
-        AND c.house_id = i.HOUSE_ID
-        AND c.cctv_id = REPLACE(i.MODULE_ID, ',1', '')
-        AND c.applied = 1
+        ON h.farm_id = c.farm_id AND h.house_id = c.house_id
+      LEFT JOIN (
+        SELECT
+          i.FARM_ID AS farm_id,
+          i.HOUSE_ID AS house_id,
+          REPLACE(i.MODULE_ID, ',1', '') AS cctv_id,
+          MAX(i.MODULE_ID) AS module_id,
+          MAX(i.CREATE_TIME) AS latest_at,
+          SUM(i.CREATE_TIME >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) AS cnt_1h,
+          SUM(i.CREATE_TIME >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS cnt_24h
+        FROM tbl_farm_image i FORCE INDEX (idx_farm_house_module_createtime)
+        WHERE i.CREATE_TIME >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+          AND i.CREATE_TIME <= NOW()
+        GROUP BY i.FARM_ID, i.HOUSE_ID, REPLACE(i.MODULE_ID, ',1', '')
+      ) img
+        ON img.farm_id = c.farm_id
+        AND img.house_id = c.house_id
+        AND img.cctv_id = c.cctv_id
+      WHERE c.applied = 1
         AND c.display = 'YES'
         AND c.is_working = 'Y'
-      WHERE i.CREATE_TIME >= DATE_SUB(NOW(), INTERVAL 90 DAY)
-        AND i.CREATE_TIME <= NOW()
-      GROUP BY i.FARM_ID, s.farm_name, i.HOUSE_ID, h.house_name, i.MODULE_ID, c.cctv_name
-      ORDER BY latest_at DESC
+      ORDER BY img.latest_at IS NULL DESC, img.latest_at ASC, c.farm_id, c.house_id, c.cctv_id
       LIMIT ?
       `,
+        timeout: DB_QUERY_TIMEOUT_MS,
+      },
       [limit],
     );
 
     const mappedRows = mapDbSummaryRows(rows);
 
     return {
-      payload: buildPayload(mappedRows, 'db'),
+      payload: buildPayload(mappedRows, 'db', '운영 DB의 활성 CCTV 농장 전체를 감시합니다.'),
       status: 200,
     };
   } catch (error) {

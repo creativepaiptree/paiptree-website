@@ -6,6 +6,10 @@ export type CctvUpRow = {
   id: string;
   farm: string;
   farmName?: string;
+  farmAlias?: string;
+  farmAffiliates?: string;
+  country?: string;
+  poultryType?: string;
   house: string;
   houseName?: string;
   camera: string;
@@ -77,11 +81,15 @@ export type CctvUpPayload = {
 export type CctvUpDbSummaryRow = {
   farm_id: string;
   farm_name?: string | null;
+  farm_alias?: string | null;
+  farm_affiliates?: string | null;
+  country?: string | null;
+  poultry_type?: string | null;
   house_id: string;
   house_name?: string | null;
   module_id: string;
   camera_name?: string | null;
-  latest_at: Date | string;
+  latest_at?: Date | string | null;
   cnt_1h: number | string;
   cnt_24h: number | string;
 };
@@ -151,9 +159,13 @@ export const CCTVUP_EXPECTED_24H = 288;
 export function getCctvUpStatus(ageMinutes: number, cnt1h: number): CctvUpStatus {
   if (!Number.isFinite(ageMinutes) || ageMinutes >= 999) return 'paused';
   if (ageMinutes <= 7) return 'ok';
-  if (ageMinutes <= 12) return 'late';
-  if (ageMinutes > 30 || cnt1h <= 6) return 'critical';
+  if (ageMinutes < 12) return 'late';
+  if (ageMinutes >= 30 || cnt1h <= 6) return 'critical';
   return 'missing';
+}
+
+export function isCctvUpLoggableIssueStatus(status: CctvUpStatus): status is 'missing' | 'critical' {
+  return status === 'missing' || status === 'critical';
 }
 
 export function buildSlots(ageMinutes: number, status: CctvUpStatus): CctvUpSlotStatus[] {
@@ -192,29 +204,37 @@ export function mapDbSummaryRows(rows: CctvUpDbSummaryRow[], checkedAt = new Dat
   return rows.map((row) => {
     const cnt1h = Number(row.cnt_1h ?? 0);
     const cnt24h = Number(row.cnt_24h ?? 0);
-    const ageMinutes = minutesBetween(checkedAt, row.latest_at);
-    const status = getCctvUpStatus(ageMinutes, cnt1h);
+    const latestDate = row.latest_at ? new Date(row.latest_at) : null;
+    const hasLatestImage = Boolean(latestDate && !Number.isNaN(latestDate.getTime()));
+    const ageMinutes = hasLatestImage && latestDate ? minutesBetween(checkedAt, latestDate) : 999;
+    const status = hasLatestImage ? getCctvUpStatus(ageMinutes, cnt1h) : 'critical';
     const camera = normalizeModuleId(row.module_id);
-    const reason = status === 'ok'
-      ? '이미지 정상 수신'
-      : status === 'late'
-        ? '5분 슬롯 지연 가능성'
-        : status === 'missing'
-          ? '최근 5분 이미지 누락'
-          : status === 'critical'
-            ? '30분 초과 또는 최근 1시간 수신 급감'
-            : '점검 제외';
+    const reason = !hasLatestImage
+      ? '최근 24시간 이미지 저장 이력 없음'
+      : status === 'ok'
+        ? '이미지 정상 수신'
+        : status === 'late'
+          ? '1회 수집 지연 가능성'
+          : status === 'missing'
+            ? '2회 이상 이미지 미수집'
+            : status === 'critical'
+              ? '30분 초과 또는 최근 1시간 수신 급감'
+              : '점검 제외';
 
     return {
       id: `${row.farm_id}-${row.house_id}-${row.module_id}`,
       farm: row.farm_id,
       farmName: row.farm_name ?? undefined,
+      farmAlias: row.farm_alias ?? undefined,
+      farmAffiliates: row.farm_affiliates ?? undefined,
+      country: row.country ?? undefined,
+      poultryType: row.poultry_type ?? undefined,
       house: row.house_id,
       houseName: row.house_name ?? undefined,
       camera,
       cameraName: row.camera_name ?? undefined,
-      latestAt: formatTime(row.latest_at),
-      latestAtIso: new Date(row.latest_at).toISOString(),
+      latestAt: hasLatestImage && latestDate ? formatTime(latestDate) : '--:--',
+      latestAtIso: hasLatestImage && latestDate ? latestDate.toISOString() : undefined,
       ageMinutes,
       consecutiveMiss: Math.max(0, Math.min(CCTVUP_EXPECTED_1H, Math.floor(ageMinutes / 5))),
       rate1h: `${cnt1h}/${CCTVUP_EXPECTED_1H}`,
@@ -231,7 +251,7 @@ export function mapDbSummaryRows(rows: CctvUpDbSummaryRow[], checkedAt = new Dat
 
 export function buildIncidents(rows: CctvUpRow[]): CctvUpIncident[] {
   return rows
-    .filter((row): row is CctvUpRow & { status: 'late' | 'missing' | 'critical' } => ['late', 'missing', 'critical'].includes(row.status))
+    .filter((row): row is CctvUpRow & { status: 'missing' | 'critical' } => isCctvUpLoggableIssueStatus(row.status))
     .slice(0, 10)
     .map((row, index) => ({
       id: `cctvup-inc-${index + 1}`,
@@ -248,7 +268,7 @@ export function buildIncidents(rows: CctvUpRow[]): CctvUpIncident[] {
 
 export function buildCurrentIssues(rows: CctvUpRow[], checkedAt = new Date().toISOString()): CctvUpCurrentIssue[] {
   return rows
-    .filter((row): row is CctvUpRow & { status: 'late' | 'missing' | 'critical' } => ['late', 'missing', 'critical'].includes(row.status))
+    .filter((row): row is CctvUpRow & { status: 'missing' | 'critical' } => isCctvUpLoggableIssueStatus(row.status))
     .map((row, index) => ({
       id: `cctvup-current-${index + 1}`,
       cameraKey: row.id,

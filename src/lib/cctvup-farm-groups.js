@@ -163,10 +163,10 @@ export function compareCctvUpFarmGroups(a, b, sortMode = 'issue') {
   }
 
   if (sortMode === 'category') {
-    const bucketDiff = getGroupBucket(a) - getGroupBucket(b);
-    if (bucketDiff !== 0) return bucketDiff;
     const categoryDiff = CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
     if (categoryDiff !== 0) return categoryDiff;
+    const bucketDiff = getGroupBucket(a) - getGroupBucket(b);
+    if (bucketDiff !== 0) return bucketDiff;
     const statusDiff = STATUS_PRIORITY[a.status === 'paused' ? 'ok' : a.status] - STATUS_PRIORITY[b.status === 'paused' ? 'ok' : b.status];
     if (statusDiff !== 0) return statusDiff;
     const freshnessDiff = (a.issueAgeMinutes ?? Number.POSITIVE_INFINITY) - (b.issueAgeMinutes ?? Number.POSITIVE_INFINITY);

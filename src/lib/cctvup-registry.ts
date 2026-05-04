@@ -35,6 +35,29 @@ export type CctvUpFarmRegistryPayload = {
 };
 
 const CATEGORY_SET = new Set<CctvUpFarmCategory>(['overseas', 'shinwoo', 'cheriburo', 'other']);
+const SUPABASE_REGISTRY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
+const SUPABASE_REGISTRY_WRITE_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_WRITE_TIMEOUT_MS || 8000);
+
+function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return undefined;
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(timeoutMs);
+  }
+
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), timeoutMs);
+  return controller.signal;
+}
+
+function formatRegistryFetchError(error: unknown) {
+  if (error instanceof Error && error.name === 'TimeoutError') {
+    return `Supabase farm registry 조회가 ${SUPABASE_REGISTRY_READ_TIMEOUT_MS}ms 안에 끝나지 않았습니다.`;
+  }
+  if (error instanceof Error && error.name === 'AbortError') {
+    return `Supabase farm registry 조회가 ${SUPABASE_REGISTRY_READ_TIMEOUT_MS}ms 안에 중단되었습니다.`;
+  }
+  return error instanceof Error ? error.message : 'CCTVUP farm registry fetch failed';
+}
 
 const asList = (value: SupabaseRegistryRow['tags'] | SupabaseRegistryRow['aliases']): string[] => {
   if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
@@ -103,6 +126,7 @@ export async function fetchCctvUpFarmRegistry(): Promise<CctvUpFarmRegistryPaylo
     const response = await fetch(endpoint.toString(), {
       method: 'GET',
       cache: 'no-store',
+      signal: createTimeoutSignal(SUPABASE_REGISTRY_READ_TIMEOUT_MS),
       headers: {
         apikey: config.serviceKey,
         Authorization: `Bearer ${config.serviceKey}`,
@@ -138,7 +162,7 @@ export async function fetchCctvUpFarmRegistry(): Promise<CctvUpFarmRegistryPaylo
     return {
       source: 'unavailable',
       items: [],
-      message: error instanceof Error ? error.message : 'CCTVUP farm registry fetch failed',
+      message: formatRegistryFetchError(error),
     };
   }
 }
@@ -184,6 +208,7 @@ export async function upsertCctvUpFarmRegistry(payload: CctvUpFarmRegistryUpsert
   const response = await fetch(endpoint.toString(), {
     method: 'POST',
     cache: 'no-store',
+    signal: createTimeoutSignal(SUPABASE_REGISTRY_WRITE_TIMEOUT_MS),
     headers: {
       apikey: config.serviceKey,
       Authorization: `Bearer ${config.serviceKey}`,

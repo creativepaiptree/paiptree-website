@@ -106,3 +106,10 @@ test('compareCctvUpFarmGroups supports name sorting', () => {
 
   assert.deepEqual(sorted.map((group) => group.farmName), ['가농장', '나농장']);
 });
+
+test('compareCctvUpFarmGroups prioritizes category in category sorting', () => {
+  const groups = buildCctvUpFarmGroups(rows);
+  const sorted = groups.slice().sort((a, b) => compareCctvUpFarmGroups(a, b, 'category'));
+
+  assert.deepEqual(sorted.map((group) => group.farmId), ['FARM-B', 'FARM-A']);
+});

@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getCctvUpCronAuthState } from '@/lib/cctvup-check-core.js';
 import { fetchCctvUpHistory, persistCctvUpHistory } from '@/lib/cctvup-history';
 import type { CctvUpPayload } from '@/lib/cctvup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const CRON_SECRET_HEADER = 'x-cctvup-cron-secret';
+
+function readMutationSecret(request: Request) {
+  const expectedSecret = process.env.CCTVUP_CRON_TRIGGER_SECRET?.trim();
+  const providedSecret = request.headers.get(CRON_SECRET_HEADER)?.trim() || '';
+  return getCctvUpCronAuthState({ expectedSecret, providedSecret });
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -29,6 +38,14 @@ export async function GET(request: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = readMutationSecret(req);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { ok: false, message: auth.message, mode: auth.mode },
+      { status: auth.status, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   try {
     const payload = (await req.json()) as CctvUpPayload;
     if (!payload || !Array.isArray(payload.rows) || !payload.summary || !payload.checkedAt) {

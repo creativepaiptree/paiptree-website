@@ -44,12 +44,16 @@ const initialRegistryState: CctvUpFarmRegistryPayload = {
   items: [],
 };
 
+const LOCAL_REGISTRY_STORAGE_KEY = 'cctvup-local-registry';
+
 const FarmBadgeLabels: Record<CctvUpFarmCategory, string> = {
   overseas: '해외',
   shinwoo: '신우',
   cheriburo: '체리부로',
   other: '기타',
 };
+
+const FarmCategoryOptions = Object.entries(FarmBadgeLabels) as Array<[CctvUpFarmCategory, string]>;
 
 const statusTone: Record<CameraStatus, { label: string; badge: string; dot: string }> = {
   ok: { label: '정상', badge: 'border-sky-500/30 bg-sky-500/10 text-sky-200', dot: 'bg-sky-400' },
@@ -181,23 +185,54 @@ function cleanName(value: string) {
   return value.trim();
 }
 
-function classifyFarmBadge(row: Pick<CctvUpRow, 'farm' | 'farmName'> & { displayFarmName?: string }) {
-  const text = [row.farmName, row.displayFarmName, row.farm].filter(Boolean).join(' ');
+function classifyFarmBadge(row: Pick<CctvUpRow, 'farmName' | 'farmAlias' | 'farmAffiliates' | 'country'> & { displayFarmName?: string }) {
+  const affiliates = row.farmAffiliates?.trim().toLowerCase() || '';
+  const country = row.country?.trim().toUpperCase() || '';
+  if (/cherry|체리/.test(affiliates)) return 'cheriburo' as const;
+  if (/shinwoo|신우/.test(affiliates)) return 'shinwoo' as const;
+  if (country && country !== 'KR') return 'overseas' as const;
+  if (/taiwan|indonesia|madagascar|cpgroup|prifoods|laos|overseas|global/.test(affiliates)) return 'overseas' as const;
+
+  const text = [row.farmName, row.displayFarmName, row.farmAlias].filter(Boolean).join(' ');
   const compact = text.replace(/\s+/g, '');
   if (/체리부로/i.test(text)) return 'cheriburo' as const;
   if (/신우/i.test(text)) return 'shinwoo' as const;
   if (/해외/i.test(text)) return 'overseas' as const;
-  if (/[A-Za-z]/.test(text) || /[^가-힣0-9A-Za-z()&\-· ]/.test(text)) return 'overseas' as const;
   if (/체리/.test(compact)) return 'cheriburo' as const;
+  const hasHangul = /[가-힣]/.test(text);
+  const hasLatin = /[A-Za-z]/.test(text);
+  const hasCjk = /[\u3400-\u9fff]/.test(text);
+  if (!hasHangul && (hasLatin || hasCjk)) return 'overseas' as const;
   return 'other' as const;
 }
 
-const farmBadgeTone: Record<CctvUpFarmCategory, { label: string; className: string }> = {
-  overseas: { label: '해외', className: 'border-sky-500/20 bg-sky-500/10 text-sky-200' },
-  shinwoo: { label: '신우', className: 'border-teal-500/20 bg-teal-500/10 text-teal-100' },
-  cheriburo: { label: '체리부로', className: 'border-rose-500/20 bg-rose-500/10 text-rose-100' },
-  other: { label: '기타', className: 'border-slate-500/20 bg-slate-500/10 text-slate-200' },
-};
+function farmCategoryButtonClass(theme: ThemeMode, category: CctvUpFarmCategory, isActive: boolean) {
+  if (isActive) {
+    if (category === 'overseas') return theme === 'light'
+      ? 'border-amber-300 bg-amber-50 text-amber-800'
+      : 'border-amber-500/25 bg-amber-500/10 text-amber-100';
+    if (category === 'shinwoo') return theme === 'light'
+      ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+      : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100';
+    if (category === 'cheriburo') return theme === 'light'
+      ? 'border-violet-300 bg-violet-50 text-violet-800'
+      : 'border-violet-500/25 bg-violet-500/10 text-violet-100';
+    return theme === 'light'
+      ? 'border-slate-300 bg-slate-50 text-slate-700'
+      : 'border-slate-500/30 bg-slate-500/10 text-slate-200';
+  }
+
+  return theme === 'light'
+    ? 'border-transparent bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+    : 'border-transparent bg-[#0a1019] text-slate-300 hover:border-[#314056] hover:bg-white/5';
+}
+
+function farmCategoryMarkerClass(category: CctvUpFarmCategory) {
+  if (category === 'overseas') return 'bg-amber-400';
+  if (category === 'shinwoo') return 'bg-emerald-400';
+  if (category === 'cheriburo') return 'bg-violet-400';
+  return 'bg-slate-400';
+}
 
 const farmBadgeOrder: Record<CctvUpFarmCategory, number> = {
   overseas: 0,
@@ -251,15 +286,6 @@ function compareDisplayRows(a: DisplayRow, b: DisplayRow) {
   return a.id.localeCompare(b.id);
 }
 
-function FarmBadgePill({ badge }: { badge: CctvUpFarmCategory }) {
-  const tone = farmBadgeTone[badge];
-  return (
-    <span className={`inline-flex h-5 shrink-0 items-center rounded-sm border px-1.5 text-[10px] font-semibold leading-none tracking-[0.06em] ${tone.className}`}>
-      {tone.label}
-    </span>
-  );
-}
-
 function mergeRegistryEntry(row: CctvUpRow, entry?: CctvUpFarmRegistryEntry): DisplayRow {
   const category = entry?.category ?? classifyFarmBadge(row);
   return {
@@ -311,6 +337,37 @@ function normalizeRegistryDraft(entry: CctvUpFarmRegistryEntry): CctvUpFarmRegis
   };
 }
 
+function readLocalRegistryDraft(): Record<string, CctvUpFarmRegistryEntry> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(LOCAL_REGISTRY_STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, CctvUpFarmRegistryEntry>) : {};
+    return Object.fromEntries(
+      Object.entries(parsed)
+        .filter(([farmId, entry]) => farmId && entry && typeof entry === 'object')
+        .map(([farmId, entry]) => [farmId, normalizeRegistryDraft({ ...entry, farmId })]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function writeLocalRegistryEntry(entry: CctvUpFarmRegistryEntry) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = readLocalRegistryDraft();
+    window.localStorage.setItem(
+      LOCAL_REGISTRY_STORAGE_KEY,
+      JSON.stringify({
+        ...current,
+        [entry.farmId]: normalizeRegistryDraft(entry),
+      }),
+    );
+  } catch {
+    // Local persistence is only a UI fallback; server registry remains canonical.
+  }
+}
+
 export default function CctvUpClient() {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   const [query, setQuery] = useState('');
@@ -335,7 +392,15 @@ export default function CctvUpClient() {
   const [isRegistryLoading, setIsRegistryLoading] = useState(true);
   const [isRegistrySaving, setIsRegistrySaving] = useState(false);
   const [registryError, setRegistryError] = useState('');
+  const [categoryMenuFarmId, setCategoryMenuFarmId] = useState('');
+  const [adminSecret, setAdminSecret] = useState('');
   const monitorRows = payload.rows;
+
+  useEffect(() => {
+    const storedSecret = window.sessionStorage.getItem('cctvup-admin-secret') || '';
+    if (storedSecret) setAdminSecret(storedSecret);
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const refreshIntervalMs = 5 * 60 * 1000;
@@ -373,12 +438,18 @@ export default function CctvUpClient() {
 
         const nextRegistry = (await registryResponse.json()) as CctvUpFarmRegistryPayload;
         if (registryResponse.ok && nextRegistry?.items) {
-          const nextDraft = Object.fromEntries(nextRegistry.items.map((entry) => [entry.farmId, entry]));
+          const nextDraft = {
+            ...Object.fromEntries(nextRegistry.items.map((entry) => [entry.farmId, entry])),
+            ...readLocalRegistryDraft(),
+          };
           setRegistryPayload(nextRegistry);
           setRegistryDraft(nextDraft);
           setRegistryBaseline(nextDraft);
         } else {
+          const localDraft = readLocalRegistryDraft();
           setRegistryPayload({ source: 'unavailable', items: [], message: nextRegistry?.message || `registry 조회 실패: ${registryResponse.status}` });
+          setRegistryDraft(localDraft);
+          setRegistryBaseline(localDraft);
           setRegistryError(nextRegistry?.message || `registry 조회 실패: ${registryResponse.status}`);
         }
       } catch (error) {
@@ -514,6 +585,39 @@ export default function CctvUpClient() {
   const latestCheckAgeMinutes = latestCheckRun?.checkedAt ? minutesBetween(new Date(), latestCheckRun.checkedAt) : 999;
   const isStale = latestCheckAgeMinutes >= 15;
 
+  const postRegistryItems = async (items: CctvUpFarmRegistryEntry[]) => {
+    const secret = adminSecret.trim();
+    if (!secret) {
+      throw new Error('관리 secret을 입력해야 저장할 수 있습니다.');
+    }
+
+    const response = await fetch('/api/cctvup/registry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-cctvup-cron-secret': secret,
+      },
+      body: JSON.stringify({
+        items: items.map((entry) => ({
+          farmId: entry.farmId,
+          displayName: entry.displayName,
+          category: entry.category,
+          tags: entry.tags,
+          memo: entry.memo,
+          aliases: entry.aliases,
+          isActive: entry.isActive ?? true,
+        })),
+      }),
+    });
+
+    const result = (await response.json()) as { ok?: boolean; message?: string };
+    if (!response.ok || result.ok === false) {
+      throw new Error(result.message || `registry 저장 실패: ${response.status}`);
+    }
+
+    window.sessionStorage.setItem('cctvup-admin-secret', secret);
+  };
+
   const updateRegistryField = (farmId: string, field: keyof CctvUpFarmRegistryEntry, value: string | string[] | boolean | CctvUpFarmCategory) => {
     setRegistryDraft((current) => {
       const sourceRow = monitorRows.find((row) => row.farm === farmId);
@@ -556,34 +660,13 @@ export default function CctvUpClient() {
     setIsRegistrySaving(true);
     setRegistryError('');
     try {
-      const response = await fetch('/api/cctvup/registry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [
-            {
-              farmId,
-              displayName: entry.displayName,
-              category: entry.category,
-              tags: entry.tags,
-              memo: entry.memo,
-              aliases: entry.aliases,
-              isActive: entry.isActive ?? true,
-            },
-          ],
-        }),
-      });
-
-      const result = (await response.json()) as { ok?: boolean; message?: string };
-      if (!response.ok || result.ok === false) {
-        throw new Error(result.message || `registry 저장 실패: ${response.status}`);
-      }
-
       const normalized = normalizeRegistryDraft(entry);
+      writeLocalRegistryEntry(normalized);
+      await postRegistryItems([normalized]);
       setRegistryBaseline((current) => ({ ...current, [farmId]: normalized }));
       setRegistryDraft((current) => ({ ...current, [farmId]: normalized }));
     } catch (error) {
-      setRegistryError(error instanceof Error ? error.message : 'registry 저장 실패');
+      setRegistryError(error instanceof Error ? `서버 저장 실패: ${error.message} (브라우저 로컬에는 반영됨)` : '서버 저장 실패 (브라우저 로컬에는 반영됨)');
     } finally {
       setIsRegistrySaving(false);
     }
@@ -591,6 +674,33 @@ export default function CctvUpClient() {
 
   const resetRegistryAll = () => {
     setRegistryDraft(registryBaseline);
+  };
+
+  const saveFarmGroupCategory = async (group: FarmGroup, category: CctvUpFarmCategory) => {
+    const existing = registryDraft[group.farmId] ?? emptyRegistryForFarm(group.farmId);
+    const nextEntry = normalizeRegistryDraft({
+      ...existing,
+      farmId: group.farmId,
+      displayName: existing.displayName || group.farmName,
+      category,
+      tags: existing.tags ?? [],
+      memo: existing.memo ?? '',
+      aliases: existing.aliases ?? [],
+      isActive: existing.isActive ?? true,
+    });
+
+    setRegistryDraft((current) => ({ ...current, [group.farmId]: nextEntry }));
+    writeLocalRegistryEntry(nextEntry);
+    setIsRegistrySaving(true);
+    setRegistryError('');
+    try {
+      await postRegistryItems([nextEntry]);
+      setRegistryBaseline((current) => ({ ...current, [group.farmId]: nextEntry }));
+    } catch (error) {
+      setRegistryError(error instanceof Error ? `분류 서버 저장 실패: ${error.message} (브라우저 로컬에는 반영됨)` : '분류 서버 저장 실패 (브라우저 로컬에는 반영됨)');
+    } finally {
+      setIsRegistrySaving(false);
+    }
   };
 
 
@@ -608,6 +718,13 @@ export default function CctvUpClient() {
             </h1>
           </div>
           <div className="flex flex-wrap justify-end gap-2">
+            <input
+              type="password"
+              value={adminSecret}
+              onChange={(event) => setAdminSecret(event.target.value)}
+              placeholder="관리 secret"
+              className={`h-10 w-40 border px-3 py-2 text-sm outline-none ${inputClass(theme)}`}
+            />
             <button
               type="button"
               onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
@@ -709,6 +826,7 @@ export default function CctvUpClient() {
                       <span className={`text-xs ${theme === 'light' ? 'text-slate-400' : 'text-slate-400'}`}>{payload.table}</span>
                     </div>
                   </div>
+                  {registryError ? <p className="mt-2 text-xs text-red-400">{registryError}</p> : null}
                 </div>
               </div>
             </div>
@@ -719,39 +837,108 @@ export default function CctvUpClient() {
                 const isExpanded = expandedFarmIds[group.farmId] || selected?.farm === group.farmId;
                 const latestRow = sortedRows.find((row) => row.id === group.latestRowId) ?? group.rows[0];
                 const tagsLabel = latestRow?.displayTags.length ? latestRow.displayTags.slice(0, 3).join(' · ') : '';
+                const groupCategory = group.category as CctvUpFarmCategory;
                 return (
                   <div key={group.farmId} className={`border-b ${theme === 'light' ? 'border-slate-100' : 'border-[#1b2636]'}`}>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
-                      className={`w-full px-3 py-3 text-left transition ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-[#0f1722]'}`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className={`inline-flex h-5 items-center rounded-sm border px-1.5 text-[10px] font-semibold ${tone.badge}`}>
-                              {tone.label}
-                            </span>
-                            <FarmBadgePill badge={group.category as CctvUpFarmCategory} />
-                            <span className="min-w-0 truncate text-sm font-semibold leading-5">{group.farmName}</span>
-                            <span className={`text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{group.farmId}</span>
-                            <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{isExpanded ? '접기 ▲' : '펼치기 ▼'}</span>
-                          </div>
-                          <div className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0 text-[11px] leading-4 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                            <span>카메라 {group.cameraCount}대</span>
-                            <span>·</span>
-                            <span>문제 {group.problemCount}대</span>
-                            <span>·</span>
-                            <span>정상 {group.okCount}대</span>
-                            <span>·</span>
-                            <span>최신 {group.latestAt}</span>
-                            {tagsLabel ? <><span>·</span><span>{tagsLabel}</span></> : null}
-                            {latestRow?.displayMemo ? <><span>·</span><span className="truncate">{latestRow.displayMemo}</span></> : null}
-                          </div>
-                        </div>
+	                    <div className={`flex items-start justify-between gap-3 px-3 py-3 transition ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-[#0f1722]'}`}>
+	                      <div className="min-w-0 flex-1">
+	                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+	                          <button
+	                            type="button"
+	                            onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
+	                            className="inline-flex min-w-0 items-center gap-x-2 text-left"
+	                          >
+	                            <span className={`inline-flex h-5 shrink-0 items-center rounded-sm border px-1.5 text-[10px] font-semibold ${tone.badge}`}>
+	                              {tone.label}
+	                            </span>
+	                            <span className="min-w-0 truncate text-sm font-semibold leading-5">{group.farmName}</span>
+	                          </button>
+	                          <div className="relative shrink-0">
+	                            <button
+	                              type="button"
+	                              onClick={() => setCategoryMenuFarmId((current) => (current === group.farmId ? '' : group.farmId))}
+	                              disabled={isRegistrySaving}
+	                              className={`inline-flex h-5 items-center gap-1 rounded-sm border px-1.5 text-[10px] font-semibold leading-none transition disabled:opacity-50 ${farmCategoryButtonClass(theme, groupCategory, true)}`}
+	                              aria-haspopup="menu"
+	                              aria-expanded={categoryMenuFarmId === group.farmId}
+	                              aria-label={`${group.farmName} 현재 분류 ${FarmBadgeLabels[groupCategory]}`}
+	                            >
+	                              <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(groupCategory)}`} aria-hidden="true" />
+	                              {FarmBadgeLabels[groupCategory]}
+	                              <span className="text-[9px] opacity-60" aria-hidden="true">⌄</span>
+	                            </button>
+	                            {categoryMenuFarmId === group.farmId ? (
+	                              <div
+	                                role="menu"
+	                                className={`absolute left-0 top-6 z-20 w-[96px] border p-1 shadow-lg ${
+	                                  theme === 'light'
+	                                    ? 'border-slate-200 bg-white shadow-slate-200/70'
+	                                    : 'border-[#314056] bg-[#0a1019] shadow-black/30'
+	                                }`}
+	                              >
+	                                {FarmCategoryOptions.map(([category, label]) => {
+	                                  const isActive = groupCategory === category;
+	                                  return (
+	                                    <button
+	                                      key={category}
+	                                      type="button"
+	                                      role="menuitemradio"
+	                                      aria-checked={isActive}
+	                                      onClick={() => {
+	                                        setCategoryMenuFarmId('');
+	                                        if (!isActive) void saveFarmGroupCategory(group, category);
+	                                      }}
+	                                      className={`mb-1 inline-flex h-6 w-full items-center gap-1 rounded-sm border px-1.5 text-left text-[10px] font-semibold transition last:mb-0 ${farmCategoryButtonClass(theme, category, isActive)}`}
+	                                    >
+	                                      <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(category)}`} aria-hidden="true" />
+	                                      {label}
+	                                    </button>
+	                                  );
+	                                })}
+	                              </div>
+	                            ) : null}
+	                          </div>
+	                          <button
+	                            type="button"
+	                            onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
+	                            className={`text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}
+	                          >
+	                            {group.farmId}
+	                          </button>
+	                          <button
+	                            type="button"
+	                            onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
+	                            className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}
+	                          >
+	                            {isExpanded ? '접기 ▲' : '펼치기 ▼'}
+	                          </button>
+	                        </div>
+	                        <button
+	                          type="button"
+	                          onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
+	                          className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0 text-left text-[11px] leading-4 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}
+	                        >
+	                          <span>카메라 {group.cameraCount}대</span>
+	                          <span>·</span>
+	                          <span>문제 {group.problemCount}대</span>
+	                          <span>·</span>
+	                          <span>정상 {group.okCount}대</span>
+	                          <span>·</span>
+	                          <span>최신 {group.latestAt}</span>
+	                          {latestRow?.farmAffiliates || latestRow?.country ? (
+	                            <>
+	                              <span>·</span>
+	                              <span>원본 {latestRow.farmAffiliates || '-'} / {latestRow.country || '-'}</span>
+	                            </>
+	                          ) : null}
+	                          {tagsLabel ? <><span>·</span><span>{tagsLabel}</span></> : null}
+	                          {latestRow?.displayMemo ? <><span>·</span><span className="truncate">{latestRow.displayMemo}</span></> : null}
+	                        </button>
+	                      </div>
+                      <div className="mt-1 flex shrink-0 items-center">
                         <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
                       </div>
-                    </button>
+                    </div>
 
                     {isExpanded ? (
                       <div className={`${theme === 'light' ? 'bg-slate-50/70' : 'bg-[#0a1019]'}`}>
@@ -921,14 +1108,14 @@ export default function CctvUpClient() {
                   <section className={`border ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#314056] bg-[#0a1019]'}`}>
                     <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200' : 'border-[#243041]'}`}>
                       <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-sm font-semibold">분류 / 메모</h3>
+                        <h3 className="text-sm font-semibold">표시 / 메모</h3>
                         <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
                           {registryPayload.source} · {isRegistryLoading ? '불러오는 중' : '편집 가능'}
                         </span>
                       </div>
                     </div>
                     <div className="space-y-3 px-4 py-4">
-                      <div className="grid gap-3 md:grid-cols-2">
+                      <div className="grid gap-3">
                         <label className="block text-xs">
                           <span className={`mb-1 block ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>표시명</span>
                           <input
@@ -936,20 +1123,6 @@ export default function CctvUpClient() {
                             onChange={(event) => selected && updateRegistryField(selected.farm, 'displayName', event.target.value)}
                             className={`h-8 w-full border px-3 py-1.5 text-sm outline-none ${inputClass(theme)}`}
                           />
-                        </label>
-                        <label className="block text-xs">
-                          <span className={`mb-1 block ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>분류</span>
-                          <select
-                            value={selectedRegistry?.category ?? 'other'}
-                            onChange={(event) => selected && updateRegistryField(selected.farm, 'category', event.target.value as CctvUpFarmCategory)}
-                            className={`h-8 w-full border px-3 py-1.5 text-sm outline-none ${inputClass(theme)}`}
-                          >
-                            {Object.entries(FarmBadgeLabels).map(([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ))}
-                          </select>
                         </label>
                       </div>
 
@@ -1001,7 +1174,7 @@ export default function CctvUpClient() {
                           되돌리기
                         </button>
                         <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
-                          {selectedRegistry?.isActive === false ? '비활성' : '활성'} · {selectedRegistry?.tags?.length ?? 0} tags
+                          {selectedRegistry?.tags?.length ?? 0} tags
                         </span>
                       </div>
 
