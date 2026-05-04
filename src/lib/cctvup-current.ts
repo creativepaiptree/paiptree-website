@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import type { RowDataPacket } from 'mysql2';
+import type { ExecuteValues, QueryOptions, RowDataPacket } from 'mysql2';
 import {
   buildPayload,
   mapDbSummaryRows,
@@ -67,6 +67,7 @@ type SupabaseLatestCheckRunRow = {
 
 const SUPABASE_FETCH_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
 const DB_QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_DB_QUERY_TIMEOUT_MS || 10000);
+const MUTATING_SQL_PATTERN = /\b(?:insert|update|delete|replace|alter|drop|truncate|create|grant|revoke|call|load|lock|unlock|set)\b/i;
 
 function shouldUseMockFallback() {
   return process.env.CCTVUP_ALLOW_MOCK_FALLBACK === '1' || process.env.NODE_ENV !== 'production';
@@ -101,6 +102,26 @@ function sanitizeDbError(error: unknown): SafeDbError {
     fatal: typeof record.fatal === 'boolean' ? record.fatal : undefined,
     message: message.slice(0, 240),
   };
+}
+
+function assertReadOnlySql(sql: string) {
+  const normalizedSql = sql
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--.*$/gm, ' ')
+    .trim();
+
+  if (!/^(?:select|with)\b/i.test(normalizedSql) || MUTATING_SQL_PATTERN.test(normalizedSql)) {
+    throw new Error('CCTVUP 원본 DB 연결은 SELECT/WITH 조회만 허용합니다.');
+  }
+}
+
+async function executeReadOnlyDbQuery<T extends RowDataPacket[]>(
+  connection: mysql.Connection,
+  query: QueryOptions,
+  values?: ExecuteValues,
+) {
+  assertReadOnlySql(query.sql);
+  return connection.execute<T>(query, values);
 }
 
 function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
@@ -270,7 +291,8 @@ export async function diagnoseCctvUpDb(): Promise<CctvUpDbHealthResult> {
   }
 
   try {
-    const [rows] = await connection.execute<RowDataPacket[]>(
+    const [rows] = await executeReadOnlyDbQuery<RowDataPacket[]>(
+      connection,
       {
         sql: `
           SELECT
@@ -350,7 +372,8 @@ export async function fetchCctvUpCurrentPayload(
       dateStrings: false,
     });
 
-    const [rows] = await connection.execute<DbSummaryResultRow[]>(
+    const [rows] = await executeReadOnlyDbQuery<DbSummaryResultRow[]>(
+      connection,
       {
         sql: `
       SELECT
