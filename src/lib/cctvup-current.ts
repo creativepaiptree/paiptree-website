@@ -67,7 +67,8 @@ type SupabaseLatestCheckRunRow = {
 
 const SUPABASE_FETCH_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
 const DB_QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_DB_QUERY_TIMEOUT_MS || 10000);
-const MUTATING_SQL_PATTERN = /\b(?:insert|update|delete|replace|alter|drop|truncate|create|grant|revoke|call|load|lock|unlock|set)\b/i;
+const READ_ONLY_SQL_PATTERN = /^(?:select|with)\b/i;
+const LOCKING_READ_PATTERN = /\b(?:for\s+update|lock\s+in\s+share\s+mode)\b/i;
 
 function shouldUseMockFallback() {
   return process.env.CCTVUP_ALLOW_MOCK_FALLBACK === '1' || process.env.NODE_ENV !== 'production';
@@ -108,9 +109,11 @@ function assertReadOnlySql(sql: string) {
   const normalizedSql = sql
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/--.*$/gm, ' ')
+    .trim()
+    .replace(/;+$/g, '')
     .trim();
 
-  if (!/^(?:select|with)\b/i.test(normalizedSql) || MUTATING_SQL_PATTERN.test(normalizedSql)) {
+  if (!READ_ONLY_SQL_PATTERN.test(normalizedSql) || normalizedSql.includes(';') || LOCKING_READ_PATTERN.test(normalizedSql)) {
     throw new Error('CCTVUP 원본 DB 연결은 SELECT/WITH 조회만 허용합니다.');
   }
 }
