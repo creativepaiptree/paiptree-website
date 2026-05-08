@@ -47,17 +47,17 @@ function pickFreshestIssue(rowA, rowB) {
 
 function getGroupStatus(rows) {
   let winner = 'ok';
-  let sawPaused = false;
+  let sawNonPaused = false;
   for (const row of rows) {
     if (row.status === 'paused') {
-      sawPaused = true;
       continue;
     }
+    sawNonPaused = true;
     if (STATUS_PRIORITY[row.status] < STATUS_PRIORITY[winner]) {
       winner = row.status;
     }
   }
-  return winner === 'ok' && sawPaused ? 'paused' : winner;
+  return sawNonPaused ? winner : 'paused';
 }
 
 function getGroupCategory(rows) {
@@ -89,13 +89,14 @@ export function buildCctvUpFarmGroups(rows) {
   const byFarm = new Map();
 
   for (const row of rows) {
+    const isIssueRow = row.status !== 'ok' && row.status !== 'paused';
     const current = byFarm.get(row.farm);
     if (current) {
       current.rows.push(row);
-      current.problemCount += row.status === 'ok' ? 0 : 1;
+      current.problemCount += isIssueRow ? 1 : 0;
       current.okCount += row.status === 'ok' ? 1 : 0;
       current.latestRow = pickLatest(current.latestRow, row);
-      current.freshIssueRow = row.status === 'ok' || row.status === 'paused'
+      current.freshIssueRow = !isIssueRow
         ? current.freshIssueRow
         : (current.freshIssueRow ? pickFreshestIssue(current.freshIssueRow, row) : row);
       continue;
@@ -106,10 +107,10 @@ export function buildCctvUpFarmGroups(rows) {
       farmName: row.displayFarmName || row.farmName || row.farm,
       category: row.displayCategory || 'other',
       rows: [row],
-      problemCount: row.status === 'ok' ? 0 : 1,
+      problemCount: isIssueRow ? 1 : 0,
       okCount: row.status === 'ok' ? 1 : 0,
       latestRow: row,
-      freshIssueRow: row.status === 'ok' || row.status === 'paused' ? null : row,
+      freshIssueRow: isIssueRow ? row : null,
     });
   }
 
@@ -136,7 +137,7 @@ export function buildCctvUpFarmGroups(rows) {
       freshestIssueRowId: freshestIssueRow?.id || '',
       freshestIssueAt: freshestIssueRow?.latestAtIso || freshestIssueRow?.latestAt || '',
       status,
-      isProblem: status !== 'ok',
+      isProblem: status !== 'ok' && status !== 'paused',
       isChronic: Number.isFinite(issueAgeMinutes) ? issueAgeMinutes >= CHRONIC_AGE_MINUTES : false,
     };
   });

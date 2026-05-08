@@ -1,8 +1,9 @@
 name: CCTVUP Check
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
+  # CCTVUP의 1차 운영 체크는 원본 DB에 접근 가능한 로컬 24시간 PC에서 실행한다.
+  # GitHub-hosted runner나 현재 웹 배포 서버가 원본 CCTV DB를 읽지 못하면 5분마다 실패 메일이 쌓인다.
+  # 웹 서버에서 원본 DB 접근이 검증된 뒤에만 schedule을 다시 켠다.
   workflow_dispatch:
 
 jobs:

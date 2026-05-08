@@ -1,12 +1,15 @@
 import type {
   CctvUpCameraSnapshot,
+  CctvUpCameraState,
   CctvUpCheckRun,
   CctvUpCurrentIssue,
+  CctvUpIssueEvent,
   CctvUpIncidentLog,
   CctvUpPayload,
   CctvUpStatus,
 } from '@/lib/cctvup';
-import { buildCurrentIssues, isCctvUpLoggableIssueStatus } from '@/lib/cctvup';
+import { buildCurrentIssues, getCctvUpStateLabel, isCctvUpLoggableIssueStatus } from '@/lib/cctvup';
+import { fetchCctvUpActiveCameraStates, fetchCctvUpIssueEvents } from '@/lib/cctvup-state';
 
 export type CctvUpHistorySource = 'supabase' | 'unavailable';
 
@@ -16,6 +19,8 @@ export type CctvUpHistoryPayload = {
   snapshots: CctvUpCameraSnapshot[];
   incidents: CctvUpIncidentLog[];
   currentIssues: CctvUpCurrentIssue[];
+  cameraStates?: CctvUpCameraState[];
+  issueEvents?: CctvUpIssueEvent[];
   message?: string;
 };
 
@@ -106,8 +111,11 @@ type SupabaseCurrentIssueRow = {
 };
 
 const HISTORY_KEEP_DAYS = 30;
-const DEFAULT_LIMIT = 200;
-const SUPABASE_HISTORY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
+const DEFAULT_LIMIT = 50;
+const DEFAULT_CHECK_RUN_LIMIT = 5;
+const DEFAULT_ISSUE_EVENT_LIMIT = 50;
+const ACTIVE_CAMERA_STATE_LIMIT = 1000;
+const SUPABASE_HISTORY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 800);
 const SUPABASE_HISTORY_WRITE_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_WRITE_TIMEOUT_MS || 8000);
 
 function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
@@ -137,6 +145,20 @@ function formatHistoryFetchError(error: unknown) {
 
 function getSettledValue<T>(result: PromiseSettledResult<T[]>) {
   return result.status === 'fulfilled' ? result.value : [];
+}
+
+function unwrapSupabaseData<T>(result: SupabaseResponse<T>, label: string) {
+  if (result.error) {
+    throw new Error(`${label} 조회 실패: ${result.error}`);
+  }
+  return result.data;
+}
+
+function requireSupabaseRows<T>(rows: T[] | null, label: string) {
+  if (!rows) {
+    throw new Error(`${label} 조회 실패`);
+  }
+  return rows;
 }
 
 function clampHistoryLimit(limit: number) {
@@ -272,6 +294,52 @@ function mapCurrentIssueFromSupabase(row: SupabaseCurrentIssueRow): CctvUpCurren
     ageMinutes: row.age_minutes,
     message: row.message,
     expiresAt: row.expires_at,
+  };
+}
+
+function mapStateToCurrentIssue(state: CctvUpCameraState, index: number): CctvUpCurrentIssue | null {
+  if (state.status !== 'watching' && state.status !== 'open' && state.status !== 'recovering') return null;
+  return {
+    id: state.id || `cctvup-state-current-${index + 1}`,
+    runId: state.runId,
+    cameraKey: state.cameraKey,
+    farmId: state.farmId,
+    houseId: state.houseId,
+    moduleId: state.moduleId,
+    farmName: state.farmName,
+    houseName: state.houseName,
+    cameraName: state.cameraName,
+    issueKind: state.status === 'open' ? 'critical' : 'missing',
+    issueStatus: 'open',
+    firstSeenAt: state.firstMissedAt || state.openedAt || state.lastCheckedAt,
+    lastSeenAt: state.lastCheckedAt,
+    resolvedAt: null,
+    latestAt: state.latestImageAt,
+    ageMinutes: state.ageMinutes,
+    message: state.message || getCctvUpStateLabel(state.status),
+    expiresAt: new Date(Date.parse(state.lastCheckedAt) + HISTORY_KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
+function mapIssueEventToIncident(event: CctvUpIssueEvent): CctvUpIncidentLog {
+  const isResolved = event.eventKind === 'resolved';
+  return {
+    id: event.id || `${event.cameraKey}-${event.eventAt}-${event.eventKind}`,
+    runId: event.runId,
+    cameraKey: event.cameraKey,
+    farmId: event.farmId,
+    houseId: event.houseId,
+    moduleId: event.moduleId,
+    farmName: event.farmName,
+    houseName: event.houseName,
+    cameraName: event.cameraName,
+    incidentKind: event.eventKind === 'opened' || event.eventKind === 'reopened' ? 'critical' : 'missing',
+    incidentStatus: isResolved ? 'resolved' : 'open',
+    firstSeenAt: event.eventAt,
+    lastSeenAt: event.eventAt,
+    resolvedAt: isResolved ? event.eventAt : null,
+    expiresAt: new Date(Date.parse(event.eventAt) + HISTORY_KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+    message: event.message,
   };
 }
 
@@ -472,32 +540,40 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
   const safeLimit = clampHistoryLimit(limit);
 
   try {
-    const [checkRunsResult, snapshotsResult, incidentsResult, currentIssuesResult] = await Promise.allSettled([
-      requestSupabase<SupabaseCheckRunRow[]>(config, `tbl_cctvup_check_runs?order=checked_at.desc&limit=${safeLimit}`, {
+    const checkRunLimit = Math.min(safeLimit, DEFAULT_CHECK_RUN_LIMIT);
+    const issueEventLimit = Math.min(safeLimit, DEFAULT_ISSUE_EVENT_LIMIT);
+    const [checkRunsResult, cameraStatesResult, issueEventsResult] = await Promise.allSettled([
+      requestSupabase<SupabaseCheckRunRow[]>(config, `tbl_cctvup_check_runs?order=checked_at.desc&limit=${checkRunLimit}`, {
         method: 'GET',
-      }).then((result) => Array.isArray(result.data) ? result.data.map(mapCheckRunFromSupabase) : []),
-      requestSupabase<SupabaseCameraSnapshotRow[]>(config, `tbl_cctvup_camera_snapshots?order=snapshot_at.desc&limit=${safeLimit}`, {
-        method: 'GET',
-      }).then((result) => Array.isArray(result.data) ? result.data.map(mapSnapshotFromSupabase) : []),
-      requestSupabase<SupabaseIncidentLogRow[]>(config, `tbl_cctvup_incident_logs?order=last_seen_at.desc&limit=${safeLimit}`, {
-        method: 'GET',
-      }).then((result) => Array.isArray(result.data) ? result.data.map(mapIncidentFromSupabase) : []),
-      requestSupabase<SupabaseCurrentIssueRow[]>(config, `tbl_cctvup_current_issues?order=last_seen_at.desc&limit=${safeLimit}`, {
-        method: 'GET',
-      }).then((result) => Array.isArray(result.data) ? result.data.map(mapCurrentIssueFromSupabase) : []),
+      }).then((result) => {
+        const data = unwrapSupabaseData(result, 'tbl_cctvup_check_runs');
+        return Array.isArray(data) ? data.map(mapCheckRunFromSupabase) : [];
+      }),
+      fetchCctvUpActiveCameraStates(ACTIVE_CAMERA_STATE_LIMIT, { timeoutMs: SUPABASE_HISTORY_READ_TIMEOUT_MS }).then((result) => requireSupabaseRows(result, 'tbl_cctvup_camera_states')),
+      fetchCctvUpIssueEvents({ limit: issueEventLimit, timeoutMs: SUPABASE_HISTORY_READ_TIMEOUT_MS }).then((result) => requireSupabaseRows(result, 'tbl_cctvup_issue_events')),
     ]);
 
-    const rejected = [checkRunsResult, snapshotsResult, incidentsResult, currentIssuesResult]
-      .find((result): result is PromiseRejectedResult => result.status === 'rejected');
-    const message = rejected ? formatHistoryFetchError(rejected.reason) : undefined;
+    const settledResults = [checkRunsResult, cameraStatesResult, issueEventsResult];
+    const rejectedResults = settledResults.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+    const fulfilledCount = settledResults.length - rejectedResults.length;
+    const message = rejectedResults.length ? formatHistoryFetchError(rejectedResults[0].reason) : undefined;
     if (message) console.warn(`[cctvup-history] ${message}`);
 
+    const cameraStates = getSettledValue(cameraStatesResult);
+    const issueEvents = getSettledValue(issueEventsResult);
+    const incidents = issueEvents.map(mapIssueEventToIncident);
+    const currentIssues = cameraStates
+      .map(mapStateToCurrentIssue)
+      .filter((issue): issue is CctvUpCurrentIssue => Boolean(issue));
+
     return {
-      source: rejected ? 'unavailable' : 'supabase',
+      source: fulfilledCount > 0 ? 'supabase' : 'unavailable',
       checkRuns: getSettledValue(checkRunsResult),
-      snapshots: getSettledValue(snapshotsResult),
-      incidents: getSettledValue(incidentsResult),
-      currentIssues: getSettledValue(currentIssuesResult),
+      snapshots: [],
+      incidents,
+      currentIssues,
+      cameraStates,
+      issueEvents,
       message,
     };
   } catch (error) {
@@ -509,6 +585,8 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
       snapshots: [],
       incidents: [],
       currentIssues: [],
+      cameraStates: [],
+      issueEvents: [],
       message,
     };
   }

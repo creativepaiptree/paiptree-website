@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.05.06
+last_updated: 26.05.08
 ---
 
 # 문서 운영 허브
@@ -30,12 +30,12 @@ last_updated: 26.05.06
 - 자동 신규 생성: **0**
 - 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
-- 활성 페이지 문서(root): **28**
+- 활성 페이지 문서(root): **29**
 - 아카이브 페이지 문서: **16**
 - 활성 가이드(root): **1**
 - 아카이브 가이드: **14**
 - 레거시 문서(`docs/old/**`): **5**
-- 전체 문서 수(`docs/**/*.md`): **72**
+- 전체 문서 수(`docs/**/*.md`): **77**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -73,12 +73,14 @@ last_updated: 26.05.06
 | Section | Count |
 | --- | --- |
 | admin | 1 |
+| company | 1 |
 | decisions | 1 |
 | guides | 15 |
 | old | 5 |
-| pages | 44 |
-| plans | 2 |
+| pages | 45 |
+| plans | 4 |
 | root | 2 |
+| standards | 1 |
 | templates | 2 |
 
 ## 6. 아카이브 상태
@@ -95,13 +97,13 @@ last_updated: 26.05.06
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.05.06)
-- `docs/pages/cctvup.page.md` (26.05.04)
+- `docs/admin/README.md` (26.05.08)
+- `docs/pages/cctvup.service-manual.md` (26.05.08)
+- `docs/pages/cctvup.page.md` (26.05.08)
+- `docs/README.md` (26.05.08)
+- `docs/standards/documentation.md` (26.05.08)
+- `docs/company/README.md` (26.05.08)
+- `docs/plans/2026-05-06-cctvup-weight-input-control.md` (26.05.07)
+- `docs/plans/2026-05-07-docs-system-audit-and-migration.md` (26.05.07)
 - `docs/plans/2026-04-30-cctvup-issue-first-switchover.md` (26.04.30)
 - `docs/pages/cherry_tms-grouping.page.md` (26.04.27)
-- `docs/pages/cherry_tms-monthly-vehicle.page.md` (26.04.27)
-- `docs/pages/cherry_tms-claim-docs.page.md` (26.04.26)
-- `docs/pages/cherry_tms-settlement-review.page.md` (26.04.26)
-- `docs/pages/cherry_tms.page.md` (26.04.26)
-- `docs/pages/cherry_tms-settlement-register.page.md` (26.04.26)
-- `docs/plans/cherry_tms-supabase-rollout.md` (26.04.24)

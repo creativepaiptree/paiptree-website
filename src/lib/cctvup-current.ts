@@ -7,6 +7,7 @@ import {
   type CctvUpDbSummaryRow,
   type CctvUpPayload,
 } from '@/lib/cctvup';
+import { mergeCctvUpPayloadWithPersistedState } from '@/lib/cctvup-state';
 
 type DbSummaryResultRow = CctvUpDbSummaryRow & RowDataPacket;
 
@@ -49,6 +50,7 @@ export type CctvUpDbHealthResult = {
 
 type FetchCctvUpCurrentPayloadOptions = {
   preferSupabaseLatest?: boolean;
+  includePersistedState?: boolean;
 };
 
 type SupabaseConfig = {
@@ -214,7 +216,12 @@ function normalizeSupabasePayload(payload: CctvUpPayload): CctvUpPayload {
       critical: Number(payload.summary?.critical ?? 0),
       paused: Number(payload.summary?.paused ?? 0),
       issueCount: Number(payload.summary?.issueCount ?? 0),
+      watching: Number(payload.summary?.watching ?? 0),
+      open: Number(payload.summary?.open ?? 0),
+      recovering: Number(payload.summary?.recovering ?? 0),
+      resolved: Number(payload.summary?.resolved ?? 0),
     },
+    stateSync: payload.stateSync,
   };
 }
 
@@ -230,7 +237,7 @@ async function fetchSupabaseLatestCurrentPayload(): Promise<CurrentPayloadResult
     );
 
     const row = Array.isArray(result.data) ? result.data[0] : null;
-    if (!row?.payload) return null;
+    if (!row?.payload || !Array.isArray(row.payload.rows) || row.payload.rows.length === 0) return null;
 
     const payload = normalizeSupabasePayload(row.payload);
     return {
@@ -345,6 +352,7 @@ export async function fetchCctvUpCurrentPayload(
   options: FetchCctvUpCurrentPayloadOptions = {},
 ): Promise<CurrentPayloadResult> {
   const preferSupabaseLatest = options.preferSupabaseLatest ?? true;
+  const includePersistedState = options.includePersistedState ?? true;
   if (preferSupabaseLatest) {
     const supabasePayload = await fetchSupabaseLatestCurrentPayload();
     if (supabasePayload) return supabasePayload;
@@ -386,6 +394,18 @@ export async function fetchCctvUpCurrentPayload(
         s.affiliates AS farm_affiliates,
         s.country,
         s.poultry_type,
+        COALESCE(g.installed_count, 0) AS gateway_installed_count,
+        COALESCE(g.gateway_statuses, 'gateway 없음') AS gateway_statuses,
+        COALESCE(g.gateway_types, '') AS gateway_types,
+        latest.parts_status,
+        latest.parts_year,
+        latest.parts_seq,
+        latest.in_date,
+        latest.out_date,
+        DATEDIFF(NOW(), latest.in_date) AS days_since_in,
+        DATEDIFF(latest.in_date, NOW()) AS days_until_in,
+        DATEDIFF(NOW(), latest.out_date) AS days_since_out,
+        DATEDIFF(latest.out_date, NOW()) AS days_until_out,
         c.house_id,
         h.house_name,
         COALESCE(img.module_id, CONCAT(c.cctv_id, ',1')) AS module_id,
@@ -398,6 +418,29 @@ export async function fetchCctvUpCurrentPayload(
         ON s.farm_id = c.farm_id
       LEFT JOIN tbl_farm_house h
         ON h.farm_id = c.farm_id AND h.house_id = c.house_id
+      LEFT JOIN (
+        SELECT
+          farm_id,
+          SUM(install_status = '설치') AS installed_count,
+          GROUP_CONCAT(DISTINCT install_status ORDER BY install_status SEPARATOR ',') AS gateway_statuses,
+          GROUP_CONCAT(DISTINCT gateway_type ORDER BY gateway_type SEPARATOR ',') AS gateway_types
+        FROM tbl_farm_gateway
+        GROUP BY farm_id
+      ) g
+        ON g.farm_id = c.farm_id
+      LEFT JOIN (
+        SELECT bh.*
+        FROM tbl_farm_house_breed_hist bh
+        JOIN (
+          SELECT farm_id, house_id, MAX(seq) AS max_seq
+          FROM tbl_farm_house_breed_hist
+          GROUP BY farm_id, house_id
+        ) latest_key
+          ON latest_key.farm_id = bh.farm_id
+          AND latest_key.house_id = bh.house_id
+          AND latest_key.max_seq = bh.seq
+      ) latest
+        ON latest.farm_id = c.farm_id AND latest.house_id = c.house_id
       LEFT JOIN (
         SELECT
           i.FARM_ID AS farm_id,
@@ -427,9 +470,16 @@ export async function fetchCctvUpCurrentPayload(
     );
 
     const mappedRows = mapDbSummaryRows(rows);
+    const livePayload = buildPayload(mappedRows, 'db', '운영 DB의 활성 CCTV 농장 전체를 감시합니다.');
+    const payload = includePersistedState
+      ? await mergeCctvUpPayloadWithPersistedState(livePayload).catch((error) => {
+          console.warn('[cctvup] persisted camera state merge failed', error);
+          return livePayload;
+        })
+      : livePayload;
 
     return {
-      payload: buildPayload(mappedRows, 'db', '운영 DB의 활성 CCTV 농장 전체를 감시합니다.'),
+      payload,
       status: 200,
     };
   } catch (error) {

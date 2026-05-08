@@ -28,6 +28,13 @@ yarn-error.log*
 # Hermes local workspace artifacts
 .hermes/
 
+# Local docs export artifacts
+.company-feed/
+
+# Local sensitive artifacts
+*.sensitive.json
+docs/reports/
+
 # Supabase local CLI state
 supabase/.temp/
 

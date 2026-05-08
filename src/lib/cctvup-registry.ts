@@ -3,11 +3,13 @@ import { getCctvUpSupabaseConfig } from '@/lib/cctvup-history';
 export const CCTVUP_FARM_REGISTRY_TABLE = 'tbl_cctvup_farm_registry';
 
 export type CctvUpFarmCategory = 'overseas' | 'shinwoo' | 'cheriburo' | 'other';
+export type CctvUpFarmCategorySource = 'auto' | 'legacy' | 'manual';
 
 export type CctvUpFarmRegistryEntry = {
   farmId: string;
   displayName?: string;
   category?: CctvUpFarmCategory;
+  categorySource?: CctvUpFarmCategorySource;
   tags: string[];
   memo?: string;
   aliases: string[];
@@ -20,6 +22,7 @@ type SupabaseRegistryRow = {
   farm_id: string;
   display_name?: string | null;
   category?: CctvUpFarmCategory | null;
+  category_source?: CctvUpFarmCategorySource | null;
   tags?: string[] | string | null;
   memo?: string | null;
   aliases?: string[] | string | null;
@@ -35,6 +38,7 @@ export type CctvUpFarmRegistryPayload = {
 };
 
 const CATEGORY_SET = new Set<CctvUpFarmCategory>(['overseas', 'shinwoo', 'cheriburo', 'other']);
+const CATEGORY_SOURCE_SET = new Set<CctvUpFarmCategorySource>(['auto', 'legacy', 'manual']);
 const SUPABASE_REGISTRY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 2000);
 const SUPABASE_REGISTRY_WRITE_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_WRITE_TIMEOUT_MS || 8000);
 
@@ -87,12 +91,23 @@ export function normalizeCctvUpFarmCategory(value: unknown): CctvUpFarmCategory 
   return undefined;
 }
 
+export function normalizeCctvUpFarmCategorySource(value: unknown): CctvUpFarmCategorySource | undefined {
+  if (typeof value !== 'string') return undefined;
+  const compact = value.trim().toLowerCase();
+  if (compact === 'auto' || compact === '자동') return 'auto';
+  if (compact === 'legacy' || compact === '기존') return 'legacy';
+  if (compact === 'manual' || compact === '수동') return 'manual';
+  return undefined;
+}
+
 export function normalizeCctvUpFarmRegistryEntry(row: SupabaseRegistryRow): CctvUpFarmRegistryEntry {
   const category = normalizeCctvUpFarmCategory(row.category) ?? 'other';
+  const categorySource = normalizeCctvUpFarmCategorySource(row.category_source) ?? 'legacy';
   return {
     farmId: row.farm_id,
     displayName: row.display_name?.trim() || undefined,
     category: CATEGORY_SET.has(category) ? category : 'other',
+    categorySource: CATEGORY_SOURCE_SET.has(categorySource) ? categorySource : 'legacy',
     tags: asList(row.tags),
     memo: row.memo?.trim() || undefined,
     aliases: asList(row.aliases),
@@ -118,11 +133,11 @@ export async function fetchCctvUpFarmRegistry(): Promise<CctvUpFarmRegistryPaylo
   const config = getCctvUpSupabaseConfig();
   if (!endpoint || !config) return null;
 
-  endpoint.searchParams.set('select', 'farm_id,display_name,category,tags,memo,aliases,updated_at,updated_by,is_active');
-  endpoint.searchParams.set('order', 'farm_id.asc');
-  endpoint.searchParams.set('limit', '1000');
+  const fetchRows = async (select: string) => {
+    endpoint.searchParams.set('select', select);
+    endpoint.searchParams.set('order', 'farm_id.asc');
+    endpoint.searchParams.set('limit', '1000');
 
-  try {
     const response = await fetch(endpoint.toString(), {
       method: 'GET',
       cache: 'no-store',
@@ -134,8 +149,24 @@ export async function fetchCctvUpFarmRegistry(): Promise<CctvUpFarmRegistryPaylo
       },
     });
 
+    const body = await response.text();
+    return { response, body };
+  };
+
+  const selectWithCategorySource = 'farm_id,display_name,category,category_source,tags,memo,aliases,updated_at,updated_by,is_active';
+  const legacySelect = 'farm_id,display_name,category,tags,memo,aliases,updated_at,updated_by,is_active';
+
+  endpoint.searchParams.set('select', selectWithCategorySource);
+  endpoint.searchParams.set('order', 'farm_id.asc');
+  endpoint.searchParams.set('limit', '1000');
+
+  try {
+    let { response, body } = await fetchRows(selectWithCategorySource);
+    if (!response.ok && body.includes('category_source')) {
+      ({ response, body } = await fetchRows(legacySelect));
+    }
+
     if (!response.ok) {
-      const body = await response.text();
       return {
         source: 'unavailable',
         items: [],
@@ -143,7 +174,12 @@ export async function fetchCctvUpFarmRegistry(): Promise<CctvUpFarmRegistryPaylo
       };
     }
 
-    const rows = (await response.json()) as unknown[];
+    let rows: unknown[] = [];
+    try {
+      rows = JSON.parse(body) as unknown[];
+    } catch {
+      rows = [];
+    }
     if (!Array.isArray(rows)) {
       return {
         source: 'unavailable',
@@ -172,6 +208,7 @@ export type CctvUpFarmRegistryUpsertPayload = {
     farmId: string;
     displayName?: string;
     category?: CctvUpFarmCategory;
+    categorySource?: CctvUpFarmCategorySource;
     tags?: string[];
     memo?: string;
     aliases?: string[];
@@ -191,6 +228,7 @@ export async function upsertCctvUpFarmRegistry(payload: CctvUpFarmRegistryUpsert
       farm_id: item.farmId.trim(),
       display_name: item.displayName?.trim() || null,
       category: item.category || null,
+      category_source: item.categorySource || (item.category ? 'manual' : 'legacy'),
       tags: Array.isArray(item.tags) ? item.tags : [],
       memo: item.memo?.trim() || '',
       aliases: Array.isArray(item.aliases) ? item.aliases : [],
@@ -205,7 +243,7 @@ export async function upsertCctvUpFarmRegistry(payload: CctvUpFarmRegistryUpsert
   const endpoint = new URL(`/rest/v1/${CCTVUP_FARM_REGISTRY_TABLE}`, config.supabaseUrl);
   endpoint.searchParams.set('on_conflict', 'farm_id');
 
-  const response = await fetch(endpoint.toString(), {
+  const postRows = (nextRows: Array<Record<string, unknown>>) => fetch(endpoint.toString(), {
     method: 'POST',
     cache: 'no-store',
     signal: createTimeoutSignal(SUPABASE_REGISTRY_WRITE_TIMEOUT_MS),
@@ -215,11 +253,18 @@ export async function upsertCctvUpFarmRegistry(payload: CctvUpFarmRegistryUpsert
       'Content-Type': 'application/json',
       Prefer: 'resolution=merge-duplicates,return=representation',
     },
-    body: JSON.stringify(rows),
+    body: JSON.stringify(nextRows),
   });
 
+  let response = await postRows(rows);
+  let body = response.ok ? '' : await response.text();
+  if (!response.ok && body.includes('category_source')) {
+    const fallbackRows = rows.map(({ category_source: _categorySource, ...row }) => row);
+    response = await postRows(fallbackRows);
+    body = response.ok ? '' : await response.text();
+  }
+
   if (!response.ok) {
-    const body = await response.text();
     return { ok: false as const, message: `Supabase farm registry 저장 실패 (${response.status}): ${body}` };
   }
 

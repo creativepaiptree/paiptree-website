@@ -16,7 +16,7 @@ function readMutationSecret(request: Request) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || 200), 1), 500);
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || 50), 1), 500);
   const payload = await fetchCctvUpHistory(limit);
 
   if (!payload) {
@@ -26,6 +26,9 @@ export async function GET(request: Request) {
         checkRuns: [],
         snapshots: [],
         incidents: [],
+        currentIssues: [],
+        cameraStates: [],
+        issueEvents: [],
         message: 'SUPABASE_URL 또는 SUPABASE_SERVICE_KEY 설정이 없어 history를 읽지 못했습니다.',
       },
       { status: 503, headers: { 'Cache-Control': 'no-store' } },

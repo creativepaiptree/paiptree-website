@@ -113,3 +113,54 @@ test('compareCctvUpFarmGroups prioritizes category in category sorting', () => {
 
   assert.deepEqual(sorted.map((group) => group.farmId), ['FARM-B', 'FARM-A']);
 });
+
+test('buildCctvUpFarmGroups keeps mixed active and paused farm as normal when active rows are ok', () => {
+  const groups = buildCctvUpFarmGroups([
+    {
+      ...rows[0],
+      id: 'farm-mixed-active',
+      farm: 'FARM-MIXED',
+      status: 'ok',
+      displayCategory: 'shinwoo',
+      monitorScopeCode: 'active',
+    },
+    {
+      ...rows[0],
+      id: 'farm-mixed-resting',
+      farm: 'FARM-MIXED',
+      status: 'paused',
+      displayCategory: 'shinwoo',
+      monitorScopeCode: 'resting',
+    },
+  ]);
+
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].status, 'ok');
+  assert.equal(groups[0].isProblem, false);
+});
+
+test('buildCctvUpFarmGroups excludes paused rows from issue counts', () => {
+  const groups = buildCctvUpFarmGroups([
+    {
+      ...rows[0],
+      id: 'farm-resting-1',
+      farm: 'FARM-RESTING',
+      status: 'paused',
+      displayCategory: 'overseas',
+      monitorScopeCode: 'resting',
+    },
+    {
+      ...rows[0],
+      id: 'farm-resting-2',
+      farm: 'FARM-RESTING',
+      status: 'paused',
+      displayCategory: 'overseas',
+      monitorScopeCode: 'resting',
+    },
+  ]);
+
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].status, 'paused');
+  assert.equal(groups[0].problemCount, 0);
+  assert.equal(groups[0].isProblem, false);
+});

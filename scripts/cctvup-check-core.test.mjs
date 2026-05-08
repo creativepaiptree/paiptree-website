@@ -40,14 +40,15 @@ test('createCctvUpCheckRunner loads payload and persists it once', async () => {
   let persistCalls = 0;
   const runner = createCctvUpCheckRunner({
     loadCurrentPayload: async () => payload,
-    persistHistory: async (nextPayload) => {
+    persistHistory: async (nextPayload, options) => {
       persistCalls += 1;
       assert.equal(nextPayload, payload);
+      assert.deepEqual(options, { noteSuffix: 'caller=test' });
       return { ok: true, runId: 'run-1', snapshotCount: 0, incidentCount: 0 };
     },
   });
 
-  const result = await runner();
+  const result = await runner({ noteSuffix: 'caller=test' });
 
   assert.equal(persistCalls, 1);
   assert.equal(result.ok, true);

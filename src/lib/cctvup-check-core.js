@@ -46,7 +46,7 @@ export function createCctvUpCheckRunner({ loadCurrentPayload, persistHistory }) 
     throw new TypeError('persistHistory must be a function');
   }
 
-  return async () => {
+  return async (options = {}) => {
     const payload = await loadCurrentPayload();
     if (!payload || payload.source !== 'db') {
       return {
@@ -59,7 +59,7 @@ export function createCctvUpCheckRunner({ loadCurrentPayload, persistHistory }) 
       };
     }
 
-    const persistResult = await persistHistory(payload);
+    const persistResult = await persistHistory(payload, options);
 
     return {
       ok: Boolean(persistResult && persistResult.ok),

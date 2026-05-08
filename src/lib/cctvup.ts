@@ -2,6 +2,25 @@ export type CctvUpStatus = 'ok' | 'late' | 'missing' | 'critical' | 'paused';
 
 export type CctvUpSlotStatus = 'ok' | 'late' | 'missing' | 'paused';
 
+export type CctvUpStateStatus = 'ok' | 'watching' | 'open' | 'recovering' | 'resolved';
+
+export type CctvUpIssueEventKind = 'opened' | 'recovering' | 'resolved' | 'reopened';
+
+export type CctvUpStateSyncStatus = 'applied' | 'unavailable' | 'disabled';
+
+export type CctvUpMonitorScopeCode = 'active' | 'resting' | 'needs_review' | 'uninstalled';
+
+export type CctvUpCycleBucketCode = 'current_rearing' | 'resting' | 'long_idle' | 'no_cycle_info' | 'pre_placement' | 'unknown_cycle';
+
+export type CctvUpStateSync = {
+  status: CctvUpStateSyncStatus;
+  applied: boolean;
+  stateCount: number;
+  checkedAt: string;
+  timeoutMs: number;
+  message: string;
+};
+
 export type CctvUpRow = {
   id: string;
   farm: string;
@@ -10,6 +29,13 @@ export type CctvUpRow = {
   farmAffiliates?: string;
   country?: string;
   poultryType?: string;
+  gatewayInstalledCount?: number;
+  gatewayStatuses?: string;
+  gatewayTypes?: string;
+  cycleBucketCode?: CctvUpCycleBucketCode;
+  cycleBucketLabel?: string;
+  monitorScopeCode?: CctvUpMonitorScopeCode;
+  monitorScopeLabel?: string;
   house: string;
   houseName?: string;
   camera: string;
@@ -23,6 +49,15 @@ export type CctvUpRow = {
   reason: string;
   status: CctvUpStatus;
   slots: CctvUpSlotStatus[];
+  stateStatus?: CctvUpStateStatus;
+  stateLabel?: string;
+  stateMessage?: string;
+  missCount?: number;
+  firstMissedAt?: string | null;
+  openedAt?: string | null;
+  resolvedAt?: string | null;
+  lastCheckedAt?: string | null;
+  confirmedIssue?: boolean;
 };
 
 export type CctvUpIncident = {
@@ -74,8 +109,17 @@ export type CctvUpPayload = {
     critical: number;
     paused: number;
     issueCount: number;
+    watching?: number;
+    open?: number;
+    recovering?: number;
+    resolved?: number;
+    monitorActive?: number;
+    monitorResting?: number;
+    monitorNeedsReview?: number;
+    monitorUninstalled?: number;
   };
   message?: string;
+  stateSync?: CctvUpStateSync;
 };
 
 export type CctvUpDbSummaryRow = {
@@ -85,6 +129,18 @@ export type CctvUpDbSummaryRow = {
   farm_affiliates?: string | null;
   country?: string | null;
   poultry_type?: string | null;
+  gateway_installed_count?: number | string | null;
+  gateway_statuses?: string | null;
+  gateway_types?: string | null;
+  parts_status?: string | null;
+  parts_year?: number | string | null;
+  parts_seq?: number | string | null;
+  in_date?: Date | string | null;
+  out_date?: Date | string | null;
+  days_since_in?: number | string | null;
+  days_until_in?: number | string | null;
+  days_since_out?: number | string | null;
+  days_until_out?: number | string | null;
   house_id: string;
   house_name?: string | null;
   module_id: string;
@@ -108,6 +164,10 @@ export type CctvUpCheckRun = {
   pausedCount: number;
   issueCount: number;
   note: string;
+  watchingCount?: number;
+  openCount?: number;
+  recoveringCount?: number;
+  resolvedCount?: number;
 };
 
 export type CctvUpCameraSnapshot = {
@@ -148,11 +208,54 @@ export type CctvUpIncidentLog = {
   message: string;
 };
 
+export type CctvUpCameraState = {
+  id?: string;
+  runId?: string | null;
+  cameraKey: string;
+  farmId: string;
+  houseId: string;
+  moduleId: string;
+  farmName?: string | null;
+  houseName?: string | null;
+  cameraName?: string | null;
+  status: CctvUpStateStatus;
+  latestImageAt?: string | null;
+  lastCheckedAt: string;
+  missCount: number;
+  firstMissedAt?: string | null;
+  openedAt?: string | null;
+  resolvedAt?: string | null;
+  recentSlots: CctvUpSlotStatus[];
+  ageMinutes: number;
+  message: string;
+};
+
+export type CctvUpIssueEvent = {
+  id?: string;
+  runId?: string | null;
+  cameraKey: string;
+  farmId: string;
+  houseId: string;
+  moduleId: string;
+  farmName?: string | null;
+  houseName?: string | null;
+  cameraName?: string | null;
+  eventKind: CctvUpIssueEventKind;
+  previousStatus?: CctvUpStateStatus | null;
+  nextStatus: CctvUpStateStatus;
+  eventAt: string;
+  latestImageAt?: string | null;
+  missCount: number;
+  message: string;
+};
+
 export const CCTVUP_TABLE = 'paip.tbl_farm_image';
 export const CCTVUP_HISTORY_CHECK_RUNS_TABLE = 'public.tbl_cctvup_check_runs';
 export const CCTVUP_HISTORY_CAMERA_SNAPSHOTS_TABLE = 'public.tbl_cctvup_camera_snapshots';
 export const CCTVUP_HISTORY_INCIDENT_LOGS_TABLE = 'public.tbl_cctvup_incident_logs';
 export const CCTVUP_HISTORY_CURRENT_ISSUES_TABLE = 'public.tbl_cctvup_current_issues';
+export const CCTVUP_CAMERA_STATES_TABLE = 'public.tbl_cctvup_camera_states';
+export const CCTVUP_ISSUE_EVENTS_TABLE = 'public.tbl_cctvup_issue_events';
 export const CCTVUP_EXPECTED_1H = 12;
 export const CCTVUP_EXPECTED_24H = 288;
 
@@ -168,6 +271,29 @@ export function isCctvUpLoggableIssueStatus(status: CctvUpStatus): status is 'mi
   return status === 'missing' || status === 'critical';
 }
 
+export function isCctvUpActiveStateStatus(status?: CctvUpStateStatus) {
+  return status === 'watching' || status === 'open' || status === 'recovering';
+}
+
+export function isCctvUpMonitorActive(row: Pick<CctvUpRow, 'monitorScopeCode'>) {
+  return (row.monitorScopeCode ?? 'active') === 'active';
+}
+
+export function mapCctvUpStateStatusToLegacyStatus(status: CctvUpStateStatus): CctvUpStatus {
+  if (status === 'watching') return 'late';
+  if (status === 'open') return 'critical';
+  if (status === 'recovering') return 'missing';
+  return 'ok';
+}
+
+export function getCctvUpStateLabel(status?: CctvUpStateStatus) {
+  if (status === 'watching') return '관찰중';
+  if (status === 'open') return '문제확정';
+  if (status === 'recovering') return '회복중';
+  if (status === 'resolved') return '해결';
+  return '정상';
+}
+
 export function buildSlots(ageMinutes: number, status: CctvUpStatus): CctvUpSlotStatus[] {
   if (status === 'paused') return Array.from({ length: CCTVUP_EXPECTED_1H }, () => 'paused');
 
@@ -181,6 +307,53 @@ export function buildSlots(ageMinutes: number, status: CctvUpStatus): CctvUpSlot
 
 export function normalizeModuleId(moduleId: string): string {
   return moduleId.replace(/,1$/, '');
+}
+
+function numberOrNull(value: unknown): number | null {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function hasDateValue(value: unknown) {
+  return value !== null && value !== undefined && String(value).trim() !== '';
+}
+
+function getCycleBucket(row: CctvUpDbSummaryRow): { code: CctvUpCycleBucketCode; label: string } {
+  const daysSinceOut = numberOrNull(row.days_since_out);
+  const daysUntilIn = numberOrNull(row.days_until_in);
+  const daysUntilOut = numberOrNull(row.days_until_out);
+  const hasCycleInfo = Boolean(row.parts_year || row.parts_seq || row.parts_status || hasDateValue(row.in_date) || hasDateValue(row.out_date));
+
+  if (!hasCycleInfo) {
+    return { code: 'no_cycle_info', label: '사육정보 없음' };
+  }
+  if (daysUntilIn !== null && daysUntilIn > 0) {
+    return { code: 'pre_placement', label: '입추 예정' };
+  }
+  if (hasDateValue(row.in_date) && (!hasDateValue(row.out_date) || (daysUntilOut !== null && daysUntilOut >= 0))) {
+    return { code: 'current_rearing', label: '현재 사육중' };
+  }
+  if (hasDateValue(row.out_date) && daysSinceOut !== null && daysSinceOut >= 0 && daysSinceOut <= 35) {
+    return { code: 'resting', label: `휴지기 D+${daysSinceOut}` };
+  }
+  if (hasDateValue(row.out_date) && daysSinceOut !== null && daysSinceOut > 35) {
+    return { code: 'long_idle', label: `출하후 ${daysSinceOut}일` };
+  }
+  return { code: 'unknown_cycle', label: '사육판정 불명' };
+}
+
+function getMonitorScope(row: CctvUpDbSummaryRow, cycleBucket: { code: CctvUpCycleBucketCode }): { code: CctvUpMonitorScopeCode; label: string } {
+  const gatewayInstalledCount = Number(row.gateway_installed_count ?? 0);
+  if (gatewayInstalledCount <= 0) {
+    return { code: 'uninstalled', label: '미설치' };
+  }
+  if (cycleBucket.code === 'current_rearing') {
+    return { code: 'active', label: '감시중' };
+  }
+  if (cycleBucket.code === 'resting') {
+    return { code: 'resting', label: '휴지기' };
+  }
+  return { code: 'needs_review', label: '대상확인' };
 }
 
 export function formatTime(value: Date | string): string {
@@ -207,9 +380,14 @@ export function mapDbSummaryRows(rows: CctvUpDbSummaryRow[], checkedAt = new Dat
     const latestDate = row.latest_at ? new Date(row.latest_at) : null;
     const hasLatestImage = Boolean(latestDate && !Number.isNaN(latestDate.getTime()));
     const ageMinutes = hasLatestImage && latestDate ? minutesBetween(checkedAt, latestDate) : 999;
-    const status = hasLatestImage ? getCctvUpStatus(ageMinutes, cnt1h) : 'critical';
+    const cycleBucket = getCycleBucket(row);
+    const monitorScope = getMonitorScope(row, cycleBucket);
+    const activeStatus = hasLatestImage ? getCctvUpStatus(ageMinutes, cnt1h) : 'critical';
+    const status = monitorScope.code === 'active' ? activeStatus : 'paused';
     const camera = normalizeModuleId(row.module_id);
-    const reason = !hasLatestImage
+    const reason = monitorScope.code !== 'active'
+      ? `${monitorScope.label}: ${cycleBucket.label}`
+      : !hasLatestImage
       ? '최근 24시간 이미지 저장 이력 없음'
       : status === 'ok'
         ? '이미지 정상 수신'
@@ -229,6 +407,13 @@ export function mapDbSummaryRows(rows: CctvUpDbSummaryRow[], checkedAt = new Dat
       farmAffiliates: row.farm_affiliates ?? undefined,
       country: row.country ?? undefined,
       poultryType: row.poultry_type ?? undefined,
+      gatewayInstalledCount: Number(row.gateway_installed_count ?? 0),
+      gatewayStatuses: row.gateway_statuses ?? undefined,
+      gatewayTypes: row.gateway_types ?? undefined,
+      cycleBucketCode: cycleBucket.code,
+      cycleBucketLabel: cycleBucket.label,
+      monitorScopeCode: monitorScope.code,
+      monitorScopeLabel: monitorScope.label,
       house: row.house_id,
       houseName: row.house_name ?? undefined,
       camera,
@@ -236,7 +421,7 @@ export function mapDbSummaryRows(rows: CctvUpDbSummaryRow[], checkedAt = new Dat
       latestAt: hasLatestImage && latestDate ? formatTime(latestDate) : '--:--',
       latestAtIso: hasLatestImage && latestDate ? latestDate.toISOString() : undefined,
       ageMinutes,
-      consecutiveMiss: Math.max(0, Math.min(CCTVUP_EXPECTED_1H, Math.floor(ageMinutes / 5))),
+      consecutiveMiss: status === 'paused' ? 0 : Math.max(0, Math.min(CCTVUP_EXPECTED_1H, Math.floor(ageMinutes / 5))),
       rate1h: `${cnt1h}/${CCTVUP_EXPECTED_1H}`,
       rate24h: `${cnt24h}/${CCTVUP_EXPECTED_24H}`,
       reason,
@@ -293,6 +478,14 @@ export function buildCurrentIssues(rows: CctvUpRow[], checkedAt = new Date().toI
 export function buildPayload(rows: CctvUpRow[], source: CctvUpPayload['source'], message?: string): CctvUpPayload {
   const farms = new Set(rows.map((row) => row.farm));
   const currentIssues = buildCurrentIssues(rows);
+  const watching = rows.filter((row) => row.stateStatus === 'watching').length;
+  const open = rows.filter((row) => row.stateStatus === 'open').length;
+  const recovering = rows.filter((row) => row.stateStatus === 'recovering').length;
+  const resolved = rows.filter((row) => row.stateStatus === 'resolved').length;
+  const monitorActive = rows.filter((row) => row.monitorScopeCode === 'active' || !row.monitorScopeCode).length;
+  const monitorResting = rows.filter((row) => row.monitorScopeCode === 'resting').length;
+  const monitorNeedsReview = rows.filter((row) => row.monitorScopeCode === 'needs_review').length;
+  const monitorUninstalled = rows.filter((row) => row.monitorScopeCode === 'uninstalled').length;
   return {
     source,
     checkedAt: new Date().toISOString(),
@@ -309,6 +502,14 @@ export function buildPayload(rows: CctvUpRow[], source: CctvUpPayload['source'],
       critical: rows.filter((row) => row.status === 'critical').length,
       paused: rows.filter((row) => row.status === 'paused').length,
       issueCount: currentIssues.length,
+      watching,
+      open,
+      recovering,
+      resolved,
+      monitorActive,
+      monitorResting,
+      monitorNeedsReview,
+      monitorUninstalled,
     },
     message,
   };

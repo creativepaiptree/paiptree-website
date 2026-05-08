@@ -1,7 +1,7 @@
 ---
 title: 개발 문서 인덱스
 author: ZORO
-last_updated: 26.03.20
+last_updated: 26.05.08
 ---
 
 # 개발 문서 인덱스
@@ -48,10 +48,14 @@ last_updated: 26.03.20
   - 활성 스타일/운영 가이드
   - 현재 root 활성 문서는 `marketing-page-style-baseline.md` 1건
   - `docs/guides/old/`는 이전 스타일 단계에서 사용한 가이드 아카이브
+- `docs/company/`
+  - 이 repo 밖의 Hermes company 원천 문서 위치를 안내하는 포인터만 둔다.
 - `docs/old/`
   - 레거시 컴포넌트/과거 정리 문서 아카이브
 - `docs/templates/`
   - 신규 문서 템플릿
+- `docs/standards/`
+  - 문서/에이전트/운영 방식의 공통 기준
 - root 기준 문서
   - `docs/README.md`: 웹/마케팅 문서 진입점
   - `docs/3.0-design-system.md`: `src/app/PoC/**` 전용 내부 도구 UI 기준
@@ -66,6 +70,10 @@ last_updated: 26.03.20
 - 활성 기준 문서
   - [about.page.md](./pages/about.page.md) — `/about` 운영 기준
   - [marketing-page-style-baseline.md](./guides/marketing-page-style-baseline.md) — 마케팅 페이지 스타일 단일 기준
+- 문서 운영 기준
+  - [documentation.md](./standards/documentation.md) — repo 문서, Company feed, Obsidian export 기준
+- 서비스 참조
+  - [Company 원천 문서 위치 안내](./company/README.md) — Hermes company source-of-truth는 `/Users/zoro/company-ops/company/source-of-truth/farm-ops/`를 우선 참조
 - 템플릿
   - [component-spec.template.md](./templates/component-spec.template.md)
 - 아카이브
@@ -92,6 +100,10 @@ last_updated: 26.03.20
   - frontmatter/링크/페이지 문서 누락 검사
 - `npm run docs:check`
   - sync + validate 일괄 실행
+- `node scripts/docs-audit.mjs`
+  - 전체 Markdown 문서 전수조사, route 문서 누락, 템플릿 잔재, 깨진 참조 확인
+- `node scripts/docs-agent-feed.mjs`
+  - Company 에이전트/Obsidian용 문서 feed 생성
 
 ## 8. Codex 요청 표준
 - `README 기준으로 웹 문서 구조 정리`
