@@ -10,6 +10,8 @@ const DEFAULT_QUERY_TIMEOUT_MS = 30000;
 const REST_DAYS = Number(process.env.CCTVUP_AUDIT_REST_DAYS || DEFAULT_REST_DAYS);
 const QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_AUDIT_QUERY_TIMEOUT_MS || DEFAULT_QUERY_TIMEOUT_MS);
 const DETAIL_LIMIT = Number(process.env.CCTVUP_AUDIT_DETAIL_LIMIT || 60);
+const EXCLUDED_FARM_IDS = ['FA0000', 'FA0001'];
+const EXCLUDED_FARM_SQL_PLACEHOLDERS = EXCLUDED_FARM_IDS.map(() => '?').join(',');
 const READ_ONLY_SQL_PATTERN = /^(?:select|with|show)\b/i;
 const LOCKING_READ_PATTERN = /\b(?:for\s+update|lock\s+in\s+share\s+mode)\b/i;
 
@@ -270,7 +272,7 @@ function createMarkdownReport({ checkedAt, dbNow, rows, farmSummary, csvFileName
   return `---
 title: CCTVUP 감시대상 자동 전수조사 리포트
 author: Codex
-last_updated: 26.05.07
+last_updated: 26.05.09
 ---
 
 # CCTVUP 감시대상 자동 전수조사 리포트
@@ -312,9 +314,10 @@ ${markdownTable(needsReview, farmColumns)}
 ${markdownTable(uninstalled, farmColumns)}
 
 ## 10. 적용 전 체크
-- 이 리포트는 /cctvup 로직을 변경하지 않는다.
-- 다음 단계에서 사용자가 예외 농장을 확인한 뒤, 감시중만 상태머신/issue event 대상이 되도록 코드에 반영한다.
-- 기존 opened issue가 휴지기/대상확인으로 빠질 때는 resolved로 자동 처리하지 않는다.
+- 이 리포트는 원본 운영 DB를 읽기 전용으로 조사하며, 자체적으로 원본 DB나 Supabase 상태를 변경하지 않는다.
+- 현재 /cctvup 로직은 감시중만 상태머신/issue event 대상으로 본다.
+- 휴지기/대상확인/미설치로 빠진 카메라의 과거 opened state는 다음 체크 때 camera_state만 resolved로 닫아 활성 목록에서 제외한다.
+- 이 정리는 감시범위 변경 처리이며 카메라 회복 이벤트로 보지 않으므로 issue_events에는 새 이벤트를 남기지 않는다.
 `;
 }
 
@@ -385,8 +388,9 @@ try {
     WHERE c.applied = 1
       AND c.display = 'YES'
       AND c.is_working = 'Y'
+      AND c.farm_id NOT IN (${EXCLUDED_FARM_SQL_PLACEHOLDERS})
     ORDER BY c.farm_id, c.house_id, c.cctv_id
-  `);
+  `, EXCLUDED_FARM_IDS);
 
   const farmIds = [...new Set(activeRows.map((row) => row.farm_id))];
   const placeholders = farmIds.map(() => '?').join(',');

@@ -97,6 +97,7 @@ export async function GET(request: Request) {
       currentIssueCount: result.persistResult.currentIssueCount,
       resolvedIssueCount: result.persistResult.resolvedIssueCount,
       stateCount: result.persistResult.stateCount,
+      archivedStaleStateCount: result.persistResult.archivedStaleStateCount ?? 0,
       eventCount: result.persistResult.eventCount,
       openedCount: result.persistResult.openedCount,
       recoveringCount: result.persistResult.recoveringCount,

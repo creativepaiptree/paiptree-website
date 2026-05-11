@@ -14,6 +14,7 @@ import {
   isCctvUpMonitorActive,
   mapCctvUpStateStatusToLegacyStatus,
 } from '@/lib/cctvup';
+import { buildCctvUpExcludedFarmIdFilterParam, isCctvUpExcludedFarmId } from '@/lib/cctvup-exclusions';
 
 type SupabaseConfig = {
   supabaseUrl: string;
@@ -91,6 +92,7 @@ export type CctvUpStatePersistResult = {
   message?: string;
   runId?: string;
   stateCount: number;
+  archivedStaleStateCount?: number;
   eventCount: number;
   openedCount: number;
   recoveringCount: number;
@@ -388,6 +390,7 @@ function buildCameraStatesQuery(optionsOrLimit?: number | FetchCameraStatesOptio
     select: CAMERA_STATE_SELECT,
     order: 'last_checked_at.desc',
     limit: String(safeLimit),
+    farm_id: buildCctvUpExcludedFarmIdFilterParam(),
   });
 
   if (options.statuses?.length) {
@@ -407,6 +410,7 @@ function buildIssueEventsQuery(optionsOrLimit?: number | FetchIssueEventsOptions
     select: ISSUE_EVENT_SELECT,
     order: 'event_at.desc',
     limit: String(safeLimit),
+    farm_id: buildCctvUpExcludedFarmIdFilterParam(),
   });
 
   if (options.cameraKey) {
@@ -436,6 +440,21 @@ function buildStateMessage(status: CctvUpStateStatus, missCount: number, latestI
   if (status === 'recovering') return '이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다.';
   if (status === 'resolved') return '최근 1시간 슬롯이 정상으로 채워져 해결 처리했습니다.';
   return latestImageAt ? '이미지 정상 수신 중입니다.' : '이미지 수신 기준 정상입니다.';
+}
+
+function buildStaleCameraStateArchive(
+  previous: CctvUpCameraState,
+  checkedAt: string,
+  runId?: string,
+): CctvUpCameraState {
+  return {
+    ...previous,
+    runId,
+    status: 'resolved',
+    lastCheckedAt: checkedAt,
+    resolvedAt: checkedAt,
+    message: '현재 감시중 범위에서 제외되어 상태머신 활성 목록에서 정리했습니다. 카메라 회복 이벤트로 보지 않습니다.',
+  };
 }
 
 export function computeNextCctvUpCameraState(
@@ -605,7 +624,11 @@ export async function fetchCctvUpCameraStates(optionsOrLimit: number | FetchCame
   );
 
   if (result.error) throw new Error(`tbl_cctvup_camera_states 조회 실패: ${result.error}`);
-  return Array.isArray(result.data) ? result.data.map(mapCameraStateFromSupabase) : [];
+  return Array.isArray(result.data)
+    ? result.data
+        .map(mapCameraStateFromSupabase)
+        .filter((state) => !isCctvUpExcludedFarmId(state.farmId))
+    : [];
 }
 
 export async function fetchCctvUpActiveCameraStates(limit = 1000, options: Omit<FetchCameraStatesOptions, 'limit' | 'statuses'> = {}): Promise<CctvUpCameraState[] | null> {
@@ -627,7 +650,11 @@ export async function fetchCctvUpIssueEvents(optionsOrLimit: number | FetchIssue
   );
 
   if (result.error) throw new Error(`tbl_cctvup_issue_events 조회 실패: ${result.error}`);
-  return Array.isArray(result.data) ? result.data.map(mapIssueEventFromSupabase) : [];
+  return Array.isArray(result.data)
+    ? result.data
+        .map(mapIssueEventFromSupabase)
+        .filter((event) => !isCctvUpExcludedFarmId(event.farmId))
+    : [];
 }
 
 function buildStateSummary(states: CctvUpCameraState[], payload: CctvUpPayload): CctvUpPayload['summary'] {
@@ -755,10 +782,15 @@ export async function persistCctvUpStateCheck(
 
   const previousMap = new Map(previousStates.map((state) => [state.cameraKey, state]));
   const monitoredRows = payload.rows.filter(isCctvUpMonitorActive);
+  const monitoredKeys = new Set(monitoredRows.map((row) => row.id));
+  const staleStates = previousStates.filter((state) => !monitoredKeys.has(state.cameraKey));
   const computed = monitoredRows.map((row) => computeNextCctvUpCameraState(row, previousMap.get(row.id), payload.checkedAt));
   const nextStates = computed.map((entry) => entry.state);
   const events = computed.flatMap((entry) => (entry.event ? [entry.event] : []));
   const summary = buildStateSummary(nextStates, payload);
+  const noteSuffix = staleStates.length
+    ? [options.noteSuffix, `stale_archived=${staleStates.length}`].filter(Boolean).join('; ')
+    : options.noteSuffix;
 
   const runResponse = await requestSupabase<Array<{ id: string }>>(config, 'tbl_cctvup_check_runs', {
     method: 'POST',
@@ -766,7 +798,7 @@ export async function persistCctvUpStateCheck(
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
     },
-    body: JSON.stringify([buildCheckRunInsert(payload, nextStates, options)]),
+    body: JSON.stringify([buildCheckRunInsert(payload, nextStates, { ...options, noteSuffix })]),
   });
 
   if (!runResponse.data || !Array.isArray(runResponse.data) || runResponse.data.length === 0) {
@@ -789,13 +821,14 @@ export async function persistCctvUpStateCheck(
 
   const runId = runResponse.data[0].id;
   const statesWithRun = nextStates.map((state) => ({ ...state, runId }));
+  const staleStatesWithRun = staleStates.map((state) => buildStaleCameraStateArchive(state, payload.checkedAt, runId));
   const stateResponse = await requestSupabase<unknown>(config, 'tbl_cctvup_camera_states?on_conflict=camera_key', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Prefer: 'resolution=merge-duplicates,return=minimal',
     },
-    body: JSON.stringify(statesWithRun.map(mapCameraStateToSupabase)),
+    body: JSON.stringify([...statesWithRun, ...staleStatesWithRun].map(mapCameraStateToSupabase)),
   });
 
   if (stateResponse.error) {
@@ -852,6 +885,7 @@ export async function persistCctvUpStateCheck(
     ok: true,
     runId,
     stateCount: statesWithRun.length,
+    archivedStaleStateCount: staleStatesWithRun.length,
     eventCount: eventsWithRun.length,
     openedCount: eventsWithRun.filter((event) => event.eventKind === 'opened' || event.eventKind === 'reopened').length,
     recoveringCount: eventsWithRun.filter((event) => event.eventKind === 'recovering').length,

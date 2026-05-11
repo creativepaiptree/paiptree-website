@@ -77,6 +77,7 @@ try {
     source: payload?.source,
     runId: payload?.runId,
     stateCount: payload?.stateCount,
+    archivedStaleStateCount: payload?.archivedStaleStateCount,
     eventCount: payload?.eventCount,
     openedCount: payload?.openedCount,
     recoveringCount: payload?.recoveringCount,

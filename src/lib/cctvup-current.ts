@@ -7,6 +7,7 @@ import {
   type CctvUpDbSummaryRow,
   type CctvUpPayload,
 } from '@/lib/cctvup';
+import { CCTVUP_EXCLUDED_FARM_IDS } from '@/lib/cctvup-exclusions';
 import { mergeCctvUpPayloadWithPersistedState } from '@/lib/cctvup-state';
 
 type DbSummaryResultRow = CctvUpDbSummaryRow & RowDataPacket;
@@ -71,6 +72,7 @@ const SUPABASE_FETCH_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEO
 const DB_QUERY_TIMEOUT_MS = Number(process.env.CCTVUP_DB_QUERY_TIMEOUT_MS || 10000);
 const READ_ONLY_SQL_PATTERN = /^(?:select|with)\b/i;
 const LOCKING_READ_PATTERN = /\b(?:for\s+update|lock\s+in\s+share\s+mode)\b/i;
+const EXCLUDED_FARM_SQL_PLACEHOLDERS = CCTVUP_EXCLUDED_FARM_IDS.map(() => '?').join(', ');
 
 function shouldUseMockFallback() {
   return process.env.CCTVUP_ALLOW_MOCK_FALLBACK === '1' || process.env.NODE_ENV !== 'production';
@@ -312,9 +314,11 @@ export async function diagnoseCctvUpDb(): Promise<CctvUpDbHealthResult> {
           WHERE c.applied = 1
             AND c.display = 'YES'
             AND c.is_working = 'Y'
+            AND c.farm_id NOT IN (${EXCLUDED_FARM_SQL_PLACEHOLDERS})
         `,
         timeout: DB_QUERY_TIMEOUT_MS,
       },
+      [...CCTVUP_EXCLUDED_FARM_IDS],
     );
     const row = rows[0] || {};
 
@@ -461,12 +465,13 @@ export async function fetchCctvUpCurrentPayload(
       WHERE c.applied = 1
         AND c.display = 'YES'
         AND c.is_working = 'Y'
+        AND c.farm_id NOT IN (${EXCLUDED_FARM_SQL_PLACEHOLDERS})
       ORDER BY img.latest_at IS NULL DESC, img.latest_at ASC, c.farm_id, c.house_id, c.cctv_id
       LIMIT ?
       `,
         timeout: DB_QUERY_TIMEOUT_MS,
       },
-      [limit],
+      [...CCTVUP_EXCLUDED_FARM_IDS, limit],
     );
 
     const mappedRows = mapDbSummaryRows(rows);

@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.05.08
+last_updated: 26.05.11
 ---
 
 # 문서 운영 허브
@@ -97,13 +97,13 @@ last_updated: 26.05.08
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/admin/README.md` (26.05.08)
-- `docs/pages/cctvup.service-manual.md` (26.05.08)
-- `docs/pages/cctvup.page.md` (26.05.08)
-- `docs/README.md` (26.05.08)
-- `docs/standards/documentation.md` (26.05.08)
+- `docs/plans/2026-05-06-cctvup-weight-input-control.md` (26.05.11)
+- `docs/pages/cctvup.service-manual.md` (26.05.11)
+- `docs/pages/cctvup.page.md` (26.05.11)
+- `docs/admin/README.md` (26.05.11)
+- `docs/README.md` (26.05.09)
+- `docs/standards/documentation.md` (26.05.09)
 - `docs/company/README.md` (26.05.08)
-- `docs/plans/2026-05-06-cctvup-weight-input-control.md` (26.05.07)
 - `docs/plans/2026-05-07-docs-system-audit-and-migration.md` (26.05.07)
 - `docs/plans/2026-04-30-cctvup-issue-first-switchover.md` (26.04.30)
 - `docs/pages/cherry_tms-grouping.page.md` (26.04.27)

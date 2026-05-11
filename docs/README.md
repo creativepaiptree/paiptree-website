@@ -1,7 +1,7 @@
 ---
 title: 개발 문서 인덱스
 author: ZORO
-last_updated: 26.05.08
+last_updated: 26.05.09
 ---
 
 # 개발 문서 인덱스
@@ -85,12 +85,14 @@ last_updated: 26.05.08
 
 ## 6. 작성/갱신 규칙
 1. 코드 변경 시 관련 컴포넌트 문서를 같이 업데이트한다.
-2. 웹/마케팅 기준은 `docs/README.md`에서 시작하고, 현재 상세 기준은 `docs/pages/about.page.md`와 `docs/guides/marketing-page-style-baseline.md`를 우선 사용한다.
-3. `docs/pages/무제 폴더/**`, `docs/guides/old/**`, `docs/old/**`는 기본적으로 신규 작업 기준으로 사용하지 않는다.
-4. root 기준 문서는 `docs/README.md`, `docs/3.0-design-system.md`만 허용한다. 다른 root 문서를 추가하면 `docs:validate`에서 실패한다.
-5. 활성 guide 문서는 `docs/guides/marketing-page-style-baseline.md`만 허용한다. 새 active guide가 필요하면 allowlist와 인덱스를 같이 수정한다.
-6. 문서 구조를 바꾸면 `docs/README.md`, `docs/old/README.md`, `scripts/docs-sync.mjs`, `scripts/docs-validate.mjs`에 활성/아카이브 상태를 같이 반영한다.
-7. `docs/admin/README.md`는 `docs:sync` 결과를 기준으로 생성되므로, 허브 문구를 바꾸려면 생성 스크립트도 같이 수정한다.
+2. 서비스 구현 중 새로 확정된 운영 원칙, 판정 기준, 금지사항은 관련 서비스 문서에 누적한다.
+3. 기존 문서와 중복되는 기준은 통합하고, 상충되는 기준은 사용자에게 선택지를 물어 확정한다.
+4. 웹/마케팅 기준은 `docs/README.md`에서 시작하고, 현재 상세 기준은 `docs/pages/about.page.md`와 `docs/guides/marketing-page-style-baseline.md`를 우선 사용한다.
+5. `docs/pages/무제 폴더/**`, `docs/guides/old/**`, `docs/old/**`는 기본적으로 신규 작업 기준으로 사용하지 않는다.
+6. root 기준 문서는 `docs/README.md`, `docs/3.0-design-system.md`만 허용한다. 다른 root 문서를 추가하면 `docs:validate`에서 실패한다.
+7. 활성 guide 문서는 `docs/guides/marketing-page-style-baseline.md`만 허용한다. 새 active guide가 필요하면 allowlist와 인덱스를 같이 수정한다.
+8. 문서 구조를 바꾸면 `docs/README.md`, `docs/old/README.md`, `scripts/docs-sync.mjs`, `scripts/docs-validate.mjs`에 활성/아카이브 상태를 같이 반영한다.
+9. `docs/admin/README.md`는 `docs:sync` 결과를 기준으로 생성되므로, 허브 문구를 바꾸려면 생성 스크립트도 같이 수정한다.
 
 ## 7. 자동화 명령
 - `npm run docs:sync`

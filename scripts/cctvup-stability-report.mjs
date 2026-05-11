@@ -8,6 +8,8 @@ const DEFAULT_BASE_URL = 'http://localhost:3002';
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
 const ACTIVE_STATE_STATUSES = new Set(['watching', 'open', 'recovering']);
+const EXCLUDED_FARM_IDS = new Set(['FA0000', 'FA0001']);
+const EXCLUDED_FARM_ID_FILTER = 'not.in.(FA0000,FA0001)';
 
 function loadEnvFile(fileName) {
   const filePath = resolve(process.cwd(), fileName);
@@ -189,6 +191,10 @@ function normalizeState(row) {
     openedAt: row.opened_at || '',
     message: row.message || '',
   };
+}
+
+function isExcludedFarmId(farmId) {
+  return EXCLUDED_FARM_IDS.has(String(farmId || '').trim().toUpperCase());
 }
 
 function getStateScope(state, rowById, activeKeys, nonActiveKeys) {
@@ -395,7 +401,7 @@ ${markdownTable(needsReviewFarmRows, needsReviewColumns, 80)}
 
 ## 7. 운영 판단
 - 지금 구조는 문제로그/상태머신을 감시중에만 적용하도록 동작한다.
-- stale state는 화면에서 무시되지만 Supabase에는 보관 중이다.
+- stale 활성 state는 화면에서 무시되며, 다음 체크 때 camera_state만 resolved로 닫혀 활성 조회에서 빠진다.
 - 대상확인 농장은 사육정보 보완 또는 감시 제외 판단이 필요하다.
 - 이 리포트는 삭제/수정 없이 읽기만 수행했다.
 `;
@@ -422,10 +428,10 @@ const checkRuns = await fetchSupabaseRows(
 );
 const allStateRows = await fetchSupabaseRows(
   supabaseConfig,
-  'tbl_cctvup_camera_states?select=id,run_id,camera_key,farm_id,house_id,module_id,farm_name,house_name,camera_name,status,latest_image_at,last_checked_at,miss_count,opened_at,message&order=last_checked_at.desc&limit=5000',
+  `tbl_cctvup_camera_states?select=id,run_id,camera_key,farm_id,house_id,module_id,farm_name,house_name,camera_name,status,latest_image_at,last_checked_at,miss_count,opened_at,message&farm_id=${EXCLUDED_FARM_ID_FILTER}&order=last_checked_at.desc&limit=5000`,
 );
 
-const allStates = allStateRows.map(normalizeState);
+const allStates = allStateRows.map(normalizeState).filter((state) => !isExcludedFarmId(state.farmId));
 const activeStates = allStates.filter((state) => ACTIVE_STATE_STATUSES.has(state.status));
 const applicableStates = activeStates.filter((state) => activeKeys.has(state.cameraKey));
 const staleRows = buildStaleRows(activeStates, rowById, activeKeys, nonActiveKeys);
