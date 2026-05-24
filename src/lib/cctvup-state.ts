@@ -1,5 +1,7 @@
 import type {
   CctvUpCameraState,
+  CctvUpFarmScopeEvent,
+  CctvUpFarmScopeState,
   CctvUpIssueEvent,
   CctvUpPayload,
   CctvUpRow,
@@ -7,6 +9,7 @@ import type {
   CctvUpStateSync,
   CctvUpStateStatus,
 } from '@/lib/cctvup';
+import { computeCctvUpFarmScopeChanges } from '@/lib/cctvup-farm-scope-events';
 import {
   buildPayload,
   getCctvUpStateLabel,
@@ -68,6 +71,41 @@ type SupabaseIssueEventRow = {
   message: string;
 };
 
+type SupabaseFarmScopeStateRow = {
+  id?: string;
+  run_id?: string | null;
+  farm_id: string;
+  farm_name?: string | null;
+  monitor_scope_code: CctvUpFarmScopeState['monitorScopeCode'];
+  monitor_scope_label?: string | null;
+  cycle_bucket_code?: CctvUpFarmScopeState['cycleBucketCode'];
+  cycle_bucket_label?: string | null;
+  gateway_installed_count: number;
+  camera_count: number;
+  active_camera_count: number;
+  last_checked_at: string;
+  message: string;
+};
+
+type SupabaseFarmScopeEventRow = {
+  id?: string;
+  run_id?: string | null;
+  farm_id: string;
+  farm_name?: string | null;
+  event_kind: CctvUpFarmScopeEvent['eventKind'];
+  previous_scope_code?: CctvUpFarmScopeEvent['previousScopeCode'];
+  next_scope_code: CctvUpFarmScopeEvent['nextScopeCode'];
+  previous_cycle_bucket_code?: CctvUpFarmScopeEvent['previousCycleBucketCode'];
+  next_cycle_bucket_code?: CctvUpFarmScopeEvent['nextCycleBucketCode'];
+  previous_cycle_bucket_label?: string | null;
+  next_cycle_bucket_label?: string | null;
+  event_at: string;
+  gateway_installed_count: number;
+  camera_count: number;
+  active_camera_count: number;
+  message: string;
+};
+
 type SupabaseCheckRunInsertRow = {
   source: CctvUpPayload['source'];
   checked_at: string;
@@ -102,6 +140,9 @@ export type CctvUpStatePersistResult = {
   incidentCount: number;
   currentIssueCount: number;
   resolvedIssueCount: number;
+  farmScopeStateCount?: number;
+  farmScopeEventCount?: number;
+  farmScopeMessage?: string;
   summary: CctvUpPayload['summary'];
 };
 
@@ -115,6 +156,16 @@ type FetchCameraStatesOptions = {
 type FetchIssueEventsOptions = {
   limit?: number;
   cameraKey?: string;
+  since?: string;
+  offset?: number;
+  timeoutMs?: number;
+};
+
+type FetchFarmScopeEventsOptions = {
+  limit?: number;
+  since?: string;
+  offset?: number;
+  farmId?: string;
   timeoutMs?: number;
 };
 
@@ -128,6 +179,16 @@ type NormalizedCameraStateOptions = {
 type NormalizedIssueEventOptions = {
   limit: number;
   cameraKey?: string;
+  since?: string;
+  offset?: number;
+  timeoutMs?: number;
+};
+
+type NormalizedFarmScopeEventsOptions = {
+  limit: number;
+  since?: string;
+  offset?: number;
+  farmId?: string;
   timeoutMs?: number;
 };
 
@@ -174,6 +235,39 @@ const ISSUE_EVENT_SELECT = [
   'event_at',
   'latest_image_at',
   'miss_count',
+  'message',
+].join(',');
+const FARM_SCOPE_STATE_SELECT = [
+  'id',
+  'run_id',
+  'farm_id',
+  'farm_name',
+  'monitor_scope_code',
+  'monitor_scope_label',
+  'cycle_bucket_code',
+  'cycle_bucket_label',
+  'gateway_installed_count',
+  'camera_count',
+  'active_camera_count',
+  'last_checked_at',
+  'message',
+].join(',');
+const FARM_SCOPE_EVENT_SELECT = [
+  'id',
+  'run_id',
+  'farm_id',
+  'farm_name',
+  'event_kind',
+  'previous_scope_code',
+  'next_scope_code',
+  'previous_cycle_bucket_code',
+  'next_cycle_bucket_code',
+  'previous_cycle_bucket_label',
+  'next_cycle_bucket_label',
+  'event_at',
+  'gateway_installed_count',
+  'camera_count',
+  'active_camera_count',
   'message',
 ].join(',');
 
@@ -364,6 +458,82 @@ function mapIssueEventToSupabase(event: CctvUpIssueEvent): SupabaseIssueEventRow
   };
 }
 
+function mapFarmScopeStateFromSupabase(row: SupabaseFarmScopeStateRow): CctvUpFarmScopeState {
+  return {
+    id: row.id,
+    runId: row.run_id,
+    farmId: row.farm_id,
+    farmName: row.farm_name,
+    monitorScopeCode: row.monitor_scope_code,
+    monitorScopeLabel: row.monitor_scope_label,
+    cycleBucketCode: row.cycle_bucket_code,
+    cycleBucketLabel: row.cycle_bucket_label,
+    gatewayInstalledCount: Number(row.gateway_installed_count ?? 0),
+    cameraCount: Number(row.camera_count ?? 0),
+    activeCameraCount: Number(row.active_camera_count ?? 0),
+    lastCheckedAt: row.last_checked_at,
+    message: row.message || '',
+  };
+}
+
+function mapFarmScopeStateToSupabase(state: CctvUpFarmScopeState): SupabaseFarmScopeStateRow {
+  return {
+    run_id: state.runId,
+    farm_id: state.farmId,
+    farm_name: state.farmName,
+    monitor_scope_code: state.monitorScopeCode,
+    monitor_scope_label: state.monitorScopeLabel,
+    cycle_bucket_code: state.cycleBucketCode,
+    cycle_bucket_label: state.cycleBucketLabel,
+    gateway_installed_count: state.gatewayInstalledCount,
+    camera_count: state.cameraCount,
+    active_camera_count: state.activeCameraCount,
+    last_checked_at: state.lastCheckedAt,
+    message: state.message,
+  };
+}
+
+function mapFarmScopeEventFromSupabase(row: SupabaseFarmScopeEventRow): CctvUpFarmScopeEvent {
+  return {
+    id: row.id,
+    runId: row.run_id,
+    farmId: row.farm_id,
+    farmName: row.farm_name,
+    eventKind: row.event_kind,
+    previousScopeCode: row.previous_scope_code,
+    nextScopeCode: row.next_scope_code,
+    previousCycleBucketCode: row.previous_cycle_bucket_code,
+    nextCycleBucketCode: row.next_cycle_bucket_code,
+    previousCycleBucketLabel: row.previous_cycle_bucket_label,
+    nextCycleBucketLabel: row.next_cycle_bucket_label,
+    eventAt: row.event_at,
+    gatewayInstalledCount: Number(row.gateway_installed_count ?? 0),
+    cameraCount: Number(row.camera_count ?? 0),
+    activeCameraCount: Number(row.active_camera_count ?? 0),
+    message: row.message || '',
+  };
+}
+
+function mapFarmScopeEventToSupabase(event: CctvUpFarmScopeEvent): SupabaseFarmScopeEventRow {
+  return {
+    run_id: event.runId,
+    farm_id: event.farmId,
+    farm_name: event.farmName,
+    event_kind: event.eventKind,
+    previous_scope_code: event.previousScopeCode,
+    next_scope_code: event.nextScopeCode,
+    previous_cycle_bucket_code: event.previousCycleBucketCode,
+    next_cycle_bucket_code: event.nextCycleBucketCode,
+    previous_cycle_bucket_label: event.previousCycleBucketLabel,
+    next_cycle_bucket_label: event.nextCycleBucketLabel,
+    event_at: event.eventAt,
+    gateway_installed_count: event.gatewayInstalledCount,
+    camera_count: event.cameraCount,
+    active_camera_count: event.activeCameraCount,
+    message: event.message,
+  };
+}
+
 function normalizeCameraStateOptions(optionsOrLimit?: number | FetchCameraStatesOptions): NormalizedCameraStateOptions {
   if (typeof optionsOrLimit === 'number') return { limit: optionsOrLimit };
   return {
@@ -379,6 +549,19 @@ function normalizeIssueEventOptions(optionsOrLimit?: number | FetchIssueEventsOp
   return {
     limit: optionsOrLimit?.limit ?? 200,
     cameraKey: optionsOrLimit?.cameraKey,
+    since: optionsOrLimit?.since,
+    offset: optionsOrLimit?.offset,
+    timeoutMs: optionsOrLimit?.timeoutMs,
+  };
+}
+
+function normalizeFarmScopeEventsOptions(optionsOrLimit?: number | FetchFarmScopeEventsOptions): NormalizedFarmScopeEventsOptions {
+  if (typeof optionsOrLimit === 'number') return { limit: optionsOrLimit };
+  return {
+    limit: optionsOrLimit?.limit ?? 200,
+    since: optionsOrLimit?.since,
+    offset: optionsOrLimit?.offset,
+    farmId: optionsOrLimit?.farmId,
     timeoutMs: optionsOrLimit?.timeoutMs,
   };
 }
@@ -405,7 +588,7 @@ function buildCameraStatesQuery(optionsOrLimit?: number | FetchCameraStatesOptio
 
 function buildIssueEventsQuery(optionsOrLimit?: number | FetchIssueEventsOptions) {
   const options = normalizeIssueEventOptions(optionsOrLimit);
-  const safeLimit = Math.min(Math.max(Math.trunc(options.limit), 1), 500);
+  const safeLimit = Math.min(Math.max(Math.trunc(options.limit), 1), 1000);
   const params = new URLSearchParams({
     select: ISSUE_EVENT_SELECT,
     order: 'event_at.desc',
@@ -416,8 +599,48 @@ function buildIssueEventsQuery(optionsOrLimit?: number | FetchIssueEventsOptions
   if (options.cameraKey) {
     params.set('camera_key', `eq.${options.cameraKey}`);
   }
+  if (options.since) {
+    params.set('event_at', `gte.${options.since}`);
+  }
+  if (Number.isFinite(options.offset) && Number(options.offset) > 0) {
+    params.set('offset', String(Math.trunc(Number(options.offset))));
+  }
 
   return `tbl_cctvup_issue_events?${params.toString()}`;
+}
+
+function buildFarmScopeStatesQuery(limit = 5000) {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 10000);
+  const params = new URLSearchParams({
+    select: FARM_SCOPE_STATE_SELECT,
+    order: 'last_checked_at.desc',
+    limit: String(safeLimit),
+    farm_id: buildCctvUpExcludedFarmIdFilterParam(),
+  });
+  return `tbl_cctvup_farm_scope_states?${params.toString()}`;
+}
+
+function buildFarmScopeEventsQuery(optionsOrLimit?: number | FetchFarmScopeEventsOptions) {
+  const options = normalizeFarmScopeEventsOptions(optionsOrLimit);
+  const safeLimit = Math.min(Math.max(Math.trunc(options.limit), 1), 1000);
+  const params = new URLSearchParams({
+    select: FARM_SCOPE_EVENT_SELECT,
+    order: 'event_at.desc',
+    limit: String(safeLimit),
+    farm_id: buildCctvUpExcludedFarmIdFilterParam(),
+  });
+
+  if (options.farmId) {
+    params.set('farm_id', `eq.${options.farmId}`);
+  }
+  if (options.since) {
+    params.set('event_at', `gte.${options.since}`);
+  }
+  if (Number.isFinite(options.offset) && Number(options.offset) > 0) {
+    params.set('offset', String(Math.trunc(Number(options.offset))));
+  }
+
+  return `tbl_cctvup_farm_scope_events?${params.toString()}`;
 }
 
 function getInitialMissCount(row: CctvUpRow, slotOk: boolean) {
@@ -428,6 +651,36 @@ function getInitialMissCount(row: CctvUpRow, slotOk: boolean) {
 
 function appendRecentSlot(previous: CctvUpCameraState | undefined, slot: CctvUpSlotStatus) {
   return [...(previous?.recentSlots ?? []), slot].slice(-RECENT_SLOT_COUNT);
+}
+
+function getMissSlotStatus(missCount: number): CctvUpSlotStatus {
+  return missCount >= OPEN_MISS_COUNT ? 'missing' : 'late';
+}
+
+function buildMinimumMissSlots(missCount: number): CctvUpSlotStatus[] {
+  const clampedMissCount = Math.max(0, Math.min(RECENT_SLOT_COUNT, missCount));
+  return Array.from({ length: clampedMissCount }, (_, index) => (
+    index + 1 >= OPEN_MISS_COUNT ? 'missing' : 'late'
+  ));
+}
+
+function normalizeStateSlotsForDisplay(state: CctvUpCameraState) {
+  const slots = state.recentSlots.map((slot) => {
+    if (state.status === 'watching' && slot === 'missing') return 'late';
+    return slot;
+  });
+  const minimumMissSlots = buildMinimumMissSlots(state.missCount);
+  if (minimumMissSlots.length > slots.length) {
+    return minimumMissSlots;
+  }
+  return slots;
+}
+
+function isStateStaleForLiveRow(row: CctvUpRow, state: CctvUpCameraState) {
+  const liveLatestAt = toIso(row.latestAtIso);
+  const stateCheckedAt = toIso(state.lastCheckedAt);
+  if (!liveLatestAt || !stateCheckedAt) return false;
+  return Date.parse(liveLatestAt) > Date.parse(stateCheckedAt);
 }
 
 function hasRecovered(recentSlots: CctvUpSlotStatus[]) {
@@ -464,11 +717,11 @@ export function computeNextCctvUpCameraState(
 ): { state: CctvUpCameraState; event?: CctvUpIssueEvent } {
   const slotOk = Number.isFinite(row.ageMinutes) && row.ageMinutes <= OK_GRACE_MINUTES;
   const latestImageAt = toIso(row.latestAtIso) ?? previous?.latestImageAt ?? null;
-  const recentSlots = appendRecentSlot(previous, slotOk ? 'ok' : 'missing');
   const previousStatus = previous?.status;
   const wasActive = previousStatus === 'open' || previousStatus === 'recovering';
 
   const missCount = slotOk ? 0 : previous ? Math.max(1, previous.missCount + 1) : getInitialMissCount(row, slotOk);
+  const recentSlots = appendRecentSlot(previous, slotOk ? 'ok' : getMissSlotStatus(missCount));
   let status: CctvUpStateStatus;
   let firstMissedAt: string | null = previous?.firstMissedAt ?? null;
   let openedAt: string | null = previous?.openedAt ?? null;
@@ -558,9 +811,10 @@ export function applyCctvUpCameraStatesToRows(rows: CctvUpRow[], states: CctvUpC
   return rows.map((row) => {
     const state = stateMap.get(row.id);
     if (!state || !isCctvUpMonitorActive(row)) return row;
+    if (isStateStaleForLiveRow(row, state)) return row;
 
     const status = mapCctvUpStateStatusToLegacyStatus(state.status);
-    const slots = state.recentSlots.length ? state.recentSlots : row.slots;
+    const slots = state.recentSlots.length ? normalizeStateSlotsForDisplay(state) : row.slots;
     const okSlots = slots.filter((slot) => slot === 'ok').length;
     return {
       ...row,
@@ -588,7 +842,12 @@ export function buildStateBackedCctvUpPayload(payload: CctvUpPayload, states: Cc
       .filter(isCctvUpMonitorActive)
       .map((row) => row.id),
   );
-  const applicableStates = states.filter((state) => activeRowKeys.has(state.cameraKey));
+  const rowMap = new Map(payload.rows.map((row) => [row.id, row]));
+  const applicableStates = states.filter((state) => {
+    if (!activeRowKeys.has(state.cameraKey)) return false;
+    const row = rowMap.get(state.cameraKey);
+    return row ? !isStateStaleForLiveRow(row, state) : false;
+  });
   const stateBackedPayload = buildPayload(
     applyCctvUpCameraStatesToRows(payload.rows, applicableStates),
     payload.source,
@@ -657,6 +916,49 @@ export async function fetchCctvUpIssueEvents(optionsOrLimit: number | FetchIssue
     : [];
 }
 
+export async function fetchCctvUpFarmScopeStates(limit = 5000, timeoutMs = STATE_READ_TIMEOUT_MS): Promise<CctvUpFarmScopeState[] | null> {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+
+  const result = await requestSupabase<SupabaseFarmScopeStateRow[]>(
+    config,
+    buildFarmScopeStatesQuery(limit),
+    {
+      method: 'GET',
+      signal: timeoutMs ? createTimeoutSignal(timeoutMs) : undefined,
+    },
+  );
+
+  if (result.error) throw new Error(`tbl_cctvup_farm_scope_states 조회 실패: ${result.error}`);
+  return Array.isArray(result.data)
+    ? result.data
+        .map(mapFarmScopeStateFromSupabase)
+        .filter((state) => !isCctvUpExcludedFarmId(state.farmId))
+    : [];
+}
+
+export async function fetchCctvUpFarmScopeEvents(optionsOrLimit: number | FetchFarmScopeEventsOptions = 200): Promise<CctvUpFarmScopeEvent[] | null> {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+  const options = normalizeFarmScopeEventsOptions(optionsOrLimit);
+
+  const result = await requestSupabase<SupabaseFarmScopeEventRow[]>(
+    config,
+    buildFarmScopeEventsQuery(options),
+    {
+      method: 'GET',
+      signal: options.timeoutMs ? createTimeoutSignal(options.timeoutMs) : undefined,
+    },
+  );
+
+  if (result.error) throw new Error(`tbl_cctvup_farm_scope_events 조회 실패: ${result.error}`);
+  return Array.isArray(result.data)
+    ? result.data
+        .map(mapFarmScopeEventFromSupabase)
+        .filter((event) => !isCctvUpExcludedFarmId(event.farmId))
+    : [];
+}
+
 function buildStateSummary(states: CctvUpCameraState[], payload: CctvUpPayload): CctvUpPayload['summary'] {
   const stateMap = new Map(states.map((state) => [state.cameraKey, state]));
   const appliedRows = payload.rows.map((row) => {
@@ -688,6 +990,50 @@ function buildCheckRunInsert(
     payload: {},
     note: noteSuffix ? `${summaryNote}; ${noteSuffix}` : summaryNote,
   };
+}
+
+async function persistCctvUpFarmScopeChanges(
+  config: SupabaseConfig,
+  payload: CctvUpPayload,
+  previousStates: CctvUpFarmScopeState[],
+  runId: string,
+): Promise<{ stateCount: number; eventCount: number; error?: string }> {
+  const changes = computeCctvUpFarmScopeChanges(payload.rows, previousStates, payload.checkedAt) as {
+    states: CctvUpFarmScopeState[];
+    events: CctvUpFarmScopeEvent[];
+  };
+  const statesWithRun = changes.states.map((state) => ({ ...state, runId }));
+  const eventsWithRun = changes.events.map((event) => ({ ...event, runId }));
+
+  if (statesWithRun.length > 0) {
+    const stateResponse = await requestSupabase<unknown>(config, 'tbl_cctvup_farm_scope_states?on_conflict=farm_id', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(statesWithRun.map(mapFarmScopeStateToSupabase)),
+    });
+    if (stateResponse.error) {
+      return { stateCount: 0, eventCount: 0, error: stateResponse.error };
+    }
+  }
+
+  if (eventsWithRun.length > 0) {
+    const eventResponse = await requestSupabase<unknown>(config, 'tbl_cctvup_farm_scope_events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(eventsWithRun.map(mapFarmScopeEventToSupabase)),
+    });
+    if (eventResponse.error) {
+      return { stateCount: statesWithRun.length, eventCount: 0, error: eventResponse.error };
+    }
+  }
+
+  return { stateCount: statesWithRun.length, eventCount: eventsWithRun.length };
 }
 
 export async function mergeCctvUpPayloadWithPersistedState(payload: CctvUpPayload): Promise<CctvUpPayload> {
@@ -778,6 +1124,14 @@ export async function persistCctvUpStateCheck(
       resolvedIssueCount: 0,
       summary: payload.summary,
     };
+  }
+
+  let previousFarmScopeStates: CctvUpFarmScopeState[] = [];
+  let farmScopeMessage: string | undefined;
+  try {
+    previousFarmScopeStates = await fetchCctvUpFarmScopeStates(5000, STATE_READ_TIMEOUT_MS) ?? [];
+  } catch (error) {
+    farmScopeMessage = error instanceof Error ? error.message : 'tbl_cctvup_farm_scope_states 조회 실패';
   }
 
   const previousMap = new Map(previousStates.map((state) => [state.cameraKey, state]));
@@ -881,6 +1235,13 @@ export async function persistCctvUpStateCheck(
     }
   }
 
+  const farmScopePersistResult = farmScopeMessage
+    ? { stateCount: 0, eventCount: 0, error: undefined }
+    : await persistCctvUpFarmScopeChanges(config, payload, previousFarmScopeStates, runId);
+  if (farmScopePersistResult.error) {
+    farmScopeMessage = `농장 감시범위 로그 저장 실패: ${farmScopePersistResult.error}`;
+  }
+
   return {
     ok: true,
     runId,
@@ -895,6 +1256,9 @@ export async function persistCctvUpStateCheck(
     incidentCount: eventsWithRun.filter((event) => event.eventKind === 'opened' || event.eventKind === 'reopened').length,
     currentIssueCount: statesWithRun.filter((state) => isCctvUpActiveStateStatus(state.status)).length,
     resolvedIssueCount: eventsWithRun.filter((event) => event.eventKind === 'resolved').length,
+    farmScopeStateCount: farmScopePersistResult.stateCount,
+    farmScopeEventCount: farmScopePersistResult.eventCount,
+    farmScopeMessage,
     summary,
   };
 }

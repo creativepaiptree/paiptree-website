@@ -1,4 +1,5 @@
 import CctvUpClient from './CctvUpClient';
+import DashFloatingNav from '@/components/dash/DashFloatingNav';
 
 export const metadata = {
   title: 'CCTVUP | Paiptree',
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function CctvUpPage() {
-  return <CctvUpClient />;
+  return (
+    <>
+      <CctvUpClient />
+      <DashFloatingNav current="/cctvup" />
+    </>
+  );
 }

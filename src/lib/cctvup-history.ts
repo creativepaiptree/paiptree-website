@@ -3,13 +3,14 @@ import type {
   CctvUpCameraState,
   CctvUpCheckRun,
   CctvUpCurrentIssue,
+  CctvUpFarmScopeEvent,
   CctvUpIssueEvent,
   CctvUpIncidentLog,
   CctvUpPayload,
   CctvUpStatus,
 } from '@/lib/cctvup';
 import { buildCurrentIssues, getCctvUpStateLabel, isCctvUpLoggableIssueStatus } from '@/lib/cctvup';
-import { fetchCctvUpActiveCameraStates, fetchCctvUpIssueEvents } from '@/lib/cctvup-state';
+import { fetchCctvUpActiveCameraStates, fetchCctvUpFarmScopeEvents, fetchCctvUpIssueEvents } from '@/lib/cctvup-state';
 
 export type CctvUpHistorySource = 'supabase' | 'unavailable';
 
@@ -21,7 +22,13 @@ export type CctvUpHistoryPayload = {
   currentIssues: CctvUpCurrentIssue[];
   cameraStates?: CctvUpCameraState[];
   issueEvents?: CctvUpIssueEvent[];
+  farmScopeEvents?: CctvUpFarmScopeEvent[];
   message?: string;
+};
+
+type FetchCctvUpHistoryOptions = {
+  issueEventDays?: number;
+  issueEventLimit?: number;
 };
 
 type SupabaseConfig = {
@@ -111,11 +118,13 @@ type SupabaseCurrentIssueRow = {
 };
 
 const HISTORY_KEEP_DAYS = 30;
+const HISTORY_VISIBLE_EVENT_DAYS = 30;
 const DEFAULT_LIMIT = 50;
 const DEFAULT_CHECK_RUN_LIMIT = 5;
-const DEFAULT_ISSUE_EVENT_LIMIT = 50;
+const DEFAULT_ISSUE_EVENT_LIMIT = 20000;
+const ISSUE_EVENT_PAGE_SIZE = 1000;
 const ACTIVE_CAMERA_STATE_LIMIT = 1000;
-const SUPABASE_HISTORY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 800);
+const SUPABASE_HISTORY_READ_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_FETCH_TIMEOUT_MS || 1500);
 const SUPABASE_HISTORY_WRITE_TIMEOUT_MS = Number(process.env.CCTVUP_SUPABASE_WRITE_TIMEOUT_MS || 8000);
 
 function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
@@ -143,6 +152,17 @@ function formatHistoryFetchError(error: unknown) {
   return error instanceof Error ? error.message : 'CCTVUP history fetch failed';
 }
 
+function isOptionalFarmScopeEventsMissing(error: unknown) {
+  const message = formatHistoryFetchError(error);
+  return message.includes('tbl_cctvup_farm_scope_events')
+    && (
+      message.includes('PGRST205')
+      || message.includes('Could not find the table')
+      || message.includes('schema cache')
+      || message.includes('does not exist')
+    );
+}
+
 function getSettledValue<T>(result: PromiseSettledResult<T[]>) {
   return result.status === 'fulfilled' ? result.value : [];
 }
@@ -164,6 +184,20 @@ function requireSupabaseRows<T>(rows: T[] | null, label: string) {
 function clampHistoryLimit(limit: number) {
   if (!Number.isFinite(limit)) return DEFAULT_LIMIT;
   return Math.min(Math.max(Math.trunc(limit), 1), 500);
+}
+
+function clampIssueEventLimit(limit: number) {
+  if (!Number.isFinite(limit)) return DEFAULT_ISSUE_EVENT_LIMIT;
+  return Math.min(Math.max(Math.trunc(limit), 1), 30000);
+}
+
+function clampIssueEventDays(days: number) {
+  if (!Number.isFinite(days)) return HISTORY_VISIBLE_EVENT_DAYS;
+  return Math.min(Math.max(Math.trunc(days), 1), HISTORY_VISIBLE_EVENT_DAYS);
+}
+
+function buildIssueEventSince(days: number, now = new Date()) {
+  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
 export function getCctvUpSupabaseConfig(): SupabaseConfig | null {
@@ -533,16 +567,62 @@ function mapRunToSupabase(run: Partial<CctvUpCheckRun>, payload: CctvUpPayload) 
   };
 }
 
-export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpHistoryPayload | null> {
+async function fetchVisibleIssueEvents(limit: number, since: string) {
+  const pageSize = Math.min(ISSUE_EVENT_PAGE_SIZE, limit);
+  const events: CctvUpIssueEvent[] = [];
+  let offset = 0;
+
+  while (events.length < limit) {
+    const nextLimit = Math.min(pageSize, limit - events.length);
+    const page = await fetchCctvUpIssueEvents({
+      limit: nextLimit,
+      offset,
+      since,
+      timeoutMs: SUPABASE_HISTORY_READ_TIMEOUT_MS,
+    });
+    const rows = requireSupabaseRows(page, 'tbl_cctvup_issue_events');
+    events.push(...rows);
+    if (rows.length < nextLimit) break;
+    offset += rows.length;
+  }
+
+  return events;
+}
+
+async function fetchVisibleFarmScopeEvents(limit: number, since: string) {
+  const pageSize = Math.min(ISSUE_EVENT_PAGE_SIZE, limit);
+  const events: CctvUpFarmScopeEvent[] = [];
+  let offset = 0;
+
+  while (events.length < limit) {
+    const nextLimit = Math.min(pageSize, limit - events.length);
+    const page = await fetchCctvUpFarmScopeEvents({
+      limit: nextLimit,
+      offset,
+      since,
+      timeoutMs: SUPABASE_HISTORY_READ_TIMEOUT_MS,
+    });
+    const rows = requireSupabaseRows(page, 'tbl_cctvup_farm_scope_events');
+    events.push(...rows);
+    if (rows.length < nextLimit) break;
+    offset += rows.length;
+  }
+
+  return events;
+}
+
+export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT, options: FetchCctvUpHistoryOptions = {}): Promise<CctvUpHistoryPayload | null> {
   const config = getCctvUpSupabaseConfig();
   if (!config) return null;
 
   const safeLimit = clampHistoryLimit(limit);
+  const issueEventDays = clampIssueEventDays(options.issueEventDays ?? HISTORY_VISIBLE_EVENT_DAYS);
+  const issueEventLimit = clampIssueEventLimit(options.issueEventLimit ?? DEFAULT_ISSUE_EVENT_LIMIT);
+  const issueEventSince = buildIssueEventSince(issueEventDays);
 
   try {
     const checkRunLimit = Math.min(safeLimit, DEFAULT_CHECK_RUN_LIMIT);
-    const issueEventLimit = Math.min(safeLimit, DEFAULT_ISSUE_EVENT_LIMIT);
-    const [checkRunsResult, cameraStatesResult, issueEventsResult] = await Promise.allSettled([
+    const [checkRunsResult, cameraStatesResult, issueEventsResult, farmScopeEventsResult] = await Promise.allSettled([
       requestSupabase<SupabaseCheckRunRow[]>(config, `tbl_cctvup_check_runs?order=checked_at.desc&limit=${checkRunLimit}`, {
         method: 'GET',
       }).then((result) => {
@@ -550,17 +630,26 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
         return Array.isArray(data) ? data.map(mapCheckRunFromSupabase) : [];
       }),
       fetchCctvUpActiveCameraStates(ACTIVE_CAMERA_STATE_LIMIT, { timeoutMs: SUPABASE_HISTORY_READ_TIMEOUT_MS }).then((result) => requireSupabaseRows(result, 'tbl_cctvup_camera_states')),
-      fetchCctvUpIssueEvents({ limit: issueEventLimit, timeoutMs: SUPABASE_HISTORY_READ_TIMEOUT_MS }).then((result) => requireSupabaseRows(result, 'tbl_cctvup_issue_events')),
+      fetchVisibleIssueEvents(issueEventLimit, issueEventSince),
+      fetchVisibleFarmScopeEvents(issueEventLimit, issueEventSince).catch((error) => {
+        if (isOptionalFarmScopeEventsMissing(error)) return [];
+        throw error;
+      }),
     ]);
 
-    const settledResults = [checkRunsResult, cameraStatesResult, issueEventsResult];
+    const settledResults = [checkRunsResult, cameraStatesResult, issueEventsResult, farmScopeEventsResult];
     const rejectedResults = settledResults.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
     const fulfilledCount = settledResults.length - rejectedResults.length;
     const message = rejectedResults.length ? formatHistoryFetchError(rejectedResults[0].reason) : undefined;
-    if (message) console.warn(`[cctvup-history] ${message}`);
+    const isTimeoutMessage = message
+      ? message.includes('안에 끝나지 않았습니다') || message.includes('안에 중단되었습니다')
+      : false;
+    const isExpectedPartialTimeout = Boolean(message) && fulfilledCount > 0 && isTimeoutMessage;
+    if (message && !isExpectedPartialTimeout) console.warn(`[cctvup-history] ${message}`);
 
     const cameraStates = getSettledValue(cameraStatesResult);
     const issueEvents = getSettledValue(issueEventsResult);
+    const farmScopeEvents = getSettledValue(farmScopeEventsResult);
     const incidents = issueEvents.map(mapIssueEventToIncident);
     const currentIssues = cameraStates
       .map(mapStateToCurrentIssue)
@@ -574,6 +663,7 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
       currentIssues,
       cameraStates,
       issueEvents,
+      farmScopeEvents,
       message,
     };
   } catch (error) {
@@ -587,6 +677,7 @@ export async function fetchCctvUpHistory(limit = DEFAULT_LIMIT): Promise<CctvUpH
       currentIssues: [],
       cameraStates: [],
       issueEvents: [],
+      farmScopeEvents: [],
       message,
     };
   }

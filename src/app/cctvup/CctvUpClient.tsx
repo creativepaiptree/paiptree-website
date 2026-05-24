@@ -9,6 +9,12 @@ import { type CctvUpImageEvidenceItem, type CctvUpImageEvidencePayload } from '@
 import { type CctvUpSmokePayload, type CctvUpSmokeStep } from '@/lib/cctvup-smoke';
 import { type CctvUpSupabaseDiagnosePayload, type CctvUpSupabaseDiagnoseStep } from '@/lib/cctvup-supabase-diagnose';
 import {
+  CCTVUP_ACTIONABLE_WINDOW_MINUTES,
+  buildCctvUpProblemTransitionMap,
+  isCctvUpFreshProblemRow,
+} from '@/lib/cctvup-risk-panel';
+import { formatCctvUpFarmScopeEventKind } from '@/lib/cctvup-farm-scope-events';
+import {
   type CctvUpFarmCategory,
   type CctvUpFarmRegistryEntry,
   type CctvUpFarmRegistryPayload,
@@ -25,6 +31,7 @@ type MonitorFilter = 'all' | 'ok' | 'issue';
 type FarmSortMode = 'issue' | 'severity' | 'category' | 'name';
 type InputReadinessTone = 'ok' | 'watch' | 'blocked' | 'pending';
 type StatusSummaryTone = 'ok' | 'late' | 'missing' | 'critical';
+type MainTab = 'live' | 'daily';
 type PredictionInputDiagnostic = {
   step: number;
   label: string;
@@ -72,12 +79,94 @@ type ManualCheckPayload = {
   openedCount?: number;
   recoveringCount?: number;
   resolvedCount?: number;
+  missingDataEventCount?: number;
+  missingDataResolvedCount?: number;
+  farmScopeStateCount?: number;
+  farmScopeEventCount?: number;
+  farmScopeMessage?: string;
 };
 type ManualCheckState = {
   payload: ManualCheckPayload | null;
   isLoading: boolean;
   error: string;
   lastRanAt: string;
+};
+type CctvUpDailyReportManifestItem = {
+  date: string;
+  title: string;
+  companyCount: number;
+  notableFarmCount: number;
+  issueEventCount: number;
+  farmScopeEventCount: number;
+  activeIssueCount?: number;
+  status: string;
+  markdownPath: string;
+  rawPath: string;
+  generatedAt?: string | null;
+};
+type CctvUpDailyReportListPayload = {
+  ok?: boolean;
+  source?: 'content' | 'unavailable';
+  schemaVersion: number;
+  updatedAt?: string | null;
+  reports: CctvUpDailyReportManifestItem[];
+  message?: string;
+};
+type CctvUpDailyReportRawSummary = {
+  issueEventCount?: number;
+  farmScopeEventCount?: number;
+  openedCount?: number;
+  reopenedCount?: number;
+  recoveringCount?: number;
+  resolvedCount?: number;
+  activeIssueCount?: number;
+  notableFarmCount?: number;
+  checkRunCount?: number;
+};
+type CctvUpDailyReportCompanySummary = {
+  company: string;
+  label: string;
+  issueEventCount: number;
+  openedCount: number;
+  reopenedCount: number;
+  recoveringCount: number;
+  resolvedCount: number;
+  farmScopeEventCount: number;
+  activeIssueCount: number;
+  notableFarmCount: number;
+};
+type CctvUpDailyReportFarmSummary = {
+  farmId: string;
+  farmName: string;
+  companyLabel: string;
+  issueEventCount: number;
+  farmScopeEventCount: number;
+  activeIssueCount: number;
+  messages: string[];
+};
+type CctvUpDailyReportRaw = {
+  date?: string;
+  title?: string;
+  generatedAt?: string;
+  summary?: CctvUpDailyReportRawSummary;
+  companies?: CctvUpDailyReportCompanySummary[];
+  notableFarms?: CctvUpDailyReportFarmSummary[];
+};
+type CctvUpDailyReportDetailPayload = {
+  ok?: boolean;
+  source?: 'content' | 'unavailable';
+  date: string;
+  markdown: string;
+  raw: CctvUpDailyReportRaw | null;
+  manifestItem?: CctvUpDailyReportManifestItem | null;
+  previousDate?: string | null;
+  nextDate?: string | null;
+  message?: string;
+};
+type DailyReportGenerateState = {
+  isLoading: boolean;
+  message: string;
+  error: string;
 };
 type CheckLoopHealth = {
   label: string;
@@ -194,8 +283,8 @@ const FarmCategoryOptions = Object.entries(FarmBadgeLabels) as Array<[CctvUpFarm
 const INITIAL_FARM_CATEGORY_FILTERS: Record<CctvUpFarmCategory, boolean> = {
   overseas: true,
   shinwoo: true,
-  cheriburo: true,
-  other: true,
+  cheriburo: false,
+  other: false,
 };
 const MonitorScopeLabels: Record<CctvUpMonitorScopeCode, string> = {
   active: '감시중',
@@ -207,8 +296,8 @@ const MonitorScopeOptions = Object.entries(MonitorScopeLabels) as Array<[CctvUpM
 const INITIAL_MONITOR_SCOPE_FILTERS: Record<CctvUpMonitorScopeCode, boolean> = {
   active: true,
   resting: true,
-  needs_review: true,
-  uninstalled: true,
+  needs_review: false,
+  uninstalled: false,
 };
 
 const statusTone: Record<CameraStatus, { label: string; badge: string; dot: string }> = {
@@ -626,6 +715,277 @@ function inputClass(theme: ThemeMode) {
     : 'border-[#314056] bg-[#0a1019] text-slate-100 placeholder:text-slate-500 focus:border-[#4D7CFF]';
 }
 
+function tabButtonClass(theme: ThemeMode, isActive: boolean) {
+  if (isActive) {
+    return theme === 'light'
+      ? 'border-sky-500 bg-sky-50 text-sky-800'
+      : 'border-sky-500 bg-sky-500/10 text-white';
+  }
+  return theme === 'light'
+    ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+    : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5';
+}
+
+function dailyReportMetricClass(theme: ThemeMode, tone: StatusSummaryTone | 'scope' | 'active') {
+  if (tone === 'scope') {
+    return theme === 'light'
+      ? 'border-violet-200 bg-violet-50 text-violet-800'
+      : 'border-violet-500/25 bg-violet-500/10 text-violet-100';
+  }
+  if (tone === 'active') {
+    return theme === 'light'
+      ? 'border-amber-200 bg-amber-50 text-amber-800'
+      : 'border-amber-500/25 bg-amber-500/10 text-amber-100';
+  }
+  return statusSummaryBadgeClass(theme, tone);
+}
+
+function MarkdownPreview({ markdown, theme }: { markdown: string; theme: ThemeMode }) {
+  const lines = markdown.split(/\r?\n/);
+  return (
+    <div className="space-y-1">
+      {lines.map((line, index) => {
+        const key = `md-${index}-${line.slice(0, 12)}`;
+        if (!line.trim()) return <div key={key} className="h-2" />;
+        if (line.startsWith('# ')) {
+          return <h2 key={key} className="text-xl font-semibold leading-8">{line.slice(2)}</h2>;
+        }
+        if (line.startsWith('## ')) {
+          return <h3 key={key} className={`pt-4 text-base font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>{line.slice(3)}</h3>;
+        }
+        if (line.startsWith('### ')) {
+          return <h4 key={key} className={`pt-2 text-sm font-semibold ${theme === 'light' ? 'text-slate-700' : 'text-slate-200'}`}>{line.slice(4)}</h4>;
+        }
+        if (line.startsWith('- ')) {
+          return (
+            <p key={key} className={`pl-3 text-sm leading-6 ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>
+              <span className={theme === 'light' ? 'text-slate-400' : 'text-slate-500'}>• </span>
+              {line.slice(2)}
+            </p>
+          );
+        }
+        if (line.startsWith('  - ')) {
+          return (
+            <p key={key} className={`pl-7 text-xs leading-5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={theme === 'light' ? 'text-slate-400' : 'text-slate-500'}>• </span>
+              {line.slice(4)}
+            </p>
+          );
+        }
+        return <p key={key} className={`text-sm leading-6 ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>{line}</p>;
+      })}
+    </div>
+  );
+}
+
+function DailyReportPanel({
+  theme,
+  listPayload,
+  detailPayload,
+  selectedDate,
+  isListLoading,
+  isDetailLoading,
+  generateState,
+  error,
+  onSelectDate,
+  onGenerate,
+}: {
+  theme: ThemeMode;
+  listPayload: CctvUpDailyReportListPayload;
+  detailPayload: CctvUpDailyReportDetailPayload | null;
+  selectedDate: string;
+  isListLoading: boolean;
+  isDetailLoading: boolean;
+  generateState: DailyReportGenerateState;
+  error: string;
+  onSelectDate: (date: string) => void;
+  onGenerate: () => void;
+}) {
+  const summary = detailPayload?.raw?.summary;
+  const reports = listPayload.reports ?? [];
+  const metricItems = [
+    { label: '문제확정', value: (summary?.openedCount ?? 0) + (summary?.reopenedCount ?? 0), tone: 'critical' as const },
+    { label: '재수신', value: summary?.recoveringCount ?? 0, tone: 'missing' as const },
+    { label: '해결', value: summary?.resolvedCount ?? 0, tone: 'ok' as const },
+    { label: '감시전환', value: summary?.farmScopeEventCount ?? 0, tone: 'scope' as const },
+    { label: '열린문제', value: summary?.activeIssueCount ?? 0, tone: 'active' as const },
+  ];
+
+  return (
+    <section className={`border ${panelBg(theme)}`}>
+      <div className={`border-b px-4 py-4 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">일일 브리핑</h2>
+            <p className={`mt-1 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+              하루 동안의 상태전환 이벤트를 MD와 raw JSON 파일로 묶어 확인합니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={selectedDate}
+              onChange={(event) => onSelectDate(event.target.value)}
+              disabled={isListLoading || reports.length === 0}
+              className={`h-9 min-w-[150px] border px-2 text-xs outline-none ${inputClass(theme)}`}
+              aria-label="일일 브리핑 날짜 선택"
+            >
+              {reports.length ? reports.map((report) => (
+                <option key={report.date} value={report.date}>{report.date}</option>
+              )) : (
+                <option value="">보고서 없음</option>
+              )}
+            </select>
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={generateState.isLoading}
+              className={`h-9 border px-3 text-xs font-semibold transition disabled:cursor-wait disabled:opacity-60 ${theme === 'light' ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15'}`}
+            >
+              {generateState.isLoading ? '생성 중' : '오늘 생성'}
+            </button>
+          </div>
+        </div>
+        {(error || generateState.error || generateState.message) ? (
+          <p className={`mt-3 border px-3 py-2 text-xs leading-5 ${
+            error || generateState.error
+              ? theme === 'light' ? 'border-red-200 bg-red-50 text-red-700' : 'border-red-500/25 bg-red-500/10 text-red-100'
+              : theme === 'light' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100'
+          }`}>
+            {error || generateState.error || generateState.message}
+          </p>
+        ) : null}
+      </div>
+
+      {isListLoading || isDetailLoading ? (
+        <div className={`px-4 py-10 text-center text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+          일일 브리핑 파일을 읽는 중입니다.
+        </div>
+      ) : reports.length === 0 ? (
+        <div className={`px-4 py-12 text-center ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className="text-base font-semibold">아직 생성된 일일 브리핑이 없습니다.</p>
+          <p className="mt-2 text-sm">상단의 `오늘 생성`을 누르면 `content/cctvup/daily-reports`에 MD와 raw JSON 파일이 만들어집니다.</p>
+        </div>
+      ) : (
+        <div className="grid gap-px lg:grid-cols-[260px_minmax(0,1fr)]">
+          <aside className={`border-r ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+            <div className="max-h-[680px] overflow-auto">
+              {reports.map((report) => (
+                <button
+                  key={report.date}
+                  type="button"
+                  onClick={() => onSelectDate(report.date)}
+                  className={`w-full border-b px-4 py-3 text-left transition ${
+                    selectedDate === report.date
+                      ? theme === 'light'
+                        ? 'border-sky-200 bg-sky-50 text-sky-900'
+                        : 'border-sky-500/25 bg-sky-500/10 text-white'
+                      : theme === 'light'
+                        ? 'border-slate-200 hover:bg-white'
+                        : 'border-[#243041] hover:bg-[#0f1722]'
+                  }`}
+                >
+                  <p className="text-sm font-semibold tabular-nums">{report.date}</p>
+                  <p className={`mt-1 text-[11px] leading-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    문제 {report.issueEventCount} · 전환 {report.farmScopeEventCount} · 열린 {report.activeIssueCount ?? 0}
+                  </p>
+                  <p className={`mt-1 text-[10px] tabular-nums ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    생성 {formatEventTime(report.generatedAt ?? undefined)}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </aside>
+
+          <article className={`${theme === 'light' ? 'bg-white' : 'bg-[#0f1722]'}`}>
+            <div className={`border-b px-5 py-4 ${theme === 'light' ? 'border-slate-200' : 'border-[#243041]'}`}>
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">{detailPayload?.raw?.title || detailPayload?.manifestItem?.title || `${selectedDate} CCTVUP 일일 브리핑`}</h3>
+                  <p className={`mt-1 text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    MD {detailPayload?.manifestItem?.markdownPath || '-'} · raw {detailPayload?.manifestItem?.rawPath || '-'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {metricItems.map((item) => (
+                    <span key={item.label} className={`inline-flex h-7 items-center gap-1 border px-2 text-xs font-semibold ${dailyReportMetricClass(theme, item.tone)}`}>
+                      {item.label}<span className="tabular-nums">{item.value}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 px-5 py-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)]">
+              <div className={`border px-4 py-4 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0a1019]'}`}>
+                {detailPayload?.markdown ? (
+                  <MarkdownPreview markdown={detailPayload.markdown} theme={theme} />
+                ) : (
+                  <p className={`py-10 text-center text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    선택한 날짜의 브리핑 본문을 읽지 못했습니다.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <section className={`border px-3 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+                  <h4 className="text-sm font-semibold">업체별 요약</h4>
+                  <div className="mt-3 space-y-2">
+                    {(detailPayload?.raw?.companies ?? []).map((company) => (
+                      <div key={company.company} className={`border px-3 py-2 text-xs ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0f1722]'}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold">{company.label}</span>
+                          <span className="tabular-nums">농장 {company.notableFarmCount}</span>
+                        </div>
+                        <p className={`mt-1 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          문제 {company.openedCount + company.reopenedCount} · 재수신 {company.recoveringCount} · 해결 {company.resolvedCount} · 전환 {company.farmScopeEventCount} · 열린 {company.activeIssueCount}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className={`border px-3 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+                  <h4 className="text-sm font-semibold">농장별 특이사항</h4>
+                  <div className="mt-3 max-h-[360px] space-y-2 overflow-auto">
+                    {(detailPayload?.raw?.notableFarms ?? []).length ? (detailPayload?.raw?.notableFarms ?? []).map((farm) => (
+                      <div key={`${farm.companyLabel}-${farm.farmId}`} className={`border px-3 py-2 text-xs ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0f1722]'}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate font-semibold">{farm.companyLabel} · {farm.farmName}</span>
+                          <span className="shrink-0 tabular-nums">{farm.farmId}</span>
+                        </div>
+                        <p className={`mt-1 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          issue {farm.issueEventCount} · scope {farm.farmScopeEventCount} · active {farm.activeIssueCount}
+                        </p>
+                        {farm.messages?.slice(0, 2).map((message) => (
+                          <p key={message} className={`mt-1 line-clamp-2 leading-5 ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>{message}</p>
+                        ))}
+                      </div>
+                    )) : (
+                      <p className={`py-5 text-center text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        농장별 특이사항이 없습니다.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <details className={`border px-3 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+                  <summary className="cursor-pointer text-sm font-semibold">raw JSON 근거</summary>
+                  <p className={`mt-2 text-xs leading-5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    화면 요약의 기준이 되는 공개 가능 원천 파일입니다.
+                  </p>
+                  <pre className={`mt-3 max-h-[360px] overflow-auto border p-3 text-[11px] leading-5 ${theme === 'light' ? 'border-slate-200 bg-white text-slate-700' : 'border-[#243041] bg-[#050912] text-slate-300'}`}>
+                    {JSON.stringify(detailPayload?.raw ?? {}, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            </div>
+          </article>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function stateSyncPillClass(theme: ThemeMode, status?: NonNullable<CctvUpPayload['stateSync']>['status']) {
   if (status === 'applied') {
     return theme === 'light'
@@ -797,7 +1157,13 @@ function formatManualCheckMessage(state: ManualCheckState) {
   const resolvedCount = state.payload.resolvedCount ?? 0;
   const archivedStaleStateCount = state.payload.archivedStaleStateCount ?? 0;
   const archiveText = archivedStaleStateCount ? ` · stale 정리 ${archivedStaleStateCount}` : '';
-  return `state ${stateCount}건 · event ${eventCount}건 · opened ${openedCount} · recovering ${recoveringCount} · resolved ${resolvedCount}${archiveText}`;
+  const farmScopeStateCount = state.payload.farmScopeStateCount ?? 0;
+  const farmScopeEventCount = state.payload.farmScopeEventCount ?? 0;
+  const farmScopeText = farmScopeStateCount || farmScopeEventCount
+    ? ` · 농장범위 ${farmScopeStateCount}건 · 전환 ${farmScopeEventCount}건`
+    : '';
+  const farmScopeMessage = state.payload.farmScopeMessage ? ` · ${state.payload.farmScopeMessage}` : '';
+  return `state ${stateCount}건 · event ${eventCount}건 · 문제확정 ${openedCount} · 재수신 ${recoveringCount} · 해결 ${resolvedCount}${archiveText}${farmScopeText}${farmScopeMessage}`;
 }
 
 function getCheckLoopHealth(latestRun: CctvUpCheckRun | undefined, isHistoryLoading: boolean, historySource: CctvUpHistoryPayload['source']): CheckLoopHealth {
@@ -1114,7 +1480,7 @@ function HealthStatusTile({ title, health, theme }: { title: string; health: Che
 function formatIssueEventKind(kind: CctvUpIssueEventKind) {
   if (kind === 'opened') return '문제확정';
   if (kind === 'reopened') return '재확정';
-  if (kind === 'recovering') return '회복중';
+  if (kind === 'recovering') return '이미지 재수신';
   return '해결';
 }
 
@@ -1153,6 +1519,27 @@ function issueEventToneClass(theme: ThemeMode, kind: CctvUpIssueEventKind) {
   return theme === 'light'
     ? 'border-red-200 bg-red-50 text-red-700'
     : 'border-red-500/25 bg-red-500/10 text-red-100';
+}
+
+function farmScopeEventToneClass(theme: ThemeMode, kind?: string) {
+  if (kind === 'activated') {
+    return theme === 'light'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+      : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100';
+  }
+  if (kind === 'resting_started') {
+    return theme === 'light'
+      ? 'border-sky-200 bg-sky-50 text-sky-800'
+      : 'border-sky-500/25 bg-sky-500/10 text-sky-100';
+  }
+  if (kind === 'uninstalled') {
+    return theme === 'light'
+      ? 'border-slate-200 bg-slate-50 text-slate-700'
+      : 'border-slate-500/25 bg-slate-500/10 text-slate-200';
+  }
+  return theme === 'light'
+    ? 'border-amber-200 bg-amber-50 text-amber-800'
+    : 'border-amber-500/25 bg-amber-500/10 text-amber-100';
 }
 
 function cleanName(value: string) {
@@ -1255,7 +1642,7 @@ const statusOrder: Record<Exclude<CctvUpStatus, 'paused'>, number> = {
   ok: 3,
 };
 
-const CHRONIC_AGE_MINUTES = 180;
+const CHRONIC_AGE_MINUTES = CCTVUP_ACTIONABLE_WINDOW_MINUTES;
 
 function getRowSortBucket(row: Pick<DisplayRow, 'status' | 'ageMinutes'>) {
   if (row.status === 'paused') return 3;
@@ -1393,12 +1780,36 @@ function writeLocalRegistryEntry(entry: CctvUpFarmRegistryEntry) {
   }
 }
 
+async function readApiJson<T>(response: Response, label: string): Promise<T> {
+  const contentType = response.headers.get('content-type') || '';
+  const body = await response.text();
+  const trimmedBody = body.trim();
+
+  if (!contentType.toLowerCase().includes('application/json')) {
+    const isHtml = trimmedBody.startsWith('<!DOCTYPE') || trimmedBody.startsWith('<html') || trimmedBody.startsWith('<');
+    const detail = isHtml
+      ? 'JSON 대신 HTML 오류 페이지를 반환했습니다. 로컬 dev 서버 재시작 또는 .next 캐시 정리가 필요합니다.'
+      : `JSON 대신 ${contentType || '알 수 없는 형식'} 응답을 반환했습니다.`;
+    const excerpt = trimmedBody && !isHtml ? ` 응답 일부: ${trimmedBody.slice(0, 120)}` : '';
+    throw new Error(`${label} 응답이 ${detail}${excerpt}`);
+  }
+
+  try {
+    return JSON.parse(body || 'null') as T;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '알 수 없는 JSON 파싱 오류';
+    throw new Error(`${label} 응답 JSON 파싱 실패: ${message}`);
+  }
+}
+
 export default function CctvUpClient() {
   const [theme, setTheme] = useState<ThemeMode>('dark');
+  const [activeMainTab, setActiveMainTab] = useState<MainTab>('live');
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<MonitorFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<MonitorFilter>('issue');
   const [farmCategoryFilters, setFarmCategoryFilters] = useState<Record<CctvUpFarmCategory, boolean>>(INITIAL_FARM_CATEGORY_FILTERS);
   const [monitorScopeFilters, setMonitorScopeFilters] = useState<Record<CctvUpMonitorScopeCode, boolean>>(INITIAL_MONITOR_SCOPE_FILTERS);
+  const [isFarmFilterMenuOpen, setIsFarmFilterMenuOpen] = useState(false);
   const [farmSortMode, setFarmSortMode] = useState<FarmSortMode>('category');
   const [expandedFarmIds, setExpandedFarmIds] = useState<Record<string, boolean>>({});
   const [payload, setPayload] = useState<CctvUpPayload>(initialPayload);
@@ -1411,6 +1822,9 @@ export default function CctvUpClient() {
     snapshots: [],
     incidents: [],
     currentIssues: [],
+    cameraStates: [],
+    issueEvents: [],
+    farmScopeEvents: [],
   });
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [registryPayload, setRegistryPayload] = useState<CctvUpFarmRegistryPayload>(initialRegistryState);
@@ -1449,6 +1863,21 @@ export default function CctvUpClient() {
     error: '',
     lastRanAt: '',
   });
+  const [dailyReportList, setDailyReportList] = useState<CctvUpDailyReportListPayload>({
+    schemaVersion: 1,
+    updatedAt: null,
+    reports: [],
+  });
+  const [dailyReportDetail, setDailyReportDetail] = useState<CctvUpDailyReportDetailPayload | null>(null);
+  const [selectedDailyReportDate, setSelectedDailyReportDate] = useState('');
+  const [isDailyReportListLoading, setIsDailyReportListLoading] = useState(false);
+  const [isDailyReportDetailLoading, setIsDailyReportDetailLoading] = useState(false);
+  const [dailyReportError, setDailyReportError] = useState('');
+  const [dailyReportGenerate, setDailyReportGenerate] = useState<DailyReportGenerateState>({
+    isLoading: false,
+    message: '',
+    error: '',
+  });
   const [isOpsDetailsOpen, setIsOpsDetailsOpen] = useState(false);
   const [isFreshRiskOpen, setIsFreshRiskOpen] = useState(true);
   const [isIssueEventLogOpen, setIsIssueEventLogOpen] = useState(true);
@@ -1473,8 +1902,8 @@ export default function CctvUpClient() {
 
     void (async () => {
       try {
-        const historyResponse = await fetch('/api/cctvup/history/?limit=50', { cache: 'no-store', signal });
-        const nextHistory = (await historyResponse.json()) as CctvUpHistoryPayload;
+        const historyResponse = await fetch('/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000', { cache: 'no-store', signal });
+        const nextHistory = await readApiJson<CctvUpHistoryPayload>(historyResponse, 'history API');
         if (isAborted()) return;
 
         setHistoryPayload({
@@ -1485,6 +1914,7 @@ export default function CctvUpClient() {
           currentIssues: Array.isArray(nextHistory.currentIssues) ? nextHistory.currentIssues : [],
           cameraStates: Array.isArray(nextHistory.cameraStates) ? nextHistory.cameraStates : [],
           issueEvents: Array.isArray(nextHistory.issueEvents) ? nextHistory.issueEvents : [],
+          farmScopeEvents: Array.isArray(nextHistory.farmScopeEvents) ? nextHistory.farmScopeEvents : [],
           message: nextHistory.message,
         });
       } catch (error) {
@@ -1497,6 +1927,7 @@ export default function CctvUpClient() {
             currentIssues: [],
             cameraStates: [],
             issueEvents: [],
+            farmScopeEvents: [],
             message: error instanceof Error ? error.message : 'history 조회 실패',
           });
         }
@@ -1509,7 +1940,7 @@ export default function CctvUpClient() {
       void (async () => {
         try {
           const registryResponse = await fetch('/api/cctvup/registry/', { cache: 'no-store', signal });
-          const nextRegistry = (await registryResponse.json()) as CctvUpFarmRegistryPayload;
+          const nextRegistry = await readApiJson<CctvUpFarmRegistryPayload>(registryResponse, 'registry API');
           if (isAborted()) return;
 
           if (registryResponse.ok && nextRegistry?.items) {
@@ -1544,7 +1975,7 @@ export default function CctvUpClient() {
 
     try {
       const payloadResponse = await fetch('/api/cctvup', { cache: 'no-store', signal });
-      const nextPayload = (await payloadResponse.json()) as CctvUpPayload;
+      const nextPayload = await readApiJson<CctvUpPayload>(payloadResponse, 'CCTVUP API');
       if (isAborted()) return;
 
       setPayload(nextPayload);
@@ -1578,6 +2009,97 @@ export default function CctvUpClient() {
       if (intervalId !== null) window.clearInterval(intervalId);
     };
   }, [refreshCctvUp]);
+
+  const loadDailyReports = useCallback(async (targetDate?: string) => {
+    setIsDailyReportListLoading(true);
+    setDailyReportError('');
+    try {
+      const listResponse = await fetch('/api/cctvup/daily-reports/', { cache: 'no-store' });
+      const list = await readApiJson<CctvUpDailyReportListPayload>(listResponse, '일일 브리핑 목록 API');
+      const normalizedList: CctvUpDailyReportListPayload = {
+        ok: list.ok,
+        source: list.source ?? 'content',
+        schemaVersion: Number(list.schemaVersion ?? 1),
+        updatedAt: list.updatedAt ?? null,
+        reports: Array.isArray(list.reports) ? list.reports : [],
+        message: list.message,
+      };
+      setDailyReportList(normalizedList);
+
+      const nextDate = targetDate || normalizedList.reports[0]?.date || '';
+      setSelectedDailyReportDate(nextDate);
+      if (!nextDate) {
+        setDailyReportDetail(null);
+        return;
+      }
+
+      setIsDailyReportDetailLoading(true);
+      const detailResponse = await fetch(`/api/cctvup/daily-reports/${encodeURIComponent(nextDate)}/`, { cache: 'no-store' });
+      const detail = await readApiJson<CctvUpDailyReportDetailPayload>(detailResponse, '일일 브리핑 상세 API');
+      setDailyReportDetail(detailResponse.ok ? detail : null);
+      if (!detailResponse.ok) {
+        setDailyReportError(detail.message || `일일 브리핑 상세 조회 실패: ${detailResponse.status}`);
+      }
+    } catch (error) {
+      setDailyReportError(error instanceof Error ? error.message : '일일 브리핑 조회 실패');
+      setDailyReportDetail(null);
+    } finally {
+      setIsDailyReportListLoading(false);
+      setIsDailyReportDetailLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDailyReports();
+  }, [loadDailyReports]);
+
+  const runDailyReportGenerate = async () => {
+    const secret = adminSecret.trim();
+    if (!secret) {
+      setDailyReportGenerate({
+        isLoading: false,
+        message: '',
+        error: '관리 secret을 입력해야 일일 브리핑을 생성할 수 있습니다.',
+      });
+      return;
+    }
+
+    setDailyReportGenerate({
+      isLoading: true,
+      message: '',
+      error: '',
+    });
+
+    try {
+      const response = await fetch('/api/cctvup/daily-reports/generate/', {
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-cctvup-cron-secret': secret,
+        },
+        body: JSON.stringify({}),
+      });
+      const result = await readApiJson<{ ok?: boolean; date?: string; message?: string }>(response, '일일 브리핑 생성 API');
+      if (!response.ok || result.ok === false || !result.date) {
+        throw new Error(result.message || `일일 브리핑 생성 실패: ${response.status}`);
+      }
+
+      window.sessionStorage.setItem('cctvup-admin-secret', secret);
+      setDailyReportGenerate({
+        isLoading: false,
+        message: result.message || `${result.date} 일일 브리핑을 생성했습니다.`,
+        error: '',
+      });
+      await loadDailyReports(result.date);
+    } catch (error) {
+      setDailyReportGenerate({
+        isLoading: false,
+        message: '',
+        error: error instanceof Error ? error.message : '일일 브리핑 생성 실패',
+      });
+    }
+  };
 
   const displayRows = useMemo<DisplayRow[]>(() => {
     return monitorRows.map((row) => mergeRegistryEntry(row, registryDraft[row.farm]));
@@ -1613,6 +2135,29 @@ export default function CctvUpClient() {
     );
   }, [farmGroups]);
 
+  const farmStatusFilterCounts = useMemo<Record<MonitorFilter, number>>(() => {
+    const issue = farmGroups.filter((group) => group.isProblem).length;
+    return {
+      all: farmGroups.length,
+      ok: farmGroups.length - issue,
+      issue,
+    };
+  }, [farmGroups]);
+
+  const activeFarmCategoryOptions = FarmCategoryOptions.filter(([category]) => farmCategoryFilters[category]);
+  const activeMonitorScopeOptions = MonitorScopeOptions.filter(([scope]) => monitorScopeFilters[scope]);
+  const farmCategoryFilterLabel = activeFarmCategoryOptions.length === FarmCategoryOptions.length
+    ? '카테고리 전체'
+    : activeFarmCategoryOptions.map(([, label]) => label).join(', ') || '카테고리 없음';
+  const monitorScopeFilterLabel = activeMonitorScopeOptions.length === MonitorScopeOptions.length
+    ? '감시범위 전체'
+    : activeMonitorScopeOptions.map(([, label]) => label).join(', ') || '감시범위 없음';
+  const farmFilterSummary = `${farmCategoryFilterLabel} · ${monitorScopeFilterLabel}`;
+  const farmFilterButtonLabel = [
+    ...activeFarmCategoryOptions.map(([, label]) => label),
+    ...activeMonitorScopeOptions.map(([, label]) => label),
+  ].join('·') || '선택 없음';
+
   const selected = useMemo(() => sortedRows.find((row) => row.id === selectedId), [sortedRows, selectedId]);
 
   const stateSync = payload.stateSync;
@@ -1647,7 +2192,7 @@ export default function CctvUpClient() {
           cache: 'no-store',
           signal: controller.signal,
         });
-        const nextAnalysis = (await response.json()) as CctvUpAnalysisPayload;
+        const nextAnalysis = await readApiJson<CctvUpAnalysisPayload>(response, '중량분석 API');
         if (controller.signal.aborted) return;
 
         setAnalysisState({
@@ -1710,7 +2255,7 @@ export default function CctvUpClient() {
           cache: 'no-store',
           signal: controller.signal,
         });
-        const nextEvidence = (await response.json()) as CctvUpImageEvidencePayload;
+        const nextEvidence = await readApiJson<CctvUpImageEvidencePayload>(response, '저장 근거 API');
         if (controller.signal.aborted) return;
 
         setImageEvidenceState({
@@ -1820,7 +2365,7 @@ export default function CctvUpClient() {
       .filter((group) => farmCategoryFilters[group.category as CctvUpFarmCategory])
       .filter((group) => monitorScopeFilters[getFarmGroupMonitorScope(group)])
       .filter((group) => {
-        if (statusFilter === 'ok') return group.status === 'ok';
+        if (statusFilter === 'ok') return !group.isProblem;
         if (statusFilter === 'issue') return group.isProblem;
         return true;
       })
@@ -1840,13 +2385,18 @@ export default function CctvUpClient() {
     return sortedRows.filter((row) => row.status !== 'ok' && row.status !== 'paused');
   }, [sortedRows]);
 
+  const problemTransitionByCamera = useMemo(() => {
+    return buildCctvUpProblemTransitionMap(historyPayload.issueEvents ?? []);
+  }, [historyPayload.issueEvents]);
+
   const freshProblemRows = useMemo(() => {
-    return problemRows.filter((row) => row.ageMinutes < CHRONIC_AGE_MINUTES);
-  }, [problemRows]);
+    return problemRows.filter((row) => isCctvUpFreshProblemRow(row, problemTransitionByCamera, payload.checkedAt));
+  }, [payload.checkedAt, problemRows, problemTransitionByCamera]);
 
   const chronicProblemRows = useMemo(() => {
-    return problemRows.filter((row) => row.ageMinutes >= CHRONIC_AGE_MINUTES);
-  }, [problemRows]);
+    const freshIds = new Set(freshProblemRows.map((row) => row.id));
+    return problemRows.filter((row) => !freshIds.has(row.id));
+  }, [freshProblemRows, problemRows]);
 
   const counts = useMemo(
     () => ({
@@ -1946,14 +2496,45 @@ export default function CctvUpClient() {
   const recentIssueEvents = useMemo(() => {
     return (historyPayload.issueEvents ?? [])
       .slice()
-      .sort((a, b) => b.eventAt.localeCompare(a.eventAt))
-      .slice(0, 8);
+      .sort((a, b) => b.eventAt.localeCompare(a.eventAt));
   }, [historyPayload.issueEvents]);
+  const recentFarmScopeEvents = useMemo(() => {
+    return (historyPayload.farmScopeEvents ?? [])
+      .slice()
+      .sort((a, b) => b.eventAt.localeCompare(a.eventAt));
+  }, [historyPayload.farmScopeEvents]);
+  const recentTransitionEvents = useMemo(() => {
+    return [
+      ...recentIssueEvents.map((event) => ({
+        id: `camera-${event.id || `${event.cameraKey}-${event.eventAt}-${event.eventKind}`}`,
+        type: 'camera' as const,
+        at: event.eventAt,
+        label: formatIssueEventKind(event.eventKind),
+        title: `${event.farmName || event.farmId} / ${event.houseName || event.houseId} / ${event.cameraName || event.moduleId}`,
+        code: `${event.farmId} / ${event.houseId} / ${event.moduleId}`,
+        message: event.message,
+        eventKind: event.eventKind,
+        cameraKey: event.cameraKey,
+      })),
+      ...recentFarmScopeEvents.map((event) => ({
+        id: `farm-${event.id || `${event.farmId}-${event.eventAt}-${event.eventKind}`}`,
+        type: 'farm' as const,
+        at: event.eventAt,
+        label: formatCctvUpFarmScopeEventKind(event.eventKind),
+        title: event.farmName || event.farmId,
+        code: event.farmId,
+        message: event.message,
+        eventKind: event.eventKind,
+        farmId: event.farmId,
+      })),
+    ].sort((a, b) => b.at.localeCompare(a.at));
+  }, [recentFarmScopeEvents, recentIssueEvents]);
   const recentIssueEventSummary = useMemo(() => ({
     opened: recentIssueEvents.filter((event) => event.eventKind === 'opened' || event.eventKind === 'reopened').length,
     recovering: recentIssueEvents.filter((event) => event.eventKind === 'recovering').length,
     resolved: recentIssueEvents.filter((event) => event.eventKind === 'resolved').length,
   }), [recentIssueEvents]);
+  const recentFarmScopeEventCount = recentFarmScopeEvents.length;
 
   const postRegistryItems = async (items: CctvUpFarmRegistryEntry[]) => {
     const secret = adminSecret.trim();
@@ -1979,7 +2560,7 @@ export default function CctvUpClient() {
       }),
     });
 
-    const result = (await response.json()) as { ok?: boolean; message?: string };
+    const result = await readApiJson<{ ok?: boolean; message?: string }>(response, 'registry 저장 API');
     if (!response.ok || result.ok === false) {
       throw new Error(result.message || `registry 저장 실패: ${response.status}`);
     }
@@ -1998,7 +2579,7 @@ export default function CctvUpClient() {
 
     try {
       const response = await fetch('/api/cctvup/smoke/', { cache: 'no-store' });
-      const result = (await response.json()) as Partial<CctvUpSmokePayload> & { message?: string };
+      const result = await readApiJson<Partial<CctvUpSmokePayload> & { message?: string }>(response, '운영 점검 API');
       const payloadResult: CctvUpSmokePayload = {
         ok: Boolean(result.ok),
         checkedAt: result.checkedAt ?? startedAt,
@@ -2051,7 +2632,7 @@ export default function CctvUpClient() {
           'x-cctvup-runner': 'browser-manual',
         },
       });
-      const result = (await response.json()) as Partial<CctvUpSupabaseDiagnosePayload> & { message?: string };
+      const result = await readApiJson<Partial<CctvUpSupabaseDiagnosePayload> & { message?: string }>(response, 'Supabase 진단 API');
       const payloadResult: CctvUpSupabaseDiagnosePayload = {
         ok: Boolean(result.ok),
         checkedAt: result.checkedAt ?? '',
@@ -2101,7 +2682,7 @@ export default function CctvUpClient() {
           'x-cctvup-cron-secret': secret,
         },
       });
-      const result = (await response.json()) as ManualCheckPayload;
+      const result = await readApiJson<ManualCheckPayload>(response, '수동 체크 API');
       const payloadResult: ManualCheckPayload = {
         ...result,
         ok: Boolean(result.ok),
@@ -2485,7 +3066,7 @@ export default function CctvUpClient() {
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <dt className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>최근 이벤트</dt>
-                      <dd className="tabular-nums">확정 {recentIssueEventSummary.opened} · 회복 {recentIssueEventSummary.recovering} · 해결 {recentIssueEventSummary.resolved}</dd>
+                      <dd className="tabular-nums">확정 {recentIssueEventSummary.opened} · 재수신 {recentIssueEventSummary.recovering} · 해결 {recentIssueEventSummary.resolved}</dd>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <dt className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>열린 문제</dt>
@@ -2514,6 +3095,34 @@ export default function CctvUpClient() {
             </div>
           ) : null}
         </section>
+
+        <section className={`border px-4 py-3 ${panelBg(theme)}`}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {([
+                ['live', '실시간 관제'],
+                ['daily', '일일 브리핑'],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveMainTab(key)}
+                  aria-pressed={activeMainTab === key}
+                  className={`h-9 border px-3 text-sm font-semibold transition ${tabButtonClass(theme, activeMainTab === key)}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+              {activeMainTab === 'live'
+                ? '5분 저장 상태와 현재 문제를 실시간으로 봅니다.'
+                : '하루 단위 MD/raw 보고서를 파일 기준으로 봅니다.'}
+            </p>
+          </div>
+        </section>
+
+        {activeMainTab === 'live' ? (
         <section className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:items-start">
           <article className={`border ${panelBg(theme)}`}>
             <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
@@ -2525,40 +3134,18 @@ export default function CctvUpClient() {
                       농장 {filteredFarmGroups.length}개 · 카메라 {filteredCameraCount}대
                     </span>
                   </div>
-                  <input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="농장 / 축사 / 카메라 / 이름 검색"
-                    className={`mt-2 h-8 w-full border px-3 py-1.5 text-sm outline-none ${inputClass(theme)}`}
-                  />
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {([
-                        ['all', '전체 농장'],
-                        ['ok', '정상 농장'],
-                        ['issue', '문제 농장'],
-                      ] as const).map(([key, label]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setStatusFilter(key)}
-                          className={`inline-flex h-8 w-auto items-center justify-center border px-3 py-1.5 text-center transition ${
-                            statusFilter === key
-                              ? 'border-sky-500 bg-sky-500/10 text-white'
-                              : theme === 'light'
-                                ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                                : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <div className="mt-2 flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="농장 / 축사 / 카메라 / 이름 검색"
+                        className={`h-8 min-w-0 flex-1 border px-3 py-1.5 text-sm outline-none ${inputClass(theme)}`}
+                      />
                       <select
                         value={farmSortMode}
                         onChange={(event) => setFarmSortMode(event.target.value as FarmSortMode)}
-                        className={`h-8 border px-2 text-xs outline-none ${inputClass(theme)}`}
+                        className={`h-8 shrink-0 border px-2 text-xs outline-none sm:w-[132px] ${inputClass(theme)}`}
                         aria-label="농장 정렬"
                       >
                         <option value="issue">문제농장 우선</option>
@@ -2566,45 +3153,115 @@ export default function CctvUpClient() {
                         <option value="category">카테고리별</option>
                         <option value="name">가나다순</option>
                       </select>
-                      <span className={`text-xs ${theme === 'light' ? 'text-slate-400' : 'text-slate-400'}`}>{payload.table}</span>
                     </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    <span className={`mr-1 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>카테고리</span>
-                    {FarmCategoryOptions.map(([category, label]) => {
-                      const isActive = farmCategoryFilters[category];
-                      return (
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {([
+                          ['issue', '문제'],
+                          ['ok', '정상'],
+                          ['all', '전체'],
+                        ] as const).map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setStatusFilter(key)}
+                            aria-pressed={statusFilter === key}
+                            className={`inline-flex h-8 w-auto items-center justify-center border px-3 py-1.5 text-center transition ${
+                              statusFilter === key
+                                ? theme === 'light'
+                                  ? 'border-sky-500 bg-sky-50 text-sky-700'
+                                  : 'border-sky-500 bg-sky-500/10 text-white'
+                                : theme === 'light'
+                                  ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                                  : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'
+                            }`}
+                          >
+                            {label}<span className="ml-1 tabular-nums opacity-75">{farmStatusFilterCounts[key]}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="relative min-w-0">
                         <button
-                          key={`farm-category-filter-${category}`}
                           type="button"
-                          onClick={() => toggleFarmCategoryFilter(category)}
-                          aria-pressed={isActive}
-                          className={`inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-[11px] font-semibold transition ${farmCategoryFilterButtonClass(theme, category, isActive)}`}
+                          onClick={() => setIsFarmFilterMenuOpen((current) => !current)}
+                          aria-haspopup="menu"
+                          aria-expanded={isFarmFilterMenuOpen}
+                          aria-controls="cctvup-farm-filter-menu"
+                          title={`필터: ${farmFilterSummary}`}
+                          className={`inline-flex h-8 max-w-[260px] items-center gap-1 rounded-sm border px-2 text-[11px] font-semibold transition ${
+                            isFarmFilterMenuOpen
+                              ? theme === 'light'
+                                ? 'border-sky-500 bg-sky-50 text-sky-700'
+                                : 'border-sky-500 bg-sky-500/10 text-white'
+                              : theme === 'light'
+                                ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                                : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'
+                          }`}
                         >
-                          <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(category)}`} aria-hidden="true" />
-                          {label}
-                          <span className="ml-0.5 text-[10px] opacity-70">{farmCategoryCounts[category]}</span>
+                          <span className="min-w-0 truncate">필터: {farmFilterButtonLabel}</span>
+                          <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition ${isFarmFilterMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                         </button>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    <span className={`mr-1 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>감시범위</span>
-                    {MonitorScopeOptions.map(([scope, label]) => {
-                      const isActive = monitorScopeFilters[scope];
-                      return (
-                        <button
-                          key={`monitor-scope-filter-${scope}`}
-                          type="button"
-                          onClick={() => toggleMonitorScopeFilter(scope)}
-                          aria-pressed={isActive}
-                          className={`inline-flex h-7 items-center rounded-sm border px-2 text-[11px] font-semibold transition ${monitorScopeBadgeClass(theme, scope, isActive)}`}
-                        >
-                          {label}
-                          <span className="ml-1 text-[10px] opacity-70">{monitorScopeCounts[scope]}</span>
-                        </button>
-                      );
-                    })}
+
+                        {isFarmFilterMenuOpen ? (
+                          <div
+                            id="cctvup-farm-filter-menu"
+                            role="menu"
+                            className={`absolute right-0 top-9 z-30 w-[292px] border p-3 text-xs shadow-lg ${
+                              theme === 'light'
+                                ? 'border-slate-200 bg-white text-slate-700 shadow-slate-200/70'
+                                : 'border-[#314056] bg-[#0a1019] text-slate-200 shadow-black/30'
+                            }`}
+                          >
+                            <div>
+                              <p className={`mb-1 text-[11px] font-semibold ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>카테고리</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                {FarmCategoryOptions.map(([category, label]) => {
+                                  const isActive = farmCategoryFilters[category];
+                                  return (
+                                    <button
+                                      key={`farm-category-filter-${category}`}
+                                      type="button"
+                                      role="menuitemcheckbox"
+                                      onClick={() => toggleFarmCategoryFilter(category)}
+                                      aria-checked={isActive}
+                                      className={`inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-[11px] font-semibold transition ${farmCategoryFilterButtonClass(theme, category, isActive)}`}
+                                    >
+                                      <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(category)}`} aria-hidden="true" />
+                                      {label}
+                                      <span className="ml-auto text-[10px] opacity-70">{farmCategoryCounts[category]}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="mt-3">
+                              <p className={`mb-1 text-[11px] font-semibold ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>감시범위</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                {MonitorScopeOptions.map(([scope, label]) => {
+                                  const isActive = monitorScopeFilters[scope];
+                                  return (
+                                    <button
+                                      key={`monitor-scope-filter-${scope}`}
+                                      type="button"
+                                      role="menuitemcheckbox"
+                                      onClick={() => toggleMonitorScopeFilter(scope)}
+                                      aria-checked={isActive}
+                                      className={`inline-flex h-7 items-center rounded-sm border px-2 text-[11px] font-semibold transition ${monitorScopeBadgeClass(theme, scope, isActive)}`}
+                                    >
+                                      {label}
+                                      <span className="ml-auto text-[10px] opacity-70">{monitorScopeCounts[scope]}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                   {registryError ? <p className="mt-2 text-xs text-red-400">{registryError}</p> : null}
                 </div>
@@ -2612,193 +3269,194 @@ export default function CctvUpClient() {
             </div>
 
             <div className="space-y-px">
+              <div
+                className={`hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.02em] sm:grid ${
+                  theme === 'light' ? 'border-slate-100 bg-slate-50 text-slate-500' : 'border-[#1b2636] bg-[#0a1019] text-slate-500'
+                }`}
+              >
+                <span className="h-1 w-1" aria-hidden="true" />
+                <span>농장</span>
+                <span className="min-w-[76px] text-right">상태</span>
+              </div>
               {filteredFarmGroups.map((group) => {
                 const tone = statusTone[group.status as CameraStatus];
                 const isExpanded = expandedFarmIds[group.farmId] || selected?.farm === group.farmId;
                 const latestRow = sortedRows.find((row) => row.id === group.latestRowId) ?? group.rows[0];
-                const tagsLabel = latestRow?.displayTags.length ? latestRow.displayTags.slice(0, 3).join(' · ') : '';
                 const groupCategory = group.category as CctvUpFarmCategory;
                 const groupScope = getFarmGroupMonitorScope(group);
                 const sourceLabel = latestRow?.farmAffiliates || latestRow?.country
-                  ? `원본 ${latestRow.farmAffiliates || '-'} / ${latestRow.country || '-'}`
+                  ? `원본 ${latestRow.farmAffiliates || '-'}/${latestRow.country || '-'}`
                   : '';
                 const groupCountLabel = group.problemCount > 0
                   ? `문제 ${group.problemCount}/${group.cameraCount}대`
                   : group.status === 'paused'
                     ? `${group.cameraCount}대`
                     : `정상 ${group.okCount}/${group.cameraCount}대`;
-                const showStatusChip = group.status !== 'ok' && group.status !== 'paused';
                 const secondaryText = theme === 'light' ? 'text-slate-500' : 'text-slate-400';
                 const subtleText = theme === 'light' ? 'text-slate-400' : 'text-slate-500';
+                const toggleFarmGroup = () => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }));
                 return (
                   <div key={group.farmId} className={`border-b ${theme === 'light' ? 'border-slate-100' : 'border-[#1b2636]'}`}>
-                    <div className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2 px-3 py-3 transition ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-[#0f1722]'}`}>
-                      <span className={`mt-1 h-11 w-1 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      aria-label={`${group.farmName} ${isExpanded ? '접기' : '펼치기'}`}
+                      onClick={toggleFarmGroup}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          toggleFarmGroup();
+                        }
+                      }}
+                      className={`grid cursor-pointer select-none grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500/70 ${
+                        theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-[#0f1722]'
+                      }`}
+                    >
+                      <span className={`h-11 w-1 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
 
                       <div className="min-w-0">
-                        <div className="flex min-w-0 items-start gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
-                                className="min-w-0 truncate text-left text-sm font-semibold leading-5 hover:underline"
-                              >
-                                {group.farmName}
-                              </button>
-                              {showStatusChip ? (
-                                <span className={`inline-flex h-5 shrink-0 items-center rounded-sm border px-1.5 text-[10px] font-semibold ${tone.badge}`}>
-                                  {tone.label}
-                                </span>
-                              ) : null}
-                            </div>
+                        <div className={`truncate text-[10px] font-medium leading-3 tabular-nums ${subtleText}`}>
+                          {group.farmId}
+                        </div>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="block min-w-0 truncate text-left text-base font-semibold leading-5">
+                            {group.farmName}
+                          </span>
+                          {group.status !== 'ok' && group.status !== 'paused' ? (
+                            <span className={`inline-flex h-5 shrink-0 items-center rounded-sm border px-1.5 text-[10px] font-semibold ${tone.badge}`}>
+                              {tone.label}
+                            </span>
+                          ) : null}
+                        </div>
 
+                        <div className={`mt-0.5 flex min-w-0 items-center justify-start gap-1 text-left text-[11px] leading-4 ${secondaryText}`}>
+                          <div
+                            className="relative shrink-0"
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                          >
                             <button
                               type="button"
-                              onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
-                              className={`mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0 text-left text-[11px] leading-4 tabular-nums ${secondaryText}`}
+                              onClick={() => setCategoryMenuFarmId((current) => (current === group.farmId ? '' : group.farmId))}
+                              disabled={isRegistrySaving}
+                              className={`inline-flex h-5 items-center gap-1 rounded-sm border border-transparent bg-transparent px-1 text-[11px] font-medium leading-none transition disabled:opacity-50 ${
+                                theme === 'light'
+                                  ? 'text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+                                  : 'text-slate-300 hover:border-[#314056] hover:bg-white/5'
+                              }`}
+                              aria-haspopup="menu"
+                              aria-expanded={categoryMenuFarmId === group.farmId}
+                              aria-label={`${group.farmName} 현재 분류 ${FarmBadgeLabels[groupCategory]}`}
+                              title={sourceLabel ? `${FarmBadgeLabels[groupCategory]} (${sourceLabel})` : FarmBadgeLabels[groupCategory]}
                             >
-                              <span>{group.farmId}</span>
-                              <span className={subtleText}>·</span>
-                              <span>최신 {group.latestAt}</span>
-                              {group.problemCount > 0 ? (
-                                <>
-                                  <span className={subtleText}>·</span>
-                                  <span>미수집 {group.problemCount}대</span>
-                                </>
-                              ) : null}
+                              <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(groupCategory)}`} aria-hidden="true" />
+                              {FarmBadgeLabels[groupCategory]}
+                              <ChevronDown className="h-3 w-3 opacity-60" aria-hidden="true" />
                             </button>
-
-                            <div className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-4 ${secondaryText}`}>
-                              <span>{MonitorScopeLabels[groupScope]}</span>
-                              <span className={subtleText}>·</span>
-                              <div className="relative shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => setCategoryMenuFarmId((current) => (current === group.farmId ? '' : group.farmId))}
-                                  disabled={isRegistrySaving}
-                                  className={`inline-flex h-5 items-center gap-1 rounded-sm border border-transparent bg-transparent px-1 text-[11px] font-medium leading-none transition disabled:opacity-50 ${
-                                    theme === 'light'
-                                      ? 'text-slate-600 hover:border-slate-200 hover:bg-slate-50'
-                                      : 'text-slate-300 hover:border-[#314056] hover:bg-white/5'
-                                  }`}
-                                  aria-haspopup="menu"
-                                  aria-expanded={categoryMenuFarmId === group.farmId}
-                                  aria-label={`${group.farmName} 현재 분류 ${FarmBadgeLabels[groupCategory]}`}
-                                >
-                                  <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(groupCategory)}`} aria-hidden="true" />
-                                  {FarmBadgeLabels[groupCategory]}
-                                  <ChevronDown className="h-3 w-3 opacity-60" aria-hidden="true" />
-                                </button>
-                                {categoryMenuFarmId === group.farmId ? (
-                                  <div
-                                    role="menu"
-                                    className={`absolute left-0 top-6 z-20 w-[96px] border p-1 shadow-lg ${
-                                      theme === 'light'
-                                        ? 'border-slate-200 bg-white shadow-slate-200/70'
-                                        : 'border-[#314056] bg-[#0a1019] shadow-black/30'
-                                    }`}
-                                  >
-                                    {FarmCategoryOptions.map(([category, label]) => {
-                                      const isActive = groupCategory === category;
-                                      return (
-                                        <button
-                                          key={category}
-                                          type="button"
-                                          role="menuitemradio"
-                                          aria-checked={isActive}
-                                          onClick={() => {
-                                            setCategoryMenuFarmId('');
-                                            if (!isActive) void saveFarmGroupCategory(group, category);
-                                          }}
-                                          className={`mb-1 inline-flex h-6 w-full items-center gap-1 rounded-sm border px-1.5 text-left text-[10px] font-semibold transition last:mb-0 ${farmCategoryButtonClass(theme, category, isActive)}`}
-                                        >
-                                          <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(category)}`} aria-hidden="true" />
-                                          {label}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                ) : null}
+                            {categoryMenuFarmId === group.farmId ? (
+                              <div
+                                role="menu"
+                                className={`absolute left-0 top-6 z-20 w-[96px] border p-1 shadow-lg ${
+                                  theme === 'light'
+                                    ? 'border-slate-200 bg-white shadow-slate-200/70'
+                                    : 'border-[#314056] bg-[#0a1019] shadow-black/30'
+                                }`}
+                              >
+                                {FarmCategoryOptions.map(([category, label]) => {
+                                  const isActive = groupCategory === category;
+                                  return (
+                                    <button
+                                      key={category}
+                                      type="button"
+                                      role="menuitemradio"
+                                      aria-checked={isActive}
+                                      onClick={() => {
+                                        setCategoryMenuFarmId('');
+                                        if (!isActive) void saveFarmGroupCategory(group, category);
+                                      }}
+                                      className={`mb-1 inline-flex h-6 w-full items-center gap-1 rounded-sm border px-1.5 text-left text-[10px] font-semibold transition last:mb-0 ${farmCategoryButtonClass(theme, category, isActive)}`}
+                                    >
+                                      <span className={`h-3 w-0.5 rounded-full ${farmCategoryMarkerClass(category)}`} aria-hidden="true" />
+                                      {label}
+                                    </button>
+                                  );
+                                })}
                               </div>
-                              {sourceLabel ? (
-                                <>
-                                  <span className={subtleText}>·</span>
-                                  <span>{sourceLabel}</span>
-                                </>
-                              ) : null}
-                              {tagsLabel ? <><span className={subtleText}>·</span><span>{tagsLabel}</span></> : null}
-                              {latestRow?.displayMemo ? <><span className={subtleText}>·</span><span className="truncate">{latestRow.displayMemo}</span></> : null}
-                            </div>
+                            ) : null}
                           </div>
+                          <span className={subtleText}>·</span>
+                          <span className="shrink-0">{MonitorScopeLabels[groupScope]}</span>
+                          <span className={subtleText}>·</span>
+                          <span className="min-w-0 truncate tabular-nums">최신 {group.latestAt}</span>
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-1">
+                      <div className="flex min-w-[76px] shrink-0 items-center justify-end gap-1">
                         <span className={`text-[11px] font-medium tabular-nums ${group.problemCount > 0 ? (theme === 'light' ? 'text-red-600' : 'text-red-200') : secondaryText}`}>
                           {groupCountLabel}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => setExpandedFarmIds((current) => ({ ...current, [group.farmId]: !isExpanded }))}
+                        <span
                           className={`inline-flex h-7 w-7 items-center justify-center rounded-sm border transition ${
                             theme === 'light'
                               ? 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
                               : 'border-[#243041] bg-[#0a1019] text-slate-300 hover:bg-white/5'
                           }`}
-                          aria-label={`${group.farmName} ${isExpanded ? '접기' : '펼치기'}`}
+                          aria-hidden="true"
                         >
                           {isExpanded ? <ChevronDown className="h-4 w-4" aria-hidden="true" /> : <ChevronRight className="h-4 w-4" aria-hidden="true" />}
-                        </button>
+                        </span>
                       </div>
                     </div>
 
                     {isExpanded ? (
-                      <div className={`${theme === 'light' ? 'bg-slate-50/70' : 'bg-[#0a1019]'}`}>
-                        {group.rows.map((row: DisplayRow) => {
-                          const isSelected = row.id === selected?.id;
-                          const percent = slotCompletionPercent(row.slots);
-                          return (
-                            <button
-                              key={row.id}
-                              type="button"
-                              onClick={() => setSelectedId(row.id)}
-                              className={`flex w-full items-start justify-between gap-3 border-t px-5 py-2 text-left transition ${
-                                theme === 'light' ? 'border-slate-100 hover:bg-white' : 'border-[#1b2636] hover:bg-[#0f1722]'
-                              } ${isSelected ? (theme === 'light' ? 'bg-sky-50' : 'bg-[#13213a]') : ''}`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                                  <span className={`inline-flex h-5 min-w-[48px] items-center justify-center rounded-sm border px-1.5 text-[10px] font-semibold tabular-nums ${percent === 100 ? 'border-emerald-500/40 bg-emerald-500 text-white' : 'border-red-500/40 bg-red-500 text-white'}`}>
-                                    {percent}%
-                                  </span>
-                                  <span className={`min-w-0 truncate text-xs font-medium leading-5 ${theme === 'light' ? 'text-slate-700' : 'text-slate-200'}`}>
-                                    {row.displayHouseName} / {row.displayCameraName}
-                                  </span>
-                                  <span className={`text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    {row.house} / {row.camera}
-                                  </span>
-                                  <span className={`inline-flex items-center gap-1 text-[10px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                                    <span className={`h-1.5 w-1.5 rounded-full ${statusTone[row.status].dot}`} />
-                                    {statusTone[row.status].label}
-                                  </span>
+                      <div className={`${theme === 'light' ? 'bg-white' : 'bg-[#182437]'}`}>
+                        <div className="pl-8">
+                          {group.rows.map((row: DisplayRow) => {
+                            const isSelected = row.id === selected?.id;
+                            const percent = slotCompletionPercent(row.slots);
+                            return (
+                              <button
+                                key={row.id}
+                                type="button"
+                                onClick={() => setSelectedId(row.id)}
+                                className={`flex w-full items-start justify-between gap-3 py-2 pl-8 pr-4 text-left transition ${
+                                  theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-[#20304a]'
+                                } ${isSelected ? (theme === 'light' ? 'bg-sky-50 hover:bg-sky-50' : 'bg-[#1d3b63] hover:bg-[#1d3b63]') : ''}`}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                    <span className={`inline-flex h-5 min-w-[48px] items-center justify-center rounded-sm border px-1.5 text-[10px] font-semibold tabular-nums ${percent === 100 ? 'border-emerald-500/40 bg-emerald-500 text-white' : 'border-red-500/40 bg-red-500 text-white'}`}>
+                                      {percent}%
+                                    </span>
+                                    <span className={`min-w-0 truncate text-xs font-medium leading-5 ${theme === 'light' ? 'text-slate-700' : 'text-slate-200'}`}>
+                                      {row.displayHouseName} / {row.displayCameraName}
+                                    </span>
+                                    <span className={`text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                                      {row.house} / {row.camera}
+                                    </span>
+                                    <span className={`inline-flex items-center gap-1 text-[10px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                                      <span className={`h-1.5 w-1.5 rounded-full ${statusTone[row.status].dot}`} />
+                                      {statusTone[row.status].label}
+                                    </span>
+                                  </div>
+                                  <div className={`mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1 text-[11px] leading-4 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    <span>최신 {row.latestAt}</span>
+                                    <span>/</span>
+                                    <span>지연 {row.ageMinutes >= 999 ? '-' : `${row.ageMinutes}m`}</span>
+                                    <span>/</span>
+                                    <span>미수집 {row.missCount ?? row.consecutiveMiss}/3</span>
+                                    <span>/</span>
+                                    <span>{row.reason}</span>
+                                  </div>
                                 </div>
-                                <div className={`mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1 text-[11px] leading-4 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                                  <span>최신 {row.latestAt}</span>
-                                  <span>/</span>
-                                  <span>지연 {row.ageMinutes >= 999 ? '-' : `${row.ageMinutes}m`}</span>
-                                  <span>/</span>
-                                  <span>미수집 {row.missCount ?? row.consecutiveMiss}/3</span>
-                                  <span>/</span>
-                                  <span>{row.reason}</span>
+                                <div className="w-full max-w-[170px] shrink-0 self-center">
+                                  <SlotEnergyBar slots={row.slots} theme={theme} />
                                 </div>
-                              </div>
-                              <div className="w-full max-w-[170px] shrink-0 self-center">
-                                <SlotEnergyBar slots={row.slots} theme={theme} />
-                              </div>
-                            </button>
-                          );
-                        })}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -3149,7 +3807,7 @@ export default function CctvUpClient() {
                         <span className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{selectedStateTransitions.length}건</span>
                       </div>
                       <p className={`mt-1 text-xs leading-5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                        이미지 수신 상태머신의 문제확정, 회복중, 해결 이벤트만 보여줍니다. 분석/보정/대표값 참고 정보는 이 로그에 저장하지 않습니다.
+                        이미지 수신 상태머신의 문제확정, 이미지 재수신, 해결 이벤트만 보여줍니다. 분석/보정/대표값 참고 정보는 이 로그에 저장하지 않습니다.
                       </p>
                       {selectedStateTransitions.length ? (
                         <div className="mt-3 space-y-2">
@@ -3196,9 +3854,9 @@ export default function CctvUpClient() {
                 <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h2 className="text-lg font-semibold">최근 입력 리스크</h2>
+                      <h2 className="text-lg font-semibold">입력 상태전환 리스크</h2>
                       <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                        중량예측에 영향을 줄 수 있는 CCTV 이미지 수신 지연, 문제확정, 회복중 상태를 보여줍니다.
+                        중량예측에 영향을 줄 수 있는 CCTV 이미지 문제확정과 이미지 재수신 상태를 보여줍니다.
                       </p>
                     </div>
                     <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -3212,7 +3870,7 @@ export default function CctvUpClient() {
                     <div>
                       <h3 className="text-sm font-semibold">지금 확인할 문제</h3>
                       <p className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                        새로 보거나 우선 확인할 문제를 먼저 보여줍니다.
+                        최근 3시간 내 문제확정 또는 이미지 재수신으로 바뀐 항목입니다.
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
@@ -3290,18 +3948,18 @@ export default function CctvUpClient() {
                   <div className={`border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-sm font-semibold">최근 상태전환 로그</h3>
+                        <h3 className="text-sm font-semibold">30일 상태전환 로그</h3>
                         <p className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                          Supabase issue_events에 실제로 남은 확정, 회복, 해결 이벤트입니다.
+                          Supabase에 남은 30일 내 이미지 수신 문제와 농장 감시범위 전환 이벤트입니다.
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                          확정 {recentIssueEventSummary.opened} · 회복 {recentIssueEventSummary.recovering} · 해결 {recentIssueEventSummary.resolved}
+                          확정 {recentIssueEventSummary.opened} · 재수신 {recentIssueEventSummary.recovering} · 해결 {recentIssueEventSummary.resolved} · 농장 {recentFarmScopeEventCount}
                         </span>
                         <CollapseToggle
                           isOpen={isIssueEventLogOpen}
-                          label="최근 상태전환 로그"
+                          label="30일 상태전환 로그"
                           onClick={() => setIsIssueEventLogOpen((value) => !value)}
                           theme={theme}
                         />
@@ -3309,25 +3967,34 @@ export default function CctvUpClient() {
                     </div>
                   </div>
                   {isIssueEventLogOpen ? (
-                    recentIssueEvents.length ? (
+                    recentTransitionEvents.length ? (
                     <div className={`max-h-[360px] overflow-y-auto divide-y ${theme === 'light' ? 'divide-slate-200' : 'divide-[#243041]'}`}>
-                      {recentIssueEvents.map((event) => (
+                      {recentTransitionEvents.map((event) => (
                         <button
-                          key={`${event.cameraKey}-${event.eventAt}-${event.eventKind}`}
+                          key={event.id}
                           type="button"
-                          onClick={() => setSelectedId(event.cameraKey)}
+                          onClick={() => {
+                            if (event.type === 'camera') {
+                              setSelectedId(event.cameraKey);
+                              return;
+                            }
+                            setExpandedFarmIds((current) => ({
+                              ...current,
+                              [event.farmId]: true,
+                            }));
+                          }}
                           className={`flex min-h-[58px] w-full items-start justify-between gap-3 px-4 py-3 text-left transition ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-[#0a1019]'}`}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 flex-wrap items-center gap-2">
-                              <span className={`inline-flex shrink-0 border px-2 py-0.5 text-[10px] font-semibold ${issueEventToneClass(theme, event.eventKind)}`}>
-                                {formatIssueEventKind(event.eventKind)}
+                              <span className={`inline-flex shrink-0 border px-2 py-0.5 text-[10px] font-semibold ${event.type === 'camera' ? issueEventToneClass(theme, event.eventKind) : farmScopeEventToneClass(theme, event.eventKind)}`}>
+                                {event.label}
                               </span>
                               <span className="min-w-0 truncate text-xs font-medium">
-                                {event.farmName || event.farmId} / {event.houseName || event.houseId} / {event.cameraName || event.moduleId}
+                                {event.title}
                               </span>
                               <span className={`text-[10px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
-                                {event.farmId} / {event.houseId} / {event.moduleId}
+                                {event.code}
                               </span>
                             </div>
                             <p className={`mt-1 line-clamp-2 text-[11px] leading-4 ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -3335,7 +4002,7 @@ export default function CctvUpClient() {
                             </p>
                           </div>
                           <span className={`shrink-0 text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {formatEventTime(event.eventAt)}
+                            {formatEventTime(event.at)}
                           </span>
                         </button>
                       ))}
@@ -3424,6 +4091,20 @@ export default function CctvUpClient() {
           </aside>
 
         </section>
+        ) : (
+          <DailyReportPanel
+            theme={theme}
+            listPayload={dailyReportList}
+            detailPayload={dailyReportDetail}
+            selectedDate={selectedDailyReportDate}
+            isListLoading={isDailyReportListLoading}
+            isDetailLoading={isDailyReportDetailLoading}
+            generateState={dailyReportGenerate}
+            error={dailyReportError}
+            onSelectDate={(date) => void loadDailyReports(date)}
+            onGenerate={() => void runDailyReportGenerate()}
+          />
+        )}
       </main>
     </div>
   );

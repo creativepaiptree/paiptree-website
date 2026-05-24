@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-05-23T15:05:05.478Z",
+  "reports": [
+    {
+      "date": "2026-05-23",
+      "title": "2026-05-23 CCTVUP 일일 브리핑",
+      "companyCount": 3,
+      "notableFarmCount": 16,
+      "issueEventCount": 45,
+      "farmScopeEventCount": 0,
+      "activeIssueCount": 36,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-23.md",
+      "rawPath": "2026/05/2026-05-23.raw.json",
+      "generatedAt": "2026-05-23T15:05:05.478Z"
+    },
+    {
+      "date": "2026-05-22",
+      "title": "2026-05-22 CCTVUP 일일 브리핑",
+      "companyCount": 3,
+      "notableFarmCount": 21,
+      "issueEventCount": 66,
+      "farmScopeEventCount": 6,
+      "activeIssueCount": 32,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-22.md",
+      "rawPath": "2026/05/2026-05-22.raw.json",
+      "generatedAt": "2026-05-22T15:05:05.193Z"
+    },
+    {
+      "date": "2026-05-21",
+      "title": "2026-05-21 CCTVUP 일일 브리핑",
+      "companyCount": 3,
+      "notableFarmCount": 18,
+      "issueEventCount": 69,
+      "farmScopeEventCount": 2,
+      "activeIssueCount": 37,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-21.md",
+      "rawPath": "2026/05/2026-05-21.raw.json",
+      "generatedAt": "2026-05-21T15:05:01.416Z"
+    },
+    {
+      "date": "2026-05-20",
+      "title": "2026-05-20 CCTVUP 일일 브리핑",
+      "companyCount": 3,
+      "notableFarmCount": 20,
+      "issueEventCount": 78,
+      "farmScopeEventCount": 4,
+      "activeIssueCount": 33,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-20.md",
+      "rawPath": "2026/05/2026-05-20.raw.json",
+      "generatedAt": "2026-05-20T15:05:05.399Z"
+    },
+    {
+      "date": "2026-05-19",
+      "title": "2026-05-19 CCTVUP 일일 브리핑",
+      "companyCount": 4,
+      "notableFarmCount": 22,
+      "issueEventCount": 64,
+      "farmScopeEventCount": 7,
+      "activeIssueCount": 33,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-19.md",
+      "rawPath": "2026/05/2026-05-19.raw.json",
+      "generatedAt": "2026-05-19T15:05:05.946Z"
+    },
+    {
+      "date": "2026-05-18",
+      "title": "2026-05-18 CCTVUP 일일 브리핑",
+      "companyCount": 4,
+      "notableFarmCount": 19,
+      "issueEventCount": 56,
+      "farmScopeEventCount": 3,
+      "activeIssueCount": 34,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-18.md",
+      "rawPath": "2026/05/2026-05-18.raw.json",
+      "generatedAt": "2026-05-18T15:05:05.888Z"
+    },
+    {
+      "date": "2026-05-17",
+      "title": "2026-05-17 CCTVUP 일일 브리핑",
+      "companyCount": 4,
+      "notableFarmCount": 48,
+      "issueEventCount": 20,
+      "farmScopeEventCount": 0,
+      "activeIssueCount": 181,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-17.md",
+      "rawPath": "2026/05/2026-05-17.raw.json",
+      "generatedAt": "2026-05-17T15:05:05.116Z"
+    },
+    {
+      "date": "2026-05-16",
+      "title": "2026-05-16 CCTVUP 일일 브리핑",
+      "companyCount": 3,
+      "notableFarmCount": 14,
+      "issueEventCount": 37,
+      "farmScopeEventCount": 0,
+      "activeIssueCount": 33,
+      "status": "generated",
+      "markdownPath": "2026/05/2026-05-16.md",
+      "rawPath": "2026/05/2026-05-16.raw.json",
+      "generatedAt": "2026-05-17T13:39:23.568Z"
+    }
+  ]
+}

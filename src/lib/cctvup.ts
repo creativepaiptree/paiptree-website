@@ -6,6 +6,8 @@ export type CctvUpStateStatus = 'ok' | 'watching' | 'open' | 'recovering' | 'res
 
 export type CctvUpIssueEventKind = 'opened' | 'recovering' | 'resolved' | 'reopened';
 
+export type CctvUpFarmScopeEventKind = 'activated' | 'resting_started' | 'review_needed' | 'uninstalled' | 'scope_changed';
+
 export type CctvUpStateSyncStatus = 'applied' | 'unavailable' | 'disabled';
 
 export type CctvUpMonitorScopeCode = 'active' | 'resting' | 'needs_review' | 'uninstalled';
@@ -249,6 +251,41 @@ export type CctvUpIssueEvent = {
   message: string;
 };
 
+export type CctvUpFarmScopeState = {
+  id?: string;
+  runId?: string | null;
+  farmId: string;
+  farmName?: string | null;
+  monitorScopeCode: CctvUpMonitorScopeCode;
+  monitorScopeLabel?: string | null;
+  cycleBucketCode?: CctvUpCycleBucketCode | null;
+  cycleBucketLabel?: string | null;
+  gatewayInstalledCount: number;
+  cameraCount: number;
+  activeCameraCount: number;
+  lastCheckedAt: string;
+  message: string;
+};
+
+export type CctvUpFarmScopeEvent = {
+  id?: string;
+  runId?: string | null;
+  farmId: string;
+  farmName?: string | null;
+  eventKind: CctvUpFarmScopeEventKind;
+  previousScopeCode?: CctvUpMonitorScopeCode | null;
+  nextScopeCode: CctvUpMonitorScopeCode;
+  previousCycleBucketCode?: CctvUpCycleBucketCode | null;
+  nextCycleBucketCode?: CctvUpCycleBucketCode | null;
+  previousCycleBucketLabel?: string | null;
+  nextCycleBucketLabel?: string | null;
+  eventAt: string;
+  gatewayInstalledCount: number;
+  cameraCount: number;
+  activeCameraCount: number;
+  message: string;
+};
+
 export const CCTVUP_TABLE = 'paip.tbl_farm_image';
 export const CCTVUP_HISTORY_CHECK_RUNS_TABLE = 'public.tbl_cctvup_check_runs';
 export const CCTVUP_HISTORY_CAMERA_SNAPSHOTS_TABLE = 'public.tbl_cctvup_camera_snapshots';
@@ -256,6 +293,8 @@ export const CCTVUP_HISTORY_INCIDENT_LOGS_TABLE = 'public.tbl_cctvup_incident_lo
 export const CCTVUP_HISTORY_CURRENT_ISSUES_TABLE = 'public.tbl_cctvup_current_issues';
 export const CCTVUP_CAMERA_STATES_TABLE = 'public.tbl_cctvup_camera_states';
 export const CCTVUP_ISSUE_EVENTS_TABLE = 'public.tbl_cctvup_issue_events';
+export const CCTVUP_FARM_SCOPE_STATES_TABLE = 'public.tbl_cctvup_farm_scope_states';
+export const CCTVUP_FARM_SCOPE_EVENTS_TABLE = 'public.tbl_cctvup_farm_scope_events';
 export const CCTVUP_EXPECTED_1H = 12;
 export const CCTVUP_EXPECTED_24H = 288;
 

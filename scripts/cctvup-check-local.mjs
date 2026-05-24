@@ -82,6 +82,9 @@ try {
     openedCount: payload?.openedCount,
     recoveringCount: payload?.recoveringCount,
     resolvedCount: payload?.resolvedCount,
+    farmScopeStateCount: payload?.farmScopeStateCount,
+    farmScopeEventCount: payload?.farmScopeEventCount,
+    farmScopeMessage: payload?.farmScopeMessage,
     message: payload?.message || response.statusText,
   };
 

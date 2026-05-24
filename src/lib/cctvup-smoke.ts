@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { buildKstReportDateFromNow } from '@/lib/cctvup-daily-report.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -84,10 +85,36 @@ type CctvUpSmokeIssueEvent = {
   farm_id?: string;
 };
 
+type CctvUpSmokeFarmScopeEvent = {
+  eventKind?: string;
+  event_kind?: string;
+  eventAt?: string;
+  event_at?: string;
+  farmId?: string;
+  farm_id?: string;
+};
+
 type CctvUpSmokeHistoryPayload = {
   checkRuns?: CctvUpSmokeHistoryRun[];
   cameraStates?: CctvUpSmokeHistoryState[];
   issueEvents?: CctvUpSmokeIssueEvent[];
+  farmScopeEvents?: CctvUpSmokeFarmScopeEvent[];
+};
+
+type CctvUpSmokeRegistryPayload = {
+  source?: string;
+  items?: unknown[];
+  message?: string;
+};
+
+type CctvUpSmokeDailyReportPayload = {
+  reports?: Array<{
+    date?: string;
+    generatedAt?: string;
+    issueEventCount?: number;
+    farmScopeEventCount?: number;
+    activeIssueCount?: number;
+  }>;
 };
 
 type CheckRunSummary = {
@@ -160,6 +187,11 @@ async function fetchText(url: string, timeoutMs: number, init: RequestInit = {})
 
 async function fetchJson<T>(url: string, timeoutMs: number, init: RequestInit = {}): Promise<T> {
   const { response, text } = await fetchText(url, timeoutMs, init);
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    throw new Error(`${url} ${response.status}: JSON 대신 ${contentType || '알 수 없는 형식'} 응답을 반환했습니다. ${text.trim().slice(0, 120)}`);
+  }
+
   let payload: unknown = null;
   try {
     payload = text ? JSON.parse(text) : null;
@@ -216,6 +248,20 @@ function countBy<T>(rows: T[], keyFn: (row: T) => string): Record<string, number
   return counts;
 }
 
+function hasDailyReportLaunchdSchedule(stdout = ''): boolean {
+  return /"Hour" => 0/.test(stdout) && /"Minute" => 5/.test(stdout);
+}
+
+function kstMinutesSinceMidnight(date: Date): number {
+  const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return kstDate.getUTCHours() * 60 + kstDate.getUTCMinutes();
+}
+
+function expectedLatestDailyReportDate(now: Date): string {
+  const afterDailyReportWindow = kstMinutesSinceMidnight(now) >= 10;
+  return buildKstReportDateFromNow(now, afterDailyReportWindow ? -1 : -2);
+}
+
 function buildSmokeMessage(failureCount: number, warningCount: number) {
   if (failureCount > 0) return `운영 점검 실패 ${failureCount}건, 확인 필요 ${warningCount}건입니다.`;
   if (warningCount > 0) return `운영 핵심은 통과했고 확인 필요 ${warningCount}건이 있습니다.`;
@@ -245,6 +291,15 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
       'launchd cctvup-check',
       checkLaunchd.ok && /run interval = 300 seconds/.test(checkLaunchd.stdout || '') && /last exit code = 0/.test(checkLaunchd.stdout || ''),
       checkLaunchd.ok ? 'interval=300s · last_exit=0' : checkLaunchd.message,
+      undefined,
+      false,
+    ));
+
+    const dailyReportLaunchd = await getLaunchd('com.paiptree.cctvup-daily-report');
+    steps.push(createStep(
+      'launchd cctvup-daily-report',
+      dailyReportLaunchd.ok && hasDailyReportLaunchdSchedule(dailyReportLaunchd.stdout || '') && /last exit code = 0/.test(dailyReportLaunchd.stdout || ''),
+      dailyReportLaunchd.ok ? 'calendar 00:05 · last_exit=0' : dailyReportLaunchd.message,
       undefined,
       false,
     ));
@@ -294,7 +349,43 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
       },
     ));
 
-    const historyPayload = await fetchJson<CctvUpSmokeHistoryPayload>(`${baseUrl}/api/cctvup/history/?limit=50`, timeoutMs * 2);
+    try {
+      const registryPayload = await fetchJson<CctvUpSmokeRegistryPayload>(`${baseUrl}/api/cctvup/registry/`, timeoutMs);
+      const registryItems = Array.isArray(registryPayload.items) ? registryPayload.items : [];
+      steps.push(createStep(
+        'api /api/cctvup/registry JSON',
+        Array.isArray(registryPayload.items),
+        `${registryPayload.source || 'unknown'} · items ${registryItems.length}`,
+        {
+          source: registryPayload.source,
+          itemCount: registryItems.length,
+          message: registryPayload.message,
+        },
+      ));
+    } catch (error) {
+      steps.push(createStep('api /api/cctvup/registry JSON', false, normalizeError(error)));
+    }
+
+    try {
+      const dailyReportPayload = await fetchJson<CctvUpSmokeDailyReportPayload>(`${baseUrl}/api/cctvup/daily-reports/`, timeoutMs);
+      const reports = Array.isArray(dailyReportPayload.reports) ? dailyReportPayload.reports : [];
+      const latestReport = reports[0] || null;
+      const expectedDate = expectedLatestDailyReportDate(now);
+      steps.push(createStep(
+        'daily report manifest',
+        reports.some((report) => report.date === expectedDate),
+        `expected ${expectedDate} · latest ${latestReport?.date || 'none'} · reports ${reports.length}`,
+        {
+          expectedDate,
+          latestReport,
+        },
+        false,
+      ));
+    } catch (error) {
+      steps.push(createStep('daily report manifest', false, normalizeError(error), undefined, false));
+    }
+
+    const historyPayload = await fetchJson<CctvUpSmokeHistoryPayload>(`${baseUrl}/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000`, timeoutMs * 2);
     const checkRuns = parseCheckRuns(historyPayload);
     const latestRun = checkRuns[0];
     const latestAgeMinutes = latestRun?.checkedAt ? minutesBetween(now, latestRun.checkedAt) : null;
@@ -338,6 +429,19 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
       issueEvents.length > 0,
       `events ${issueEvents.length}`,
       issueEvents.slice(0, 5).map((event) => ({
+        kind: event.eventKind || event.event_kind,
+        at: event.eventAt || event.event_at,
+        farm: event.farmId || event.farm_id,
+      })),
+      false,
+    ));
+
+    const farmScopeEvents = Array.isArray(historyPayload.farmScopeEvents) ? historyPayload.farmScopeEvents : [];
+    steps.push(createStep(
+      'history farmScopeEvents',
+      Array.isArray(historyPayload.farmScopeEvents),
+      `events ${farmScopeEvents.length}`,
+      farmScopeEvents.slice(0, 5).map((event) => ({
         kind: event.eventKind || event.event_kind,
         at: event.eventAt || event.event_at,
         farm: event.farmId || event.farm_id,

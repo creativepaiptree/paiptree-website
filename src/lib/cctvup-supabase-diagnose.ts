@@ -231,6 +231,8 @@ export async function diagnoseCctvUpSupabase(): Promise<CctvUpSupabaseDiagnosePa
     ['rest.camera_states.any', 'tbl_cctvup_camera_states?select=id,camera_key,status,last_checked_at&limit=1'],
     ['rest.camera_states.active', 'tbl_cctvup_camera_states?select=id,camera_key,status,last_checked_at&status=in.(watching,open,recovering)&order=last_checked_at.desc&limit=1'],
     ['rest.issue_events', 'tbl_cctvup_issue_events?select=id,camera_key,event_kind,event_at&order=event_at.desc&limit=1'],
+    ['rest.farm_scope_states', 'tbl_cctvup_farm_scope_states?select=id,farm_id,monitor_scope_code,last_checked_at&limit=1'],
+    ['rest.farm_scope_events', 'tbl_cctvup_farm_scope_events?select=id,farm_id,event_kind,event_at&order=event_at.desc&limit=1'],
     ['rest.registry', 'tbl_cctvup_farm_registry?select=farm_id,category&limit=1'],
   ];
 

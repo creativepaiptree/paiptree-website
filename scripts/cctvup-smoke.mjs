@@ -4,6 +4,7 @@ import { execFile } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
+import { buildKstReportDateFromNow } from '../src/lib/cctvup-daily-report.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -84,6 +85,11 @@ async function fetchText(url, timeoutMs, init = {}) {
 
 async function fetchJson(url, timeoutMs, init = {}) {
   const { response, text } = await fetchText(url, timeoutMs, init);
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    throw new Error(`${url} ${response.status}: JSON 대신 ${contentType || '알 수 없는 형식'} 응답을 반환했습니다. ${text.trim().slice(0, 120)}`);
+  }
+
   let payload = null;
   try {
     payload = text ? JSON.parse(text) : null;
@@ -132,6 +138,20 @@ function countBy(rows, keyFn) {
     counts[key] = (counts[key] || 0) + 1;
   }
   return counts;
+}
+
+function hasDailyReportLaunchdSchedule(stdout = '') {
+  return /"Hour" => 0/.test(stdout) && /"Minute" => 5/.test(stdout);
+}
+
+function kstMinutesSinceMidnight(date) {
+  const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return kstDate.getUTCHours() * 60 + kstDate.getUTCMinutes();
+}
+
+function expectedLatestDailyReportDate(nowDate) {
+  const afterDailyReportWindow = kstMinutesSinceMidnight(nowDate) >= 10;
+  return buildKstReportDateFromNow(nowDate, afterDailyReportWindow ? -1 : -2);
 }
 
 async function runOptionalCheck(baseUrl, timeoutMs) {
@@ -190,6 +210,15 @@ try {
     false,
   ));
 
+  const dailyReportLaunchd = await getLaunchd('com.paiptree.cctvup-daily-report');
+  steps.push(createStep(
+    'launchd cctvup-daily-report',
+    dailyReportLaunchd.ok && hasDailyReportLaunchdSchedule(dailyReportLaunchd.stdout) && /last exit code = 0/.test(dailyReportLaunchd.stdout),
+    dailyReportLaunchd.ok ? 'calendar 00:05 · last_exit=0' : dailyReportLaunchd.message,
+    undefined,
+    false,
+  ));
+
   const { response: pageResponse, text: pageText } = await fetchText(`${baseUrl}/cctvup/`, timeoutMs);
   steps.push(createStep(
     'page /cctvup',
@@ -227,7 +256,43 @@ try {
     { excludedFound, haniRows: haniRows.map((row) => ({ id: row.id, status: row.status, scope: row.monitorScopeCode })) },
   ));
 
-  const historyPayload = await fetchJson(`${baseUrl}/api/cctvup/history/?limit=50`, timeoutMs * 2);
+  try {
+    const registryPayload = await fetchJson(`${baseUrl}/api/cctvup/registry/`, timeoutMs);
+    const registryItems = Array.isArray(registryPayload?.items) ? registryPayload.items : [];
+    steps.push(createStep(
+      'api /api/cctvup/registry JSON',
+      Array.isArray(registryPayload?.items),
+      `${registryPayload?.source || 'unknown'} · items ${registryItems.length}`,
+      {
+        source: registryPayload?.source,
+        itemCount: registryItems.length,
+        message: registryPayload?.message,
+      },
+    ));
+  } catch (error) {
+    steps.push(createStep('api /api/cctvup/registry JSON', false, normalizeError(error)));
+  }
+
+  try {
+    const dailyReportPayload = await fetchJson(`${baseUrl}/api/cctvup/daily-reports/`, timeoutMs);
+    const reports = Array.isArray(dailyReportPayload?.reports) ? dailyReportPayload.reports : [];
+    const latestReport = reports[0] || null;
+    const expectedDate = expectedLatestDailyReportDate(now);
+    steps.push(createStep(
+      'daily report manifest',
+      reports.some((report) => report.date === expectedDate),
+      `expected ${expectedDate} · latest ${latestReport?.date || 'none'} · reports ${reports.length}`,
+      {
+        expectedDate,
+        latestReport,
+      },
+      false,
+    ));
+  } catch (error) {
+    steps.push(createStep('daily report manifest', false, normalizeError(error), undefined, false));
+  }
+
+  const historyPayload = await fetchJson(`${baseUrl}/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000`, timeoutMs * 2);
   const checkRuns = parseCheckRuns(historyPayload);
   const latestRun = checkRuns[0];
   const latestAgeMinutes = latestRun?.checkedAt ? minutesBetween(now, latestRun.checkedAt) : null;
@@ -271,6 +336,19 @@ try {
     issueEvents.length > 0,
     `events ${issueEvents.length}`,
     issueEvents.slice(0, 5).map((event) => ({
+      kind: event.eventKind || event.event_kind,
+      at: event.eventAt || event.event_at,
+      farm: event.farmId || event.farm_id,
+    })),
+    false,
+  ));
+
+  const farmScopeEvents = Array.isArray(historyPayload.farmScopeEvents) ? historyPayload.farmScopeEvents : [];
+  steps.push(createStep(
+    'history farmScopeEvents',
+    Array.isArray(historyPayload.farmScopeEvents),
+    `events ${farmScopeEvents.length}`,
+    farmScopeEvents.slice(0, 5).map((event) => ({
       kind: event.eventKind || event.event_kind,
       at: event.eventAt || event.event_at,
       farm: event.farmId || event.farm_id,

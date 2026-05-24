@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.paiptree.cctvup-daily-report</string>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/zoro/company/paiptree-website</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/npm</string>
+    <string>run</string>
+    <string>cctvup:daily-report</string>
+    <string>--</string>
+    <string>--yesterday</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>0</integer>
+    <key>Minute</key>
+    <integer>5</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/paiptree-cctvup-daily-report.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/paiptree-cctvup-daily-report.err.log</string>
+</dict>
+</plist>

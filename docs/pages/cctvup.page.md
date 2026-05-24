@@ -1,7 +1,7 @@
 ---
 title: "/cctvup 페이지 운영 문서"
 author: ZORO
-last_updated: 26.05.10
+last_updated: 26.05.17
 ---
 
 # /cctvup 페이지 운영 문서
@@ -24,13 +24,15 @@ last_updated: 26.05.10
 - 상단: `CCTVUP - AI 중량예측 입력 관제` 타이틀, 운영 점검 버튼, Supabase 진단 버튼, 지금 체크 버튼, 테마 토글
 - 상단 운영 버튼 3개는 hover/focus tooltip을 가진다. `운영 점검`은 읽기 전용 평소 점검, `Supabase 진단`은 Supabase 연결/timeout 진단, `지금 체크`는 Supabase 저장이 발생하는 수동 체크런 실행으로 설명한다.
 - 본문 상단: `운영 상태` 한 줄 요약. 기본 화면은 문제확정/회복/관찰/정상 수와 상태머신/자동 체크만 보여주고, `상세 보기`를 눌렀을 때 현재 목록, 상태머신, 히스토리, 5분 루프, 최근 check run, 상태 근거를 펼쳐 보여준다.
-- 본문 좌측: 농장 그룹 리스트, 전체/정상/문제 필터, 카테고리 다중 필터, 감시범위 다중 필터, 정렬 선택(문제농장 우선/심각도별/카테고리별/가나다순), 검색 입력. 기본값은 `전체 농장` + 모든 카테고리 + 모든 감시범위 + `카테고리별`이며 카테고리 순서는 해외, 신우, 체리부로, 기타다.
-- 농장 row: 왼쪽 상태 레일과 농장명을 1순위로 보여주고, 우측에는 카메라/문제 대수와 펼침 아이콘만 둔다. 감시범위, 카테고리 버튼, 원본 소속(`affiliates/country`), 최신 수신 시각은 보조 메타 줄로 낮춰 표시한다.
-- 하위 카메라 row: 농장 row를 펼치면 표시하며, 카메라별 상태/최신수신/지연/누락/에너지바를 유지한다.
-- 본문 우측: 선택 카메라 상세, 최근 1시간 5분 슬롯, 5분 저장 근거, 이미지 입력 상태, 무게예측 참고, 표시명/메모 registry 편집, 상태전환 기록, 최근 상태전환 로그, 알람 정책
-- 오른쪽 기본 리스크 패널은 `지금 확인할 문제`, `최근 상태전환 로그`, `계속 열려 있는 문제`를 접기/펼치기 가능한 영역으로 나누고, 각 목록은 약 6개 항목 높이까지만 보이게 내부 스크롤로 제한한다.
-- 화면의 `계속 열려 있는 문제`는 이미 일정 시간 이상 열린 문제를 보조 보관 목록으로 접어두는 UI다. 현재 내부 분리 기준은 180분 이상이며, 장애 확정 기준은 여전히 3회 연속 미수집, 약 15분이다.
+- 본문 좌측: 농장 그룹 리스트, 검색 입력, 정렬 선택(문제농장 우선/심각도별/카테고리별/가나다순), 문제/정상/전체 상태 버튼, 필터 메뉴. 첫 진입 기본값은 `문제` + `해외/신우` 카테고리 + `감시중/휴지기` 감시범위 + `카테고리별`이며 카테고리 순서는 해외, 신우, 체리부로, 기타다.
+- 문제/정상/전체 상태 버튼은 5분 재조회 payload 기준 농장 수를 함께 표시한다. `문제`는 watching/open/recovering 또는 late/missing/critical 카메라가 1대 이상 있는 농장이고, `정상`은 `전체 - 문제`다. 휴지기/대상확인/미설치 농장은 문제 카메라가 없으면 정상 농장 수에 포함한다. 카테고리와 감시범위 다중 필터는 `필터` 메뉴 안에 접어 두고, 현재 선택값은 필터 버튼 라벨로 요약한다.
+- 농장 row: MS Fluent의 반복 목록 문법을 따르되 농장명을 중심으로 compact stack을 유지한다. `농장코드`는 농장명 위에 작게 표시하고, 본문 줄은 `농장명`과 우측 `정상/문제 카메라 수`, 보조 줄은 왼쪽 정렬로 `분류 · 감시범위 · 최신 수신` 순서다. 비정상 상태는 왼쪽 레일과 농장명 옆 작은 배지로만 보조 표시한다. `원본 affiliates/country`는 기본 row에서 숨기고 분류 버튼의 보조 설명으로만 제공한다. row 전체 클릭 또는 Enter/Space로 펼침/접힘된다.
+- 하위 카메라 row: 농장 row를 펼치면 표시하며, 카메라별 상태/최신수신/지연/누락/에너지바를 유지한다. 확장 영역은 농장 row보다 더 밝은 배경과 큰 왼쪽 들여쓰기를 사용하고, row 테두리나 guide line 없이 하위 목록임을 구분한다.
+- 본문 우측: 선택 카메라 상세, 최근 1시간 5분 슬롯, 5분 저장 근거, 이미지 입력 상태, 무게예측 참고, 표시명/메모 registry 편집, 상태전환 기록, 30일 상태전환 로그, 알람 정책
+- 오른쪽 기본 리스크 패널은 `지금 확인할 문제`, `30일 상태전환 로그`, `계속 열려 있는 문제`를 접기/펼치기 가능한 영역으로 나누고, 각 목록은 약 6개 항목 높이까지만 보이게 내부 스크롤로 제한한다.
+- 화면의 `계속 열려 있는 문제`는 이미 일정 시간 이상 열린 문제를 보조 보관 목록으로 접어두는 UI다. 현재 내부 분리 기준은 문제확정/재확정/이미지 재수신 전환 후 180분 이상이며, 장애 확정 기준은 여전히 3회 연속 미수집, 약 15분이다.
 - 데스크톱 화면에서도 전체 페이지가 세로 스크롤된다. 좌측 농장 목록과 우측 상세/로그 영역은 페이지 흐름 안에서 자연스럽게 길어지며, 오른쪽 리스크 목록처럼 개별 목록만 필요 시 내부 스크롤로 제한한다.
+- 공통 내부 도구 메뉴(`DashFloatingNav`)를 좌측에 제공한다. 기본 상태는 접힘이며, 펼쳤을 때 `/cctvup`이 현재 페이지로 표시된다.
 
 ## 4. 데이터/상태
 - 주요 데이터 소스: `/api/cctvup` 읽기 전용 API
@@ -41,12 +43,13 @@ last_updated: 26.05.10
 - 정상 카메라의 `5분 저장 근거`는 추가 DB 조회 없이 `/api/cctvup` 현재 목록의 최신 수신 시각으로 표시한다. 문제확정/회복중/상태 이력이 있는 카메라에서만 `/api/cctvup/images` 상세 조회를 수행한다.
 - 기록 API: `/api/cctvup/history`는 Supabase history 읽기/적재용 보조 API로 사용한다.
 - history 조회는 화면의 보조 정보이며 `/api/cctvup` 현재 상태 렌더링을 막지 않는다.
-- history 기본 조회량은 `check_runs` 5건, `issue_events` 50건, 활성 `camera_states` 최대 1000건이다.
+- history 기본 조회량은 `check_runs` 5건, 최근 30일 `issue_events` 최대 20000건, 활성 `camera_states` 최대 1000건이다.
 - history는 정상/해결 전체 state 5000건이나 정상 카메라 snapshot 전체를 기본 조회하지 않는다.
-- Supabase history 읽기 timeout 기본값은 800ms이며, 초과 시 `unavailable` 또는 부분 응답으로 빠르게 내려 화면을 유지한다.
+- Supabase history 읽기 timeout 기본값은 1500ms이며, 초과 시 `unavailable` 또는 부분 응답으로 빠르게 내려 화면을 유지한다.
 - checker API: `/api/cctvup/check`는 운영 DB 최신 상태를 읽고 history를 적재하는 서버용 트리거 엔드포인트다.
 - 화면의 `지금 체크` 버튼은 `x-cctvup-cron-secret`으로 `/api/cctvup/check/`를 즉시 실행하고, 성공하면 `/api/cctvup`와 `/api/cctvup/history`를 다시 읽어 현재 목록과 로그를 갱신한다.
-- 운영 점검 API: `/api/cctvup/smoke`는 화면 상단 `운영 점검` 버튼과 연결된 읽기 전용 점검이다. launchd, `/cctvup`, `/api/cctvup`, `/api/cctvup/history`, 최근 check run, stale 활성 state, 테스트/하니농장 예외를 확인하지만 체크런을 새로 저장하지 않는다.
+- 운영 점검 API: `/api/cctvup/smoke`는 화면 상단 `운영 점검` 버튼과 연결된 읽기 전용 점검이다. launchd, `/cctvup`, `/api/cctvup`, `/api/cctvup/history`, 최근 check run, stale 활성 state, 일일 브리핑 manifest, 테스트/하니농장 예외를 확인하지만 체크런을 새로 저장하지 않는다.
+- 프론트 API 응답 파싱: `/cctvup` 클라이언트는 API 응답의 `content-type`이 JSON인지 확인한 뒤 파싱한다. 로컬 dev 서버의 `.next` 청크 불일치처럼 API가 HTML 오류 페이지를 반환하면 raw `Unexpected token '<'` 대신 어떤 API가 HTML을 반환했는지와 `.next` 캐시/서버 재시작 필요성을 표시한다.
 - 진단 API: `/api/cctvup/health`는 `x-cctvup-cron-secret`으로 보호하며 운영 DB 연결/쿼리 상태와 안전한 에러 코드만 반환한다.
 - Supabase 진단 API: `/api/cctvup/supabase-diagnose`는 `x-cctvup-cron-secret`으로 보호하며 Supabase 환경변수, DNS, TCP 443, REST 핵심 테이블 응답 시간을 확인한다. service key 원문은 반환하지 않는다.
 - 기준 테이블: `paip.tbl_farm_image`를 1차 수신 원본으로 사용한다.
@@ -78,19 +81,24 @@ last_updated: 26.05.10
 - 소속 기준: 운영 DB의 `tbl_farm_service.affiliates`와 `country`를 우선 사용해 신우/체리부로/해외/기타 기본 분류를 잡고, 사용자가 화면에서 바꾼 Supabase registry 값을 최종 override로 사용한다.
 - 카메라 기준: 운영 DB의 `tbl_farm_cctv` 활성 CCTV 목록을 먼저 조회하고, `tbl_farm_image`는 최근 이미지 저장 증거로 `LEFT JOIN`한다.
 - 기록층(별도 Supabase): 운영 DB가 아니라 별도 Supabase 테이블에 `/cctvup` 전용 상태와 이벤트를 저장한다.
+- CCTVUP 기본 기록은 `/cctvup` 전용 테이블에만 쓴다. PoC/무게예측/다른 서비스 raw-log 테이블로의 동기화는 기본 비활성화이며, 별도 환경변수와 문서 승인 없이 자동 write 경로를 추가하지 않는다.
 - 상태머신 기록층(권장): `tbl_cctvup_camera_states`는 카메라별 현재 상태 1행만 upsert하고, `tbl_cctvup_issue_events`는 `opened/recovering/resolved/reopened` 상태 전환만 append한다.
+- 농장 감시범위 기록층: `tbl_cctvup_farm_scope_states`는 농장별 현재 감시범위 1행만 upsert하고, `tbl_cctvup_farm_scope_events`는 입추/감시 시작, 출하/휴지기 진입, 대상확인, 미설치 전환처럼 농장 감시범위가 바뀐 경우만 append한다.
+- 농장 감시범위 이벤트는 카메라 이미지 장애 이벤트가 아니다. 입추/출하/설치 기준 변화의 운영 이력이며, `tbl_cctvup_issue_events`의 문제확정/이미지 재수신/해결 이벤트와 분리해 저장한다.
 - 상태머신 저장 범위: `/api/cctvup/check`는 `감시중` 카메라만 `tbl_cctvup_camera_states`에 upsert한다. 기존에 남아 있는 stale state도 현재 row가 감시중이 아니면 화면에 반영하지 않는다.
+- 상태머신 병합 기준: 원본 DB live row의 최신 이미지 시각이 Supabase `camera_state.last_checked_at`보다 새로우면, 저장된 state는 stale로 보고 화면에 반영하지 않는다. 이 경우 최신 원본 DB 수신 상태가 우선이다.
 - 상태머신 조회 timeout은 history와 분리한다. `CCTVUP_SUPABASE_STATE_FETCH_TIMEOUT_MS` 기본값은 1500ms이고, 실패 시 화면에는 `상태머신 미반영`으로 표시한다.
 - 레거시 기록층: `tbl_cctvup_camera_snapshots`, `tbl_cctvup_incident_logs`, `tbl_cctvup_current_issues`는 compatibility 용도로만 남기고 기본 확장 경로로 삼지 않는다.
-- 기록 정책: 1~2회 미수집은 `watching`으로 두고 로그를 남기지 않으며, 3회 연속 미수집(약 15분)부터 `open` 문제로 확정해 issue event를 저장한다.
+- 기록 정책: 1~2회 미수집은 `watching`으로 두고 로그를 남기지 않으며, 3회 연속 미수집(약 15분)부터 `open` 문제로 확정해 issue event를 저장한다. 에너지바는 1~2회 미수집을 노랑 `late`, 3회째부터 빨강 `missing`으로 표시해 문제확정이 새로 시작된 것처럼 보이지 않게 한다.
 - 회복 정책: `open` 이후 이미지가 다시 들어오면 즉시 정상 삭제하지 않고 `recovering`으로 두며, 최근 12회 슬롯이 정상으로 밀려 채워진 뒤 `resolved` 처리한다.
 - check run의 `payload` JSON은 빈 객체 또는 최소 summary만 사용해 Supabase 저장량을 제한한다.
-- 문제로그 기준: 오른쪽 문제로그는 `tbl_cctvup_issue_events`의 상태전환 기록을 우선 표시한다.
-- 선택 카메라 상세의 히스토리는 `상태전환 기록`으로 표시한다. `missing · open`, `critical · open` 같은 기술 값 대신 `문제확정`, `회복중`, `해결`, `재확정` 운영 문구를 사용한다.
+- 문제로그 기준: 오른쪽 문제로그는 `tbl_cctvup_issue_events`의 카메라 상태전환과 `tbl_cctvup_farm_scope_events`의 농장 감시범위 전환을 함께 표시한다. 서버 DB의 event는 임의 삭제하지 않고 계속 보관하며, 화면 기본 조회만 최근 30일로 제한한다.
+- 일일 브리핑 기준: 하루 단위 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 `md`와 `raw.json` 파일로 저장한다. 이 파일은 GitHub 커밋 대상이며, 나중에 웹 배포 시 `/cctvup`의 `일일 브리핑` 탭에서 그대로 읽는다. 로컬 자동 생성은 `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 `npm run cctvup:daily-report -- --yesterday`를 실행해 전날 전체 보고서를 만든다. 상세 설계는 `docs/plans/2026-05-17-cctvup-daily-report-content-tab.md`를 따른다.
+- 선택 카메라 상세의 히스토리는 `상태전환 기록`으로 표시한다. `missing · open`, `critical · open` 같은 기술 값 대신 `문제확정`, `이미지 재수신`, `해결`, `재확정` 운영 문구를 사용한다.
 - 레거시 스냅샷/인시던트 반복 목록은 기본 화면에서 제거한다. 관련 테이블은 compatibility 보조 정보로만 유지한다.
 - current issue 규칙: 화면의 1차 기준은 `/api/cctvup` 현재 row와 Supabase `tbl_cctvup_camera_states` 병합 결과이며, 레거시 `tbl_cctvup_current_issues`는 compatibility 보조 정보로만 본다.
-- 보관 정책: 스냅샷과 문제로그는 생성 후 30일 보관을 기본값으로 둔다.
-- 체크 주기: 24시간 로컬 PC에서는 `ops/launchd/com.paiptree.website-dev.plist`로 `localhost:3002` Next 서버를 유지하고, `ops/launchd/com.paiptree.cctvup-check.plist`로 `scripts/cctvup-check-local.mjs`를 5분마다 실행하는 구성을 1차 권장한다. 외부 배포가 안정화되면 GitHub Actions cron 또는 서버 cron으로 옮긴다.
+- 화면 표시 정책: `tbl_cctvup_issue_events`와 `tbl_cctvup_farm_scope_events`는 서버 DB에 계속 남기고, `/api/cctvup/history`와 화면의 상태전환 로그는 최근 30일 이벤트를 기본으로 보여준다.
+- 체크 주기: 24시간 로컬 PC에서는 `ops/launchd/com.paiptree.website-dev.plist`로 `localhost:3002` Next 서버를 유지하고, `ops/launchd/com.paiptree.cctvup-check.plist`로 `scripts/cctvup-check-local.mjs`를 5분마다 실행한다. `ops/launchd/com.paiptree.cctvup-daily-report.plist`는 매일 00:05에 전날 일일 브리핑을 생성한다. 외부 배포가 안정화되면 GitHub Actions cron 또는 서버 cron으로 옮긴다.
 - 체크/관리 보안: `CCTVUP_CRON_TRIGGER_SECRET`는 필수이며, `x-cctvup-cron-secret` 헤더와 일치해야 checker 적재와 history 쓰기를 허용한다. registry 쓰기는 배포 환경에서 `x-cctvup-admin-secret` 또는 `x-cctvup-cron-secret`을 요구하고, 로컬 개발 환경의 localhost 요청은 분류 편집을 막지 않도록 허용한다.
 - `운영 점검` smoke API는 현재 로컬 운영 편의용 읽기 전용 API다. 외부 웹 배포 시에는 관리자 인증, 내부망 제한, 또는 local-only 차단 중 하나를 붙이기 전까지 공개 노출하지 않는다.
 - API 환경변수: `CCTVUP_DB_HOST`, `CCTVUP_DB_PORT`, `CCTVUP_DB_USER`, `CCTVUP_DB_PASSWORD`, `CCTVUP_DB_DATABASE`
@@ -106,7 +114,7 @@ last_updated: 26.05.10
 - Phase 1: 페이지 제목/설명/문제 로그 문구를 AI 중량예측 입력 관제 관점으로 정리한다. 현재 반영 완료.
 - Phase 2: 선택 카메라 상세의 기본 판정을 `이미지 입력 상태`로 축소하고, `중량분석 생성`은 `무게예측 참고` 접힘 영역으로 분리한다. 현재 반영 완료.
 - Phase 3: 분석 테이블을 읽기 전용으로 연결해 "이미지는 있음 / 분석 없음" 상태를 수신 상태와 분리해 보여준다. 현재 선택 카메라 상세에 반영 완료.
-- Phase 3.5: Supabase history를 경량/보조 조회로 정리한다. 현재 반영 완료. 화면은 `/api/cctvup` 현재 상태를 먼저 렌더링하고, history는 800ms 기본 timeout 안에서 check run 5건, issue event 50건, 활성 camera state만 읽는다.
+- Phase 3.5: Supabase history를 경량/보조 조회로 정리한다. 현재 반영 완료. 화면은 `/api/cctvup` 현재 상태를 먼저 렌더링하고, history는 1500ms 기본 timeout 안에서 check run 5건, 최근 30일 issue event, 활성 camera state만 읽는다.
 - Phase 3.6: 상태머신 운영 루프를 안정화한다. 현재 반영 완료. state 조회 timeout을 history와 분리하고, 화면에 상태머신 반영/미반영 여부를 표시하며, 로컬 5분 체크 스크립트를 기준 실행 경로로 둔다.
 - Phase 3.7: 운영 진단과 화면 사용성을 보강한다. 현재 반영 완료. Supabase 진단 버튼/API를 추가하고, 데스크톱에서도 전체 페이지가 세로 스크롤되도록 고정 높이 레이아웃을 제거한다.
 - Phase 3.8: 수동 체크와 루프 리허설을 보강한다. 현재 반영 완료. `지금 체크` 버튼으로 상태머신을 즉시 실행하고, 상단에 마지막 check run 시각을 계속 표시한다.
@@ -117,8 +125,11 @@ last_updated: 26.05.10
 - Phase 3.13: 감시범위 로직을 실제 화면/상태머신에 적용한다. 현재 반영 완료. `/api/cctvup`는 gateway/사육 이력 기반 감시범위를 row에 포함하고, 좌측 목록은 감시범위 필터를 제공한다. `/api/cctvup/check`는 `감시중` 카메라만 상태머신에 저장한다.
 - Phase 3.14: 운영 안정화 리포트를 생성한다. 현재 반영 완료. `scripts/cctvup-stability-report.mjs`가 로컬 `/api/cctvup`와 Supabase REST를 읽기 전용으로 비교해 5분 루프 간격, stale camera_state, 대상확인 목록을 암호화 bundle로 남긴다. plaintext `docs/reports` 저장은 금지한다.
 - Phase 3.15: stale camera_state를 정리한다. 현재 반영 완료. 현재 감시중이 아닌 카메라에 과거 활성 state가 남으면 다음 체크 때 `resolved`로 닫아 활성 조회에서 제외하되, 회복 이벤트로는 기록하지 않는다.
-- Phase 3.16: 로컬 smoke script와 화면 버튼을 제공한다. 현재 반영 완료. `node scripts/cctvup-smoke.mjs`와 화면 상단 `운영 점검` 버튼이 launchd, `/cctvup`, `/api/cctvup`, `/api/cctvup/history`, 최근 check run, stale 활성 state, 테스트/하니농장 예외를 read-only로 확인한다.
-- Phase 4: 선택 카메라 상세의 히스토리를 `상태전환 기록` 중심으로 정리한다. Supabase 저장은 이미지 수신 상태머신의 `문제확정/회복중/해결/재확정` 이벤트로 제한하고, 분석/보정/대표값 이슈는 현재 저장하지 않는다.
+- Phase 3.16: 로컬 smoke script와 화면 버튼을 제공한다. 현재 반영 완료. `node scripts/cctvup-smoke.mjs`와 화면 상단 `운영 점검` 버튼이 launchd, `/cctvup`, `/api/cctvup`, `/api/cctvup/registry`, `/api/cctvup/history`, 최근 check run, stale 활성 state, 일일 브리핑 manifest, 테스트/하니농장 예외를 read-only로 확인한다.
+- Phase 3.17: 상태머신 표시 안정성을 보강한다. 현재 반영 완료. Supabase state가 원본 DB 최신 수신보다 오래되면 live row로 표시하고, 3회 문제확정 시 에너지바는 1~2회 노랑 + 3회차 빨강 흐름을 유지해 새로 쌓이는 것처럼 보이지 않게 한다.
+- Phase 3.18: 농장 감시범위 전환 로그를 추가한다. 현재 코드와 Supabase migration 반영 완료. `tbl_cctvup_farm_scope_states`는 농장별 현재 감시범위를 1행으로 유지하고, `tbl_cctvup_farm_scope_events`는 입추/감시 시작, 출하/휴지기 진입, 대상확인, 미설치 전환만 append한다. 최초 baseline 생성 시에는 대량 이벤트를 만들지 않고, 다음 체크부터 실제 변화만 기록한다.
+- Phase 3.19: 일일 브리핑 파일 저장과 `/cctvup` 탭을 추가한다. 현재 반영 완료. 로컬 Next.js 생성 API와 `npm run cctvup:daily-report`가 `content/cctvup/daily-reports/**`에 `md`, `raw.json`, `manifest.json`을 쓰고, `/cctvup`의 `일일 브리핑` 탭이 같은 파일을 읽어 표시한다. `--yesterday` 옵션과 daily-report launchd로 매일 00:05 전날 보고서를 자동 생성한다.
+- Phase 4: 선택 카메라 상세의 히스토리를 `상태전환 기록` 중심으로 정리한다. Supabase 저장은 이미지 수신 상태머신의 `문제확정/이미지 재수신/해결/재확정` 이벤트로 제한하고, 분석/보정/대표값 이슈는 현재 저장하지 않는다.
 - Phase 5: 농장 단위 무게예측 운영 가능 상태는 현재 보류한다. 분석 결과, R2/A4 보정, 1시간 대표 중량 원천과 판정식이 확정되기 전까지 화면에 `사용 가능/제한적/불가` 같은 종합 판단을 추가하지 않는다.
 
 상세 전환 기준은 `docs/plans/2026-05-06-cctvup-weight-input-control.md`를 따른다.
@@ -155,7 +166,8 @@ last_updated: 26.05.10
 - [x] `/api/cctvup/check/`가 Supabase에 1회 적재되는지 확인
 - [x] `/api/cctvup/check/`가 `check_runs.note`에 호출자 지문을 남기는지 확인
 - [x] 자동 체크 최근 실행 상태가 정상/지연/멈춤 의심으로 표시되는지 확인
-- [x] 최근 상태전환 로그가 issue_events 기준으로 표시되는지 확인
+- [x] 30일 상태전환 로그가 issue_events 기준으로 표시되는지 확인
+- [ ] 30일 상태전환 로그가 farm_scope_events의 입추/출하/감시범위 전환도 함께 표시하는지 확인
 - [x] 현재 목록, 상태머신, 히스토리, 5분 루프가 `운영 상태` 상세 펼침 안에서 분리 표시되는지 확인
 - [x] 최근 check run 6회가 issue/open/recovering 흐름과 함께 표시되는지 확인
 - [x] 최근 check run 간격이 정상 루프, 수동/재기동 추정, 루프 지연으로 구분되고 맨왼쪽 배지가 두 글자 표기로 표시되는지 확인

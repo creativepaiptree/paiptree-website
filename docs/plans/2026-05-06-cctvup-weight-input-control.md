@@ -1,7 +1,7 @@
 ---
 title: CCTVUP 무게예측 입력 관제 전환 기준
 author: ZORO
-last_updated: 26.05.10
+last_updated: 26.05.13
 ---
 
 # CCTVUP 무게예측 입력 관제 전환 기준
@@ -25,6 +25,8 @@ last_updated: 26.05.10
 - `late`는 화면에서 지연 가능성으로 보여주되 기본 로그 적재 대상에서 제외한다.
 - 1~2회 미수집은 `watching`으로만 유지하고 issue event를 남기지 않는다.
 - 3회 연속 미수집부터 `open` 확정 문제로 보고 issue event를 남긴다.
+- 에너지바 표시는 1~2회 미수집을 노랑, 3회째부터 빨강으로 표시한다. 문제확정 시 기존 미수집 흐름이 새로 리셋된 것처럼 보이면 안 된다.
+- 원본 DB live row의 최신 이미지 시각이 Supabase `camera_state.last_checked_at`보다 새로우면 저장 state는 stale로 보고 화면에 병합하지 않는다.
 - `/cctvup`의 농장 목록은 정상 운영 농장 목록으로 본다. 단, CCTV 문제확정은 `감시중` 카메라에서만 발생한다.
 - `휴지기`는 이미지 미수집이 발생해도 장애가 아니다. 휴지기 여부는 이미지 공백 시간이 아니라 원본 DB 사육 이력의 출하일 기준으로 판단한다.
 - `대상확인`은 장애가 아니라 사육/설치 기준 데이터 검수 필요 상태다.
@@ -114,10 +116,15 @@ last_updated: 26.05.10
    - 현재 상태: 완료. 화면 판정, history 활성 조회, Supabase 사용량을 모두 현재 감시중 중심으로 유지한다.
 
 3.16. Phase 3.16 - 로컬 smoke script와 화면 버튼
-   - `node scripts/cctvup-smoke.mjs`와 화면 상단 `운영 점검` 버튼으로 launchd, `/cctvup`, `/api/cctvup`, `/api/cctvup/history`, 최근 check run, stale 활성 state, 테스트/하니농장 예외를 한 번에 확인한다.
+   - `node scripts/cctvup-smoke.mjs`와 화면 상단 `운영 점검` 버튼으로 launchd, `/cctvup`, `/api/cctvup`, `/api/cctvup/registry`, `/api/cctvup/history`, 최근 check run, stale 활성 state, 테스트/하니농장 예외를 한 번에 확인한다.
    - 기본 모드는 read-only이며, `--run-check`를 붙인 경우에만 `/api/cctvup/check/`를 1회 호출한다.
    - 화면 버튼은 `/api/cctvup/smoke/`를 호출하며 체크런을 새로 저장하지 않는다.
-   - 현재 상태: 완료. 로컬 운영 상태 확인의 1차 버튼/명령으로 사용한다.
+   - 현재 상태: 완료. 로컬 운영 상태 확인의 1차 버튼/명령으로 사용한다. registry API JSON 응답도 smoke에서 확인한다.
+
+3.17. Phase 3.17 - 상태머신 표시 안정성
+   - 원본 DB live row가 Supabase state보다 새로우면 stale state가 화면을 덮어쓰지 못하게 한다.
+   - 1~2회 미수집은 노랑 `late`, 3회째부터 빨강 `missing`으로 표시해 문제확정 시 에너지바가 1칸부터 새로 시작되는 것처럼 보이지 않게 한다.
+   - 현재 상태: 완료. FA0406처럼 live DB가 이미 정상으로 회복된 카메라는 stale state 대신 live row 기준 정상으로 표시한다.
 
 4. Phase 4 - 상태전환 기록 정리
    - issue 종류를 무리하게 늘리기보다, 선택 카메라 히스토리를 이미지 수신 상태머신 중심으로 단순화한다.
