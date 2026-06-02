@@ -372,7 +372,7 @@ function SlotEnergyBar({ slots, theme }: { slots: CctvUpSlotStatus[]; theme: The
 }
 
 const initialPayload: CctvUpPayload = {
-  source: 'mock',
+  source: 'unavailable',
   checkedAt: '',
   table: 'paip.tbl_farm_image',
   rows: [],
@@ -1968,10 +1968,11 @@ export default function CctvUpClient() {
   const [isChronicRiskOpen, setIsChronicRiskOpen] = useState(false);
   const [isWeightReferenceOpen, setIsWeightReferenceOpen] = useState(false);
   const stateFallbackRows = useMemo(() => {
-    if (payload.rows.length > 0 || payload.source !== 'unavailable') return [];
+    if (payload.rows.length > 0 || payload.source === 'db') return [];
     return buildFallbackRowsFromCameraStates(historyPayload.cameraStates ?? []);
   }, [historyPayload.cameraStates, payload.rows.length, payload.source]);
   const monitorRows = payload.rows.length > 0 ? payload.rows : stateFallbackRows;
+  const isStateFallbackActive = payload.rows.length === 0 && stateFallbackRows.length > 0;
 
   const updateAdminSecret = useCallback((value: string) => {
     adminSecretRef.current = value;
@@ -2086,7 +2087,7 @@ export default function CctvUpClient() {
       const nextPayload = await readApiJson<CctvUpPayload>(payloadResponse, 'CCTVUP API');
       if (isAborted()) return;
 
-      if (!payloadResponse.ok || !Array.isArray(nextPayload.rows) || !nextPayload.summary) {
+      if (!Array.isArray(nextPayload.rows) || !nextPayload.summary) {
         setLoadError(nextPayload.message || `조회 실패: ${payloadResponse.status}`);
         return;
       }
@@ -2483,9 +2484,15 @@ export default function CctvUpClient() {
 
   const filteredFarmGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const categoryFilters = isStateFallbackActive
+      ? { overseas: true, shinwoo: true, cheriburo: true, other: true }
+      : farmCategoryFilters;
+    const scopeFilters = isStateFallbackActive
+      ? { active: true, resting: true, needs_review: true, uninstalled: true }
+      : monitorScopeFilters;
     return farmGroups
-      .filter((group) => farmCategoryFilters[group.category as CctvUpFarmCategory])
-      .filter((group) => monitorScopeFilters[getFarmGroupMonitorScope(group)])
+      .filter((group) => categoryFilters[group.category as CctvUpFarmCategory])
+      .filter((group) => scopeFilters[getFarmGroupMonitorScope(group)])
       .filter((group) => {
         if (statusFilter === 'ok') return !group.isProblem;
         if (statusFilter === 'issue') return group.isProblem;
@@ -2497,7 +2504,7 @@ export default function CctvUpClient() {
         rows: q ? group.rows.filter((row: DisplayRow) => matchesRowQuery(row, q)) : group.rows,
       }))
       .filter((group) => group.rows.length > 0 || group.farmId === selected?.farm);
-  }, [farmCategoryFilters, farmGroups, monitorScopeFilters, query, selected?.farm, statusFilter]);
+  }, [farmCategoryFilters, farmGroups, isStateFallbackActive, monitorScopeFilters, query, selected?.farm, statusFilter]);
 
   const filteredCameraCount = useMemo(() => {
     return filteredFarmGroups.reduce((total, group) => total + group.rows.length, 0);
@@ -2657,7 +2664,6 @@ export default function CctvUpClient() {
     resolved: recentIssueEvents.filter((event) => event.eventKind === 'resolved').length,
   }), [recentIssueEvents]);
   const recentFarmScopeEventCount = recentFarmScopeEvents.length;
-  const isStateFallbackActive = payload.rows.length === 0 && stateFallbackRows.length > 0;
   const currentListSourceLabel = isStateFallbackActive ? 'Supabase 문제상태' : '운영 DB';
   const currentListFarmCount = isStateFallbackActive ? farmGroups.length : payload.summary.farms;
   const currentListCameraCount = isStateFallbackActive ? monitorRows.length : payload.summary.cameras;
