@@ -73,6 +73,7 @@ jobs:
           sudo rm -f /etc/systemd/system/paiptree-website.service
 
           sudo install -d -m 755 /opt/paiptree-website/current
+          sudo install -d -m 755 /var/lib/paiptree-website
           sudo rm -rf /opt/paiptree-website/current/*
           sudo cp -R /tmp/paiptree-deploy/standalone/. /opt/paiptree-website/current/
           sudo mkdir -p /opt/paiptree-website/current/.next
@@ -108,6 +109,8 @@ jobs:
           CCTVUP_DB_USER=${{ secrets.CCTVUP_DB_USER }}
           CCTVUP_DB_PASSWORD=${{ secrets.CCTVUP_DB_PASSWORD }}
           CCTVUP_DB_DATABASE=${{ secrets.CCTVUP_DB_DATABASE }}
+          CCTVUP_CURRENT_CACHE_PATH=/var/lib/paiptree-website/cctvup-current.json
+          CCTVUP_CURRENT_CACHE_MAX_AGE_MS=1200000
           NEXT_PUBLIC_SUPABASE_PROJECT_ID=poc
           NEXT_PUBLIC_SUPABASE_EXPORT_VIEW=project_release_notes_export_v1
           EOF

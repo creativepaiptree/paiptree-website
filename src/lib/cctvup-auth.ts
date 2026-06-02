@@ -37,6 +37,10 @@ export function isCctvUpLoginPath(pathname: string) {
   return pathname === '/cctvup/login' || pathname === '/cctvup/login/';
 }
 
+export function isCctvUpCurrentCachePath(pathname: string) {
+  return pathname === '/api/cctvup/current-cache' || pathname === '/api/cctvup/current-cache/';
+}
+
 export function isCctvUpApiPath(pathname: string) {
   return pathname === '/api/cctvup' || pathname === '/api/cctvup/' || pathname.startsWith('/api/cctvup/');
 }

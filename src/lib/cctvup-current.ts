@@ -8,6 +8,7 @@ import {
   type CctvUpPayload,
 } from '@/lib/cctvup';
 import { CCTVUP_EXCLUDED_FARM_IDS } from '@/lib/cctvup-exclusions';
+import { readCctvUpCurrentCachePayload } from '@/lib/cctvup-current-cache';
 import { mergeCctvUpPayloadWithPersistedState } from '@/lib/cctvup-state';
 
 type DbSummaryResultRow = CctvUpDbSummaryRow & RowDataPacket;
@@ -364,6 +365,9 @@ export async function fetchCctvUpCurrentPayload(
 
   const dbConfig = getDbConfig();
   if (!dbConfig) {
+    const cachedPayload = await readCctvUpCurrentCachePayload();
+    if (cachedPayload) return { payload: cachedPayload, status: 200 };
+
     if (!shouldUseMockFallback()) {
       return {
         payload: buildPayload([], 'unavailable', 'CCTVUP_DB_* 환경변수가 없어 실제 농장 목록을 표시하지 못합니다.'),
@@ -489,6 +493,9 @@ export async function fetchCctvUpCurrentPayload(
     };
   } catch (error) {
     console.error('[cctvup] read-only DB query failed', error);
+
+    const cachedPayload = await readCctvUpCurrentCachePayload();
+    if (cachedPayload) return { payload: cachedPayload, status: 200 };
 
     return {
       payload: buildPayload([], 'unavailable', '운영 DB 조회 실패로 실제 농장 목록을 표시하지 못합니다.'),

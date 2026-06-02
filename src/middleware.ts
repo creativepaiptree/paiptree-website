@@ -5,6 +5,7 @@ import {
   hasValidCctvUpInternalSecret,
   isCctvUpApiPath,
   isCctvUpAuthRequired,
+  isCctvUpCurrentCachePath,
   isCctvUpLoginPath,
   isCctvUpPagePath,
 } from '@/lib/cctvup-auth';
@@ -65,6 +66,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!isCctvUpAuthRequired() || isCctvUpLoginPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (targetsCctvUpApi && isCctvUpCurrentCachePath(pathname)) {
     return NextResponse.next();
   }
 

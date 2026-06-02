@@ -14,6 +14,7 @@
     "storybook": "npx --yes storybook dev -p 6006",
     "build-storybook": "npx --yes storybook build",
     "cctvup:daily-report": "node scripts/cctvup-daily-report.mjs",
+    "cctvup:publish-current": "node scripts/cctvup-publish-current-cache.mjs",
     "prebuild": "npm run docs:check",
     "build": "next build",
     "start": "next start",
