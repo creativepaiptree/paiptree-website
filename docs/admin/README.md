@@ -1,7 +1,7 @@
 ---
 title: 문서 운영 허브
 author: SYSTEM
-last_updated: 26.05.11
+last_updated: 26.06.02
 ---
 
 # 문서 운영 허브
@@ -25,17 +25,17 @@ last_updated: 26.05.11
 - 아카이브 폴더 문서는 이력 보관용이며 현재 기준으로 사용하지 않는다.
 
 ## 3. 요약
-- 총 라우트 페이지: **28**
-- 페이지 문서 생성됨: **28**
+- 총 라우트 페이지: **29**
+- 페이지 문서 생성됨: **24**
 - 자동 신규 생성: **0**
-- 자동 메타 갱신(SYNCED): **0**
+- 자동 메타 갱신(SYNCED): **5**
 - 업데이트 필요(STALE): **0**
-- 활성 페이지 문서(root): **29**
+- 활성 페이지 문서(root): **30**
 - 아카이브 페이지 문서: **16**
 - 활성 가이드(root): **1**
 - 아카이브 가이드: **14**
 - 레거시 문서(`docs/old/**`): **5**
-- 전체 문서 수(`docs/**/*.md`): **77**
+- 전체 문서 수(`docs/**/*.md`): **79**
 
 ## 4. 페이지-문서 매핑
 | Route | Page File | Doc File | Status |
@@ -44,7 +44,8 @@ last_updated: 26.05.11
 | `/about` | `src/app/about/page.tsx` | `docs/pages/about.page.md` | OK |
 | `/blog` | `src/app/blog/page.tsx` | `docs/pages/blog.page.md` | OK |
 | `/careers` | `src/app/careers/page.tsx` | `docs/pages/careers.page.md` | OK |
-| `/cctvup` | `src/app/cctvup/page.tsx` | `docs/pages/cctvup.page.md` | OK |
+| `/cctvup` | `src/app/cctvup/page.tsx` | `docs/pages/cctvup.page.md` | SYNCED |
+| `/cctvup/login` | `src/app/cctvup/login/page.tsx` | `docs/pages/cctvup-login.page.md` | SYNCED |
 | `/cherry_tms` | `src/app/cherry_tms/page.tsx` | `docs/pages/cherry_tms.page.md` | OK |
 | `/cherry_tms/claim-docs` | `src/app/cherry_tms/claim-docs/page.tsx` | `docs/pages/cherry_tms-claim-docs.page.md` | OK |
 | `/cherry_tms/grouping` | `src/app/cherry_tms/grouping/page.tsx` | `docs/pages/cherry_tms-grouping.page.md` | OK |
@@ -53,17 +54,17 @@ last_updated: 26.05.11
 | `/cherry_tms/settlement-register` | `src/app/cherry_tms/settlement-register/page.tsx` | `docs/pages/cherry_tms-settlement-register.page.md` | OK |
 | `/cherry_tms/settlement-review` | `src/app/cherry_tms/settlement-review/page.tsx` | `docs/pages/cherry_tms-settlement-review.page.md` | OK |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
-| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | OK |
+| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | SYNCED |
 | `/dash_2` | `src/app/dash_2/page.tsx` | `docs/pages/dash_2.page.md` | OK |
 | `/dash_3` | `src/app/dash_3/page.tsx` | `docs/pages/dash_3.page.md` | OK |
 | `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
 | `/git` | `src/app/git/page.tsx` | `docs/pages/git.page.md` | OK |
 | `/i18n` | `src/app/i18n/page.tsx` | `docs/pages/i18n.page.md` | OK |
-| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | OK |
+| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | SYNCED |
 | `/main` | `src/app/main/page.tsx` | `docs/pages/main.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
 | `/newsroom` | `src/app/newsroom/page.tsx` | `docs/pages/newsroom.page.md` | OK |
-| `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | OK |
+| `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | SYNCED |
 | `/services` | `src/app/services/page.tsx` | `docs/pages/services.page.md` | OK |
 | `/style` | `src/app/style/page.tsx` | `docs/pages/style.page.md` | OK |
 | `/tms` | `src/app/tms/page.tsx` | `docs/pages/tms.page.md` | OK |
@@ -77,8 +78,8 @@ last_updated: 26.05.11
 | decisions | 1 |
 | guides | 15 |
 | old | 5 |
-| pages | 45 |
-| plans | 4 |
+| pages | 46 |
+| plans | 5 |
 | root | 2 |
 | standards | 1 |
 | templates | 2 |
@@ -97,13 +98,13 @@ last_updated: 26.05.11
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/plans/2026-05-06-cctvup-weight-input-control.md` (26.05.11)
-- `docs/pages/cctvup.service-manual.md` (26.05.11)
-- `docs/pages/cctvup.page.md` (26.05.11)
-- `docs/admin/README.md` (26.05.11)
-- `docs/README.md` (26.05.09)
-- `docs/standards/documentation.md` (26.05.09)
-- `docs/company/README.md` (26.05.08)
-- `docs/plans/2026-05-07-docs-system-audit-and-migration.md` (26.05.07)
-- `docs/plans/2026-04-30-cctvup-issue-first-switchover.md` (26.04.30)
-- `docs/pages/cherry_tms-grouping.page.md` (26.04.27)
+- `docs/pages/poc.page.md` (26.06.02)
+- `docs/pages/m.page.md` (26.06.02)
+- `docs/pages/dash.page.md` (26.06.02)
+- `docs/pages/cctvup-login.page.md` (26.06.02)
+- `docs/pages/cctvup.page.md` (26.06.02)
+- `docs/pages/cctvup.service-manual.md` (26.06.02)
+- `docs/admin/README.md` (26.06.02)
+- `docs/pages/무제 폴더/tms.page.md` (26.06.02)
+- `docs/pages/무제 폴더/tms-main.page.md` (26.06.02)
+- `docs/pages/무제 폴더/services.page.md` (26.06.02)

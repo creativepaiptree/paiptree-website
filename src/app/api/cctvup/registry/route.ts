@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { buildCctvUpReadDeniedPayload, getCctvUpReadAccessState } from '@/lib/cctvup-access';
 import { getCctvUpCronAuthState } from '@/lib/cctvup-check-core.js';
 import {
   fetchCctvUpFarmRegistry,
@@ -60,7 +61,18 @@ function readMutationSecret(request: Request) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const access = await getCctvUpReadAccessState(request);
+  if (!access.ok) {
+    return NextResponse.json(
+      {
+        ...buildCctvUpReadDeniedPayload(access),
+        items: [],
+      },
+      { status: access.status, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const payload = await fetchCctvUpFarmRegistry();
   if (!payload) {
     return NextResponse.json(

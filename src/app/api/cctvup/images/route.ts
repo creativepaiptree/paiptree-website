@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { buildCctvUpReadDeniedPayload, getCctvUpReadAccessState } from '@/lib/cctvup-access';
 import { fetchCctvUpImageEvidencePayload } from '@/lib/cctvup-images';
 
 export const runtime = 'nodejs';
@@ -13,6 +14,17 @@ function readOptionalParam(url: URL, key: string) {
 }
 
 export async function GET(request: Request) {
+  const access = await getCctvUpReadAccessState(request);
+  if (!access.ok) {
+    return NextResponse.json(
+      {
+        ...buildCctvUpReadDeniedPayload(access),
+        items: [],
+      },
+      { status: access.status, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const url = new URL(request.url);
   const farmId = readRequiredParam(url, 'farmId');
   const houseId = readRequiredParam(url, 'houseId');

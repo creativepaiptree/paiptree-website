@@ -1,7 +1,7 @@
 ---
 title: CCTVUP 서비스 전체 가이드 매뉴얼
 author: ZORO
-last_updated: 26.05.17
+last_updated: 26.05.29
 ---
 
 # CCTVUP 서비스 전체 가이드 매뉴얼
@@ -37,13 +37,14 @@ last_updated: 26.05.17
 - `/api/cctvup/check`는 5분마다 원본 DB 최신 상태를 읽고 Supabase에 상태머신 결과를 저장한다.
 - 화면 상단의 `지금 체크` 버튼은 같은 `/api/cctvup/check/` 경로를 즉시 실행해 수동 운영 리허설과 긴급 확인에 사용한다.
 - 화면 상단의 `운영 점검` 버튼은 `/api/cctvup/smoke/`를 호출해 로컬 서버, 자동 체크 launchd, 일일 브리핑 launchd/manifest, 현재 API, history, stale state를 읽기 전용으로 확인한다.
+- 웹 배포 production runtime에서는 `/cctvup` 페이지 자체와 운영 데이터 읽기 API를 기본 보호한다. 페이지는 Supabase Auth 세션이 있어야 열리고, 상단 `관리 secret`에 secret을 넣고 Enter를 누르면 `/api/cctvup`, history, registry, smoke, 분석/저장근거, 일일 브리핑 읽기 요청에 같은 secret을 붙여 다시 조회한다.
 - Supabase `tbl_cctvup_camera_states`는 카메라별 현재 상태를 1행 upsert로 유지한다.
 - Supabase `tbl_cctvup_issue_events`는 확정/회복/해결 전환 이벤트만 append한다.
 - Supabase `tbl_cctvup_farm_scope_states`는 농장별 현재 감시범위를 1행 upsert로 유지한다.
 - Supabase `tbl_cctvup_farm_scope_events`는 입추/감시 시작, 출하/휴지기 진입, 대상확인, 미설치 전환처럼 농장 감시범위가 바뀐 이벤트만 append한다.
 - Supabase `tbl_cctvup_check_runs`는 체크 실행 요약만 저장한다.
 - Supabase `tbl_cctvup_farm_registry`는 사용자가 바꾼 농장 표시명, 카테고리, 메모를 저장한다.
-- 일일 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 커밋 가능한 `md`, `raw.json`, `manifest.json` 파일로 저장한다. 로컬에서는 Next.js 생성 API가 파일을 만들고, `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 전날 보고서를 자동 생성한다. 웹 배포본에서는 GitHub에 포함된 같은 파일을 `/cctvup`에서 읽는다.
+- 일일 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 커밋 가능한 `md`, `raw.json`, `manifest.json` 파일로 저장한다. 로컬에서는 Next.js 생성 API가 파일을 만들고, `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 전날 보고서를 자동 생성한다. 웹 배포본에서는 GitHub에 포함된 같은 파일을 `/cctvup`에서 읽는다. 브리핑 원천은 CCTVUP 상태 이벤트와 함께 `tbl_farm_diary_input`, `tbl_farm_diary_output`, `tbl_farm_diary_dead_kill`을 read-only로 조회한 실제 입추/출하 원장을 포함한다.
 - `/cctvup` 프론트는 `/api/cctvup`, `/api/cctvup/history`, `/api/cctvup/registry`를 조합해 화면을 만든다.
 - `/api/cctvup/history`는 보조 정보다. 느리거나 실패해도 `/api/cctvup` 현재 목록 렌더링을 막지 않는다.
 - `/api/cctvup`의 camera_state 병합은 history보다 중요하므로 별도 timeout을 사용하고, 실패하면 화면에 `상태머신 미반영`으로 표시한다.
@@ -167,8 +168,12 @@ last_updated: 26.05.17
   - 로컬 Next.js에서 하루 브리핑 파일을 생성한다. 생성 결과는 `content/cctvup/daily-reports/YYYY/MM/YYYY-MM-DD.md`, `.raw.json`, `manifest.json`이다.
 - `src/lib/cctvup-daily-report.js`
   - KST 날짜 범위, 파일 경로, 업체별/농장별 요약, raw JSON, Markdown, manifest 읽기/쓰기를 담당한다.
+  - Markdown은 요약, 업체별 특이사항, 업체별 주요 확인 항목, 출하·입추 원장, 계속 열려 있는 문제, 생성 기준 순서로 출력한다.
+  - 업체별 주요 확인 항목, 출하·입추 원장, 계속 열려 있는 문제는 체리부로, 신우, 해외, 기타 순서로 묶고 각 업체 안에서 중요도순으로 정렬한다.
 - `src/lib/cctvup-daily-report-server.ts`
-  - Supabase 이벤트와 상태 요약, 현재 농장 metadata를 읽어 일일 브리핑 생성 로직을 실행한다.
+  - Supabase 이벤트와 상태 요약, 현재 농장 metadata, 운영 DB 입추/출하/도폐사 원장을 read-only로 읽어 일일 브리핑 생성 로직을 실행한다.
+  - 실제일이 보고일인 입추/출하는 당일 원장으로 표시하고, 보고일에 등록됐지만 실제일이 다른 입추/출하는 `지연 등록`으로 별도 표시한다.
+  - 잔존 추정은 `입추수 - 출하수 - 폐사수 - 도태수` 기준이며 실제 재고 확정값이 아니라 원장 기반 추정값으로 취급한다.
 - `src/app/api/cctvup/registry/route.ts`
   - 농장 표시명/카테고리/메모 변경을 Supabase registry에 저장한다.
 - `src/app/api/cctvup/health/route.ts`
@@ -521,6 +526,8 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 ### Supabase
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 또는 기존 `NEXT_PUBLIC_SUPABASE_KEY`: Supabase Auth SSR client가 사용하는 공개 키다.
 
 ### 보호 secret
 - `CCTVUP_CRON_TRIGGER_SECRET`
@@ -546,15 +553,26 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 - `CCTVUP_AUDIT_DETAIL_LIMIT`: 감시대상 전수조사 상세 출력 제한. 기본값 60건
 - `PAIPTREE_SENSITIVE_EXPORT_PASSPHRASE`: 민감 리포트 암호화 bundle 생성 passphrase. repo와 shell history에 남기지 않는다.
 - `PAIPTREE_SENSITIVE_REPORT_DIR` 또는 `CCTVUP_SENSITIVE_REPORT_DIR`: 민감 리포트 저장 위치 override. 기본값은 `/Users/zoro/company-ops/.hermes-sensitive/farm-ops/reports`
+- `CCTVUP_READ_SECRET`: production 읽기 API 보호용 secret. 없으면 `CCTVUP_REGISTRY_ADMIN_SECRET`, 그다음 `CCTVUP_CRON_TRIGGER_SECRET`를 사용한다.
+- `CCTVUP_AUTH_REQUIRED`: `1`이면 로컬 개발에서도 `/cctvup` Supabase Auth 보호를 강제한다.
+- `CCTVUP_AUTH_DISABLED`: `1`이면 production에서도 `/cctvup` Supabase Auth 보호를 끈다. 운영 공개 전환 중 긴급 우회 외에는 사용하지 않는다.
+- `CCTVUP_PUBLIC_READ`: `1`일 때 production 읽기 API를 공개 모드로 연다. 운영 농장명/상태/브리핑 공개 승인이 없는 한 설정하지 않는다.
 - `CCTVUP_ALLOW_MOCK_FALLBACK`
 
 ## 13. 보안 원칙
 - `SUPABASE_SERVICE_KEY`는 서버에서만 사용한다.
 - `CCTVUP_CRON_TRIGGER_SECRET`도 서버/관리자 호출에만 사용한다.
+- production `/cctvup` 페이지는 Supabase Auth 세션 없이는 열면 안 된다. 로그인 화면과 callback route를 제외하고 페이지 본문은 middleware와 서버 컴포넌트 guard로 함께 보호한다.
+- `/cctvup/login`은 Supabase email-link Auth를 사용한다. 신규 가입을 열지 않도록 `shouldCreateUser=false`로 요청하며, Supabase Auth에 등록된 사용자만 로그인할 수 있다.
+- Supabase Dashboard의 Auth URL 설정에는 실제 배포 origin의 `/auth/callback`을 redirect URL로 허용해야 한다. 예: `http://52.79.116.76/auth/callback`, Vercel 사용 시 `https://<domain>/auth/callback`.
+- `/cctvup/logout`은 현재 브라우저 세션 쿠키를 제거하고 `/cctvup/login?next=/cctvup`로 이동한다.
 - registry 저장은 배포 환경에서 secret 없이 열면 안 된다. 로컬 개발 환경의 localhost registry 저장만 `local-registry` 모드로 허용한다.
 - check 실행, history 쓰기, health 진단은 로컬/배포 모두 secret 없이 열면 안 된다.
 - Supabase 진단도 service key 상태를 간접 확인하므로 secret 없이 열면 안 된다.
-- `운영 점검` smoke API는 현재 로컬 운영 편의용 읽기 전용 API다. 외부 웹 배포 시에는 관리자 인증, 내부망 제한, 또는 local-only 차단 중 하나를 붙이기 전까지 공개 노출하면 안 된다.
+- production 읽기 API는 secret 없이 운영 데이터를 내려주면 안 된다. 대상은 `/api/cctvup`, `/api/cctvup/history`, `/api/cctvup/registry`, `/api/cctvup/smoke`, `/api/cctvup/images`, `/api/cctvup/analysis`, `/api/cctvup/daily-reports`다.
+- `운영 점검` smoke API는 읽기 전용이지만 launchd/API/history 상태를 노출하므로 production에서는 같은 읽기 secret으로 보호한다.
+- `CCTVUP_PUBLIC_READ=1`은 공개 데모나 고객 공유처럼 운영 데이터 공개가 별도 승인된 경우에만 사용한다.
+- 배포 workflow는 `/api/cctvup/` 무인 접근이 401인지, secret 접근이 200이고 `source=db`인지 hard gate로 확인한다. secret 포함 검증은 서버 내부 `http://127.0.0.1:3000`으로만 수행하고, 공개 IP HTTP 요청에는 secret을 싣지 않는다. `/api/cctvup/smoke/`는 운영 루프 stale 같은 외부 상태를 드러내므로 현재는 요약 출력으로만 남긴다.
 - 프론트에 secret 값을 하드코딩하지 않는다.
 - 원본 운영 DB 계정은 가능하면 read-only 권한으로 제한한다.
 - API 코드에서도 원본 DB 쿼리가 `SELECT/WITH`로 시작하는지 검사한다.
@@ -882,6 +900,7 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
   - raw 파일은 공개 가능한 CCTVUP 운영 이벤트 원천만 담는다. DB credential, Supabase service key, 이미지 원본 URL, 운영 이미지 파일 경로 원문, 원본 운영 DB 전체 row dump는 저장하지 않는다.
   - Supabase에는 일일 보고서 본문을 중복 저장하지 않는다.
   - 원본 운영 DB에는 계속 쓰지 않는다.
+  - 브리핑 본문은 업체별 책임 단위로 읽도록 체리부로, 신우, 해외, 기타 순서로 그룹핑한다. 전체 중요도 정렬로 업체가 섞이지 않게 한다.
 
 ### Phase 4 - 상태전환 기록 정리
 - 목표: 문제로그를 넓히기보다, 운영자가 읽는 상태전환 기록을 이미지 수신 상태머신 중심으로 단순화한다.
@@ -933,7 +952,7 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 
 ## 17. 확정된 운영 결정과 보류 항목
 ### 확정
-- 웹 배포 인증 범위: 현재 1차 운영은 로컬 PC 기준이다. 외부 웹 배포 시 `/cctvup` 전체를 관리자 전용으로 잠그는 것을 기본 방향으로 한다.
+- 웹 배포 인증 범위: 현재 1차 운영은 로컬 PC 기준이다. 외부 웹 배포 production runtime에서는 `/cctvup` 운영 데이터 읽기 API를 기본 secret 보호로 잠그고, 공개 읽기 모드는 별도 승인 후 `CCTVUP_PUBLIC_READ=1`로만 연다.
 - `대상확인` 처리 방식: 현재는 장애가 아니라 사육/설치 기준 데이터 검수 필요 상태로만 표시한다. 이후 필요하면 원본 운영 DB를 수정하지 않고 Supabase에 수동 override UI를 추가한다.
 - 이미지 보기 기능: 현재는 이미지 자체를 보여주지 않고 저장 근거만 표시한다. 운영 이미지 서버 인증 방식이 확정되기 전까지 이미지 프록시나 원본 URL 노출은 보류한다.
 

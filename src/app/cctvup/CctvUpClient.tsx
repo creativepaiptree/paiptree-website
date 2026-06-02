@@ -1,7 +1,7 @@
 'use client';
 
-import { type ButtonHTMLAttributes, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { type ButtonHTMLAttributes, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
 import { type CctvUpCheckRun, type CctvUpIssueEventKind, type CctvUpMonitorScopeCode, type CctvUpPayload, type CctvUpRow, type CctvUpSlotStatus, type CctvUpStatus, minutesBetween } from '@/lib/cctvup';
 import { type CctvUpAnalysisPayload, type CctvUpAnalysisStatus } from '@/lib/cctvup-analysis';
 import { type CctvUpHistoryPayload } from '@/lib/cctvup-history';
@@ -271,6 +271,22 @@ const initialRegistryState: CctvUpFarmRegistryPayload = {
 };
 
 const LOCAL_REGISTRY_STORAGE_KEY = 'cctvup-local-registry';
+const ADMIN_SECRET_STORAGE_KEY = 'cctvup-admin-secret';
+
+function buildProtectedReadHeaders(secret: string): HeadersInit | undefined {
+  const trimmedSecret = secret.trim();
+  return trimmedSecret ? { 'x-cctvup-admin-secret': trimmedSecret } : undefined;
+}
+
+function formatLoadErrorMessage(message: string) {
+  if (message.includes('CCTVUP read access denied')) {
+    return '보호된 운영 데이터입니다. 관리 secret을 입력한 뒤 Enter를 눌러 다시 조회하세요.';
+  }
+  if (message.includes('read secret is not configured')) {
+    return '운영 배포 환경에 CCTVUP read secret이 설정되어 있지 않습니다.';
+  }
+  return message;
+}
 
 const FarmBadgeLabels: Record<CctvUpFarmCategory, string> = {
   overseas: '해외',
@@ -1835,6 +1851,7 @@ export default function CctvUpClient() {
   const [registryError, setRegistryError] = useState('');
   const [categoryMenuFarmId, setCategoryMenuFarmId] = useState('');
   const [adminSecret, setAdminSecret] = useState('');
+  const adminSecretRef = useRef('');
   const [activeHeaderTooltipId, setActiveHeaderTooltipId] = useState('');
   const [analysisState, setAnalysisState] = useState<AnalysisLoadState>({
     payload: null,
@@ -1885,14 +1902,22 @@ export default function CctvUpClient() {
   const [isWeightReferenceOpen, setIsWeightReferenceOpen] = useState(false);
   const monitorRows = payload.rows;
 
-  useEffect(() => {
-    const storedSecret = window.sessionStorage.getItem('cctvup-admin-secret') || '';
-    if (storedSecret) setAdminSecret(storedSecret);
+  const updateAdminSecret = useCallback((value: string) => {
+    adminSecretRef.current = value;
+    setAdminSecret(value);
   }, []);
+
+  const getProtectedReadHeaders = useCallback(() => buildProtectedReadHeaders(adminSecretRef.current), []);
+
+  useEffect(() => {
+    const storedSecret = window.sessionStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
+    if (storedSecret) updateAdminSecret(storedSecret);
+  }, [updateAdminSecret]);
 
   const refreshCctvUp = useCallback(async (signal?: AbortSignal, options?: { includeRegistry?: boolean }) => {
     const includeRegistry = options?.includeRegistry ?? true;
     const isAborted = () => signal?.aborted === true;
+    const readHeaders = getProtectedReadHeaders();
 
     setIsLoading(true);
     setIsHistoryLoading(true);
@@ -1902,7 +1927,11 @@ export default function CctvUpClient() {
 
     void (async () => {
       try {
-        const historyResponse = await fetch('/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000', { cache: 'no-store', signal });
+        const historyResponse = await fetch('/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000', {
+          cache: 'no-store',
+          signal,
+          headers: readHeaders,
+        });
         const nextHistory = await readApiJson<CctvUpHistoryPayload>(historyResponse, 'history API');
         if (isAborted()) return;
 
@@ -1939,7 +1968,11 @@ export default function CctvUpClient() {
     if (includeRegistry) {
       void (async () => {
         try {
-          const registryResponse = await fetch('/api/cctvup/registry/', { cache: 'no-store', signal });
+          const registryResponse = await fetch('/api/cctvup/registry/', {
+            cache: 'no-store',
+            signal,
+            headers: readHeaders,
+          });
           const nextRegistry = await readApiJson<CctvUpFarmRegistryPayload>(registryResponse, 'registry API');
           if (isAborted()) return;
 
@@ -1974,9 +2007,18 @@ export default function CctvUpClient() {
     }
 
     try {
-      const payloadResponse = await fetch('/api/cctvup', { cache: 'no-store', signal });
+      const payloadResponse = await fetch('/api/cctvup', {
+        cache: 'no-store',
+        signal,
+        headers: readHeaders,
+      });
       const nextPayload = await readApiJson<CctvUpPayload>(payloadResponse, 'CCTVUP API');
       if (isAborted()) return;
+
+      if (!payloadResponse.ok || !Array.isArray(nextPayload.rows) || !nextPayload.summary) {
+        setLoadError(nextPayload.message || `조회 실패: ${payloadResponse.status}`);
+        return;
+      }
 
       setPayload(nextPayload);
       setSelectedId((current) => (nextPayload.rows.some((row) => row.id === current) ? current : ''));
@@ -1992,7 +2034,7 @@ export default function CctvUpClient() {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [getProtectedReadHeaders]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -2013,8 +2055,12 @@ export default function CctvUpClient() {
   const loadDailyReports = useCallback(async (targetDate?: string) => {
     setIsDailyReportListLoading(true);
     setDailyReportError('');
+    const readHeaders = getProtectedReadHeaders();
     try {
-      const listResponse = await fetch('/api/cctvup/daily-reports/', { cache: 'no-store' });
+      const listResponse = await fetch('/api/cctvup/daily-reports/', {
+        cache: 'no-store',
+        headers: readHeaders,
+      });
       const list = await readApiJson<CctvUpDailyReportListPayload>(listResponse, '일일 브리핑 목록 API');
       const normalizedList: CctvUpDailyReportListPayload = {
         ok: list.ok,
@@ -2034,7 +2080,10 @@ export default function CctvUpClient() {
       }
 
       setIsDailyReportDetailLoading(true);
-      const detailResponse = await fetch(`/api/cctvup/daily-reports/${encodeURIComponent(nextDate)}/`, { cache: 'no-store' });
+      const detailResponse = await fetch(`/api/cctvup/daily-reports/${encodeURIComponent(nextDate)}/`, {
+        cache: 'no-store',
+        headers: readHeaders,
+      });
       const detail = await readApiJson<CctvUpDailyReportDetailPayload>(detailResponse, '일일 브리핑 상세 API');
       setDailyReportDetail(detailResponse.ok ? detail : null);
       if (!detailResponse.ok) {
@@ -2047,7 +2096,7 @@ export default function CctvUpClient() {
       setIsDailyReportListLoading(false);
       setIsDailyReportDetailLoading(false);
     }
-  }, []);
+  }, [getProtectedReadHeaders]);
 
   useEffect(() => {
     void loadDailyReports();
@@ -2085,7 +2134,7 @@ export default function CctvUpClient() {
         throw new Error(result.message || `일일 브리핑 생성 실패: ${response.status}`);
       }
 
-      window.sessionStorage.setItem('cctvup-admin-secret', secret);
+      window.sessionStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
       setDailyReportGenerate({
         isLoading: false,
         message: result.message || `${result.date} 일일 브리핑을 생성했습니다.`,
@@ -2191,6 +2240,7 @@ export default function CctvUpClient() {
         const response = await fetch(`/api/cctvup/analysis/?${params.toString()}`, {
           cache: 'no-store',
           signal: controller.signal,
+          headers: getProtectedReadHeaders(),
         });
         const nextAnalysis = await readApiJson<CctvUpAnalysisPayload>(response, '중량분석 API');
         if (controller.signal.aborted) return;
@@ -2212,7 +2262,7 @@ export default function CctvUpClient() {
     })();
 
     return () => controller.abort();
-  }, [isWeightReferenceOpen, selected]);
+  }, [getProtectedReadHeaders, isWeightReferenceOpen, selected]);
 
   useEffect(() => {
     if (!selected) {
@@ -2254,6 +2304,7 @@ export default function CctvUpClient() {
         const response = await fetch(`/api/cctvup/images/?${params.toString()}`, {
           cache: 'no-store',
           signal: controller.signal,
+          headers: getProtectedReadHeaders(),
         });
         const nextEvidence = await readApiJson<CctvUpImageEvidencePayload>(response, '저장 근거 API');
         if (controller.signal.aborted) return;
@@ -2275,7 +2326,7 @@ export default function CctvUpClient() {
     })();
 
     return () => controller.abort();
-  }, [selected]);
+  }, [getProtectedReadHeaders, selected]);
 
   const matchesRowQuery = (row: DisplayRow, q: string) => {
     if (!q) return true;
@@ -2565,7 +2616,7 @@ export default function CctvUpClient() {
       throw new Error(result.message || `registry 저장 실패: ${response.status}`);
     }
 
-    if (secret) window.sessionStorage.setItem('cctvup-admin-secret', secret);
+    if (secret) window.sessionStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
   };
 
   const runSmokeCheck = async () => {
@@ -2578,7 +2629,10 @@ export default function CctvUpClient() {
     });
 
     try {
-      const response = await fetch('/api/cctvup/smoke/', { cache: 'no-store' });
+      const response = await fetch('/api/cctvup/smoke/', {
+        cache: 'no-store',
+        headers: getProtectedReadHeaders(),
+      });
       const result = await readApiJson<Partial<CctvUpSmokePayload> & { message?: string }>(response, '운영 점검 API');
       const payloadResult: CctvUpSmokePayload = {
         ok: Boolean(result.ok),
@@ -2640,7 +2694,7 @@ export default function CctvUpClient() {
         message: result.message ?? `Supabase 진단 실패: ${response.status}`,
         steps: Array.isArray(result.steps) ? result.steps : [],
       };
-      window.sessionStorage.setItem('cctvup-admin-secret', secret);
+      window.sessionStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
       setSupabaseDiagnose({
         payload: payloadResult,
         isLoading: false,
@@ -2689,7 +2743,7 @@ export default function CctvUpClient() {
         message: result.message ?? (response.ok ? '체크 실행 완료' : `체크 실행 실패: ${response.status}`),
       };
 
-      window.sessionStorage.setItem('cctvup-admin-secret', secret);
+      window.sessionStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
       setManualCheck({
         payload: payloadResult,
         isLoading: false,
@@ -2811,7 +2865,14 @@ export default function CctvUpClient() {
             <input
               type="password"
               value={adminSecret}
-              onChange={(event) => setAdminSecret(event.target.value)}
+              onChange={(event) => updateAdminSecret(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                const secret = event.currentTarget.value.trim();
+                if (secret) window.sessionStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
+                void refreshCctvUp(undefined, { includeRegistry: true });
+                void loadDailyReports(selectedDailyReportDate || undefined);
+              }}
               placeholder="관리 secret"
               className={`h-10 w-40 border px-3 py-2 text-sm outline-none ${inputClass(theme)}`}
             />
@@ -2870,6 +2931,14 @@ export default function CctvUpClient() {
             >
               {theme === 'dark' ? '라이트' : '다크'}
             </button>
+            <a
+              href="/cctvup/logout"
+              aria-label="로그아웃"
+              title="로그아웃"
+              className={`inline-flex h-10 w-10 items-center justify-center border transition ${theme === 'light' ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'}`}
+            >
+              <LogOut size={17} aria-hidden="true" />
+            </a>
           </div>
         </div>
       </header>
@@ -2880,7 +2949,7 @@ export default function CctvUpClient() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>
                 {loadError
-                  ? `조회 상태: ${loadError}`
+                  ? `조회 상태: ${formatLoadErrorMessage(loadError)}`
                   : isLoading
                     ? '운영 DB와 camera_state를 함께 읽는 중입니다.'
                     : '운영 DB와 camera_state를 함께 반영했습니다.'}

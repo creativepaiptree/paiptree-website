@@ -28,9 +28,14 @@ npm run build
 
 ### Deployment
 - Push to `main` branch triggers automatic deployment
-- GitHub Actions builds a static export and publishes it to the company server
+- GitHub Actions builds a Next.js runtime server bundle and publishes it to the company server
 - Cherry TMS data pages hydrate from Supabase-compatible data at build time
-- The deployment path avoids changing shared nginx/systemd settings
+- `/cctvup` requires runtime API routes, so production uses `PAIPTREE_RUNTIME_SERVER=1` and the standalone server
+- Production `/cctvup` page access is gated by Supabase Auth. Local development keeps localhost access open unless `CCTVUP_AUTH_REQUIRED=1` is set.
+- `/cctvup/login` uses Supabase email-link Auth and `/auth/callback` exchanges the code into SSR cookies before returning to `/cctvup`.
+- Supabase Auth URL configuration must allow the deployed origin callback URL, for example `http://52.79.116.76/auth/callback` or the Vercel domain callback.
+- Production CCTVUP read APIs are protected by default. Use a server-side read/admin/cron secret, or set `CCTVUP_PUBLIC_READ=1` only after explicit approval for public read mode.
+- Deployment verifies secret-protected CCTVUP reads through server-local `127.0.0.1:3000`; public HTTP checks must not carry secrets.
 
 ### Company GitHub Guard
 - This project declares its required remote in `repo-guard.config.json`

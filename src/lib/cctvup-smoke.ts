@@ -34,6 +34,7 @@ export type CctvUpSmokePayload = {
 
 type CctvUpSmokeOptions = {
   baseUrl?: string;
+  readSecret?: string;
   timeoutMs?: number;
   maxCheckAgeMinutes?: number;
   minCheckRuns?: number;
@@ -175,6 +176,11 @@ function createStep(name: string, ok: boolean, message = '', detail?: unknown, r
   };
 }
 
+function buildProtectedReadInit(secret: string | undefined): RequestInit {
+  const trimmedSecret = (secret || '').trim();
+  return trimmedSecret ? { headers: { 'x-cctvup-admin-secret': trimmedSecret } } : {};
+}
+
 async function fetchText(url: string, timeoutMs: number, init: RequestInit = {}) {
   const response = await fetch(url, {
     cache: 'no-store',
@@ -274,6 +280,7 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
   const maxCheckAgeMinutes = options.maxCheckAgeMinutes ?? Number(process.env.CCTVUP_SMOKE_MAX_CHECK_AGE_MINUTES || DEFAULT_MAX_CHECK_AGE_MINUTES);
   const minCheckRuns = options.minCheckRuns ?? Number(process.env.CCTVUP_SMOKE_MIN_CHECK_RUNS || DEFAULT_MIN_CHECK_RUNS);
   const now = options.now ?? new Date();
+  const protectedReadInit = buildProtectedReadInit(options.readSecret);
   const steps: CctvUpSmokeStep[] = [];
 
   try {
@@ -311,7 +318,7 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
       `${pageResponse.status} · ${pageText.includes('CCTVUP') ? 'CCTVUP markup found' : 'CCTVUP markup missing'}`,
     ));
 
-    const currentPayload = await fetchJson<CctvUpSmokeCurrentPayload>(`${baseUrl}/api/cctvup/`, timeoutMs * 3);
+    const currentPayload = await fetchJson<CctvUpSmokeCurrentPayload>(`${baseUrl}/api/cctvup/`, timeoutMs * 3, protectedReadInit);
     const rows = Array.isArray(currentPayload.rows) ? currentPayload.rows : [];
     const excludedFound: string[] = [];
     for (const row of rows) {
@@ -350,7 +357,7 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
     ));
 
     try {
-      const registryPayload = await fetchJson<CctvUpSmokeRegistryPayload>(`${baseUrl}/api/cctvup/registry/`, timeoutMs);
+      const registryPayload = await fetchJson<CctvUpSmokeRegistryPayload>(`${baseUrl}/api/cctvup/registry/`, timeoutMs, protectedReadInit);
       const registryItems = Array.isArray(registryPayload.items) ? registryPayload.items : [];
       steps.push(createStep(
         'api /api/cctvup/registry JSON',
@@ -367,7 +374,7 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
     }
 
     try {
-      const dailyReportPayload = await fetchJson<CctvUpSmokeDailyReportPayload>(`${baseUrl}/api/cctvup/daily-reports/`, timeoutMs);
+      const dailyReportPayload = await fetchJson<CctvUpSmokeDailyReportPayload>(`${baseUrl}/api/cctvup/daily-reports/`, timeoutMs, protectedReadInit);
       const reports = Array.isArray(dailyReportPayload.reports) ? dailyReportPayload.reports : [];
       const latestReport = reports[0] || null;
       const expectedDate = expectedLatestDailyReportDate(now);
@@ -385,7 +392,7 @@ export async function runCctvUpSmokeCheck(options: CctvUpSmokeOptions = {}): Pro
       steps.push(createStep('daily report manifest', false, normalizeError(error), undefined, false));
     }
 
-    const historyPayload = await fetchJson<CctvUpSmokeHistoryPayload>(`${baseUrl}/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000`, timeoutMs * 2);
+    const historyPayload = await fetchJson<CctvUpSmokeHistoryPayload>(`${baseUrl}/api/cctvup/history/?limit=50&days=30&issueEventLimit=20000`, timeoutMs * 2, protectedReadInit);
     const checkRuns = parseCheckRuns(historyPayload);
     const latestRun = checkRuns[0];
     const latestAgeMinutes = latestRun?.checkedAt ? minutesBetween(now, latestRun.checkedAt) : null;

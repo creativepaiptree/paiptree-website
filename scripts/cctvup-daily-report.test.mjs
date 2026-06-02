@@ -80,6 +80,45 @@ test('buildCctvUpDailyReportDocument renders markdown and structured summaries',
         message: '휴지기에서 감시중으로 전환했습니다.',
       },
     ],
+    flockMovementEvents: [
+      {
+        id: 'movement-1',
+        movementKind: 'shipment',
+        reportBucket: 'actual_date',
+        actualDate: '2026-05-17',
+        actualAt: '2026-05-17T03:00:00.000Z',
+        registeredAt: '2026-05-17T04:00:00.000Z',
+        farmId: 'FA0406',
+        farmName: '건농장',
+        houseId: 'H01',
+        houseName: '1동',
+        movementType: 'COMPLETE',
+        birdCount: 4930,
+        averageWeight: 1999,
+        source: 'ERP',
+        inputCount: 5000,
+        outputCount: 4930,
+        deadCount: 20,
+        killCount: 50,
+        remainingEstimate: 0,
+      },
+      {
+        id: 'movement-2',
+        movementKind: 'placement',
+        reportBucket: 'registered_late',
+        actualDate: '2026-05-16',
+        actualAt: '2026-05-16T03:00:00.000Z',
+        registeredAt: '2026-05-17T05:00:00.000Z',
+        farmId: 'FA0406',
+        farmName: '건농장',
+        houseId: 'H02',
+        houseName: '2동',
+        birdCount: 1000,
+        source: 'ERP',
+        inputCount: 1000,
+        remainingEstimate: 1000,
+      },
+    ],
     cameraStates: [
       {
         id: 'state-1',
@@ -117,10 +156,113 @@ test('buildCctvUpDailyReportDocument renders markdown and structured summaries',
 
   assert.equal(report.summary.issueEventCount, 1);
   assert.equal(report.summary.farmScopeEventCount, 1);
+  assert.equal(report.summary.shipmentRecordCount, 1);
+  assert.equal(report.summary.shipmentBirdCount, 4930);
+  assert.equal(report.summary.lateMovementRecordCount, 1);
   assert.equal(report.summary.activeIssueCount, 1);
   assert.equal(report.companies.find((company) => company.company === 'shinwoo').openedCount, 1);
   assert.match(report.markdown, /건농장 FA0406/);
+  assert.match(report.markdown, /출하·입추 원장/);
+  assert.match(report.markdown, /출하 4,930수/);
+  assert.match(report.markdown, /지연 등록/);
   assert.doesNotMatch(JSON.stringify(report.checkRuns), /sensitive note/);
+});
+
+test('buildCctvUpDailyReportDocument groups operational sections by company order', () => {
+  const report = buildCctvUpDailyReportDocument({
+    date: '2026-05-17',
+    generatedAt: '2026-05-17T12:30:00.000Z',
+    farmMetadata: [
+      { farmId: 'FA0014', farmName: '하니농장', company: 'cheriburo', companyLabel: '체리부로' },
+      { farmId: 'FA0406', farmName: '건농장', company: 'shinwoo', companyLabel: '신우' },
+    ],
+    flockMovementEvents: [
+      {
+        id: 'movement-cheriburo',
+        movementKind: 'shipment',
+        reportBucket: 'actual_date',
+        actualDate: '2026-05-17',
+        actualAt: '2026-05-17T01:00:00.000Z',
+        registeredAt: '2026-05-17T02:00:00.000Z',
+        farmId: 'FA0014',
+        farmName: '하니농장',
+        houseId: 'H01',
+        houseName: '1동',
+        birdCount: 5000,
+        outputCount: 5000,
+        remainingEstimate: 0,
+      },
+      {
+        id: 'movement-shinwoo',
+        movementKind: 'shipment',
+        reportBucket: 'actual_date',
+        actualDate: '2026-05-17',
+        actualAt: '2026-05-17T03:00:00.000Z',
+        registeredAt: '2026-05-17T04:00:00.000Z',
+        farmId: 'FA0406',
+        farmName: '건농장',
+        houseId: 'H01',
+        houseName: '1동',
+        birdCount: 3000,
+        outputCount: 3000,
+        remainingEstimate: 0,
+      },
+    ],
+    cameraStates: [
+      {
+        id: 'state-cheriburo',
+        cameraKey: 'FA0014-H01-CT01',
+        farmId: 'FA0014',
+        farmName: '하니농장',
+        houseId: 'H01',
+        houseName: '1동',
+        moduleId: 'CT01',
+        cameraName: '1동 카메라',
+        status: 'open',
+        lastCheckedAt: '2026-05-17T12:00:00.000Z',
+        missCount: 7,
+        message: '체리부로 열린 문제입니다.',
+      },
+      {
+        id: 'state-shinwoo',
+        cameraKey: 'FA0406-H01-CT01',
+        farmId: 'FA0406',
+        farmName: '건농장',
+        houseId: 'H01',
+        houseName: '1동',
+        moduleId: 'CT01',
+        cameraName: '1동 카메라',
+        status: 'open',
+        lastCheckedAt: '2026-05-17T12:00:00.000Z',
+        missCount: 4,
+        message: '신우 열린 문제입니다.',
+      },
+    ],
+  });
+
+  const checkSection = report.markdown.slice(
+    report.markdown.indexOf('## 업체별 주요 확인 항목'),
+    report.markdown.indexOf('## 출하·입추 원장'),
+  );
+  assert.ok(checkSection.indexOf('### 체리부로') < checkSection.indexOf('### 신우'));
+  assert.match(checkSection, /### 체리부로\n- 하니농장 FA0014:/);
+  assert.match(checkSection, /### 신우\n- 건농장 FA0406:/);
+
+  const movementSection = report.markdown.slice(
+    report.markdown.indexOf('### 실제 출하'),
+    report.markdown.indexOf('### 실제 입추'),
+  );
+  assert.ok(movementSection.indexOf('#### 체리부로') < movementSection.indexOf('#### 신우'));
+  assert.match(movementSection, /#### 체리부로\n- 하니농장 FA0014/);
+  assert.match(movementSection, /#### 신우\n- 건농장 FA0406/);
+
+  const activeIssueSection = report.markdown.slice(
+    report.markdown.indexOf('## 계속 열려 있는 문제'),
+    report.markdown.indexOf('## 생성 기준'),
+  );
+  assert.ok(activeIssueSection.indexOf('### 체리부로') < activeIssueSection.indexOf('### 신우'));
+  assert.match(activeIssueSection, /### 체리부로\n- 하니농장 FA0014/);
+  assert.match(activeIssueSection, /### 신우\n- 건농장 FA0406/);
 });
 
 test('writeCctvUpDailyReportFiles writes markdown, raw json and sorted manifest', async () => {

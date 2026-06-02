@@ -7,7 +7,7 @@ export const CCTVUP_DAILY_REPORT_ROOT_RELATIVE = 'content/cctvup/daily-reports';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const REPORT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const COMPANY_ORDER = ['overseas', 'shinwoo', 'cheriburo', 'other'];
+const COMPANY_ORDER = ['cheriburo', 'shinwoo', 'overseas', 'other'];
 const COMPANY_LABELS = {
   overseas: '해외',
   shinwoo: '신우',
@@ -26,6 +26,14 @@ const FARM_SCOPE_EVENT_LABELS = {
   review_needed: '대상확인 전환',
   uninstalled: '미설치 전환',
   scope_changed: '감시범위 변경',
+};
+const FLOCK_MOVEMENT_LABELS = {
+  placement: '입추',
+  shipment: '출하',
+};
+const FLOCK_MOVEMENT_BUCKET_LABELS = {
+  actual_date: '실제일 기준',
+  registered_late: '지연 등록',
 };
 
 function parseReportDate(reportDate) {
@@ -89,6 +97,35 @@ function classifyFarm(row) {
 function formatCount(value) {
   const number = Number(value ?? 0);
   return Number.isFinite(number) ? number : 0;
+}
+
+function formatBirdCount(value) {
+  return formatCount(value).toLocaleString('ko-KR');
+}
+
+function companyOrderIndex(company) {
+  const index = COMPANY_ORDER.indexOf(normalizeCompany(company));
+  return index === -1 ? COMPANY_ORDER.length : index;
+}
+
+function compareCompanyOrder(a, b) {
+  return companyOrderIndex(a.company) - companyOrderIndex(b.company);
+}
+
+function groupByCompany(items) {
+  const groups = new Map(COMPANY_ORDER.map((company) => [company, []]));
+  for (const item of items) {
+    const company = normalizeCompany(item.company);
+    if (!groups.has(company)) groups.set(company, []);
+    groups.get(company).push(item);
+  }
+  return Array.from(groups.entries())
+    .filter(([, groupItems]) => groupItems.length)
+    .map(([company, groupItems]) => ({
+      company,
+      label: COMPANY_LABELS[company] ?? company,
+      items: groupItems,
+    }));
 }
 
 function safeIso(value) {
@@ -248,6 +285,45 @@ function sanitizeFarmScopeEvent(event, farmMetaMap) {
   };
 }
 
+function sanitizeFlockMovementEvent(event, farmMetaMap) {
+  const meta = farmMetaMap.get(event.farmId);
+  const fallbackCompany = classifyFarm(event);
+  const company = meta?.company ?? fallbackCompany;
+  const movementKind = event.movementKind === 'shipment' ? 'shipment' : 'placement';
+  const reportBucket = event.reportBucket === 'registered_late' ? 'registered_late' : 'actual_date';
+
+  return {
+    id: event.id ?? null,
+    type: 'flock_movement',
+    movementKind,
+    movementLabel: FLOCK_MOVEMENT_LABELS[movementKind],
+    reportBucket,
+    reportBucketLabel: FLOCK_MOVEMENT_BUCKET_LABELS[reportBucket],
+    actualDate: event.actualDate,
+    actualAt: safeIso(event.actualAt) ?? event.actualAt ?? null,
+    registeredAt: safeIso(event.registeredAt) ?? event.registeredAt ?? null,
+    farmId: event.farmId,
+    farmName: meta?.farmName || event.farmName || event.farmId,
+    company,
+    companyLabel: COMPANY_LABELS[company],
+    farmAffiliates: compact(event.farmAffiliates) || null,
+    country: compact(event.country) || null,
+    houseId: event.houseId,
+    houseName: event.houseName ?? null,
+    movementType: event.movementType ?? null,
+    birdCount: formatCount(event.birdCount),
+    averageWeight: formatCount(event.averageWeight),
+    source: compact(event.source) || null,
+    breedKind: compact(event.breedKind) || null,
+    memo: compact(event.memo) || null,
+    inputCount: formatCount(event.inputCount),
+    outputCount: formatCount(event.outputCount),
+    deadCount: formatCount(event.deadCount),
+    killCount: formatCount(event.killCount),
+    remainingEstimate: formatCount(event.remainingEstimate),
+  };
+}
+
 function sanitizeCameraState(state, farmMetaMap) {
   const meta = getEventFarmMeta(state, farmMetaMap);
   return {
@@ -304,6 +380,11 @@ function createEmptyCompanySummary(company) {
     reviewNeededCount: 0,
     uninstalledCount: 0,
     activeIssueCount: 0,
+    placementRecordCount: 0,
+    placementBirdCount: 0,
+    shipmentRecordCount: 0,
+    shipmentBirdCount: 0,
+    lateMovementRecordCount: 0,
     notableFarmCount: 0,
   };
 }
@@ -321,6 +402,11 @@ function createFarmSummary(event) {
     resolvedCount: 0,
     farmScopeEventCount: 0,
     activeIssueCount: 0,
+    placementRecordCount: 0,
+    placementBirdCount: 0,
+    shipmentRecordCount: 0,
+    shipmentBirdCount: 0,
+    lateMovementRecordCount: 0,
     messages: [],
     lastEventAt: event.eventAt,
   };
@@ -336,7 +422,73 @@ function pushMessage(summary, event) {
   }
 }
 
-function buildSummaries(issueEvents, farmScopeEvents, activeIssues) {
+function pushFlockMovementMessage(summary, event) {
+  const countText = `${formatBirdCount(event.birdCount)}수`;
+  const houseText = event.houseName || event.houseId || '동 미상';
+  const remainingText = event.remainingEstimate || event.inputCount || event.outputCount
+    ? ` · 잔존 추정 ${formatBirdCount(event.remainingEstimate)}수`
+    : '';
+  const delayedText = event.reportBucket === 'registered_late' ? ` · 실제일 ${event.actualDate}` : '';
+  const line = `${event.movementLabel}: ${houseText} ${countText}${remainingText}${delayedText}`;
+  if (!summary.messages.includes(line)) summary.messages.push(line);
+  const eventTime = event.registeredAt || event.actualAt || event.actualDate;
+  if (!summary.lastEventAt || String(eventTime || '').localeCompare(summary.lastEventAt) > 0) {
+    summary.lastEventAt = eventTime || summary.lastEventAt;
+  }
+}
+
+function compareFarmSummaryPriority(a, b) {
+  return compareCompanyOrder(a, b)
+    || b.activeIssueCount - a.activeIssueCount
+    || (b.openedCount + b.reopenedCount) - (a.openedCount + a.reopenedCount)
+    || b.issueEventCount - a.issueEventCount
+    || b.farmScopeEventCount - a.farmScopeEventCount
+    || (b.shipmentRecordCount + b.placementRecordCount) - (a.shipmentRecordCount + a.placementRecordCount)
+    || String(b.lastEventAt || '').localeCompare(String(a.lastEventAt || ''));
+}
+
+function buildFarmPriorityMap(notableFarms) {
+  return new Map(notableFarms.map((farm, index) => [`${farm.company}:${farm.farmId}`, index]));
+}
+
+function activeIssueStatusPriority(status) {
+  if (status === 'open') return 3;
+  if (status === 'recovering') return 2;
+  if (status === 'watching') return 1;
+  return 0;
+}
+
+function compareActiveIssuePriority(a, b, farmPriorityMap = new Map()) {
+  const aFarmPriority = farmPriorityMap.get(`${a.company}:${a.farmId}`) ?? Number.MAX_SAFE_INTEGER;
+  const bFarmPriority = farmPriorityMap.get(`${b.company}:${b.farmId}`) ?? Number.MAX_SAFE_INTEGER;
+  return compareCompanyOrder(a, b)
+    || aFarmPriority - bFarmPriority
+    || activeIssueStatusPriority(b.status) - activeIssueStatusPriority(a.status)
+    || formatCount(b.missCount) - formatCount(a.missCount)
+    || String(a.farmName || '').localeCompare(String(b.farmName || ''), 'ko-KR')
+    || String(a.houseName || a.houseId || '').localeCompare(String(b.houseName || b.houseId || ''), 'ko-KR')
+    || String(a.cameraName || a.moduleId || '').localeCompare(String(b.cameraName || b.moduleId || ''), 'ko-KR')
+    || String(b.lastCheckedAt || '').localeCompare(String(a.lastCheckedAt || ''));
+}
+
+function flockMovementKindPriority(kind) {
+  return kind === 'shipment' ? 0 : 1;
+}
+
+function flockMovementBucketPriority(bucket) {
+  return bucket === 'actual_date' ? 0 : 1;
+}
+
+function compareFlockMovementPriority(a, b) {
+  return flockMovementBucketPriority(a.reportBucket) - flockMovementBucketPriority(b.reportBucket)
+    || flockMovementKindPriority(a.movementKind) - flockMovementKindPriority(b.movementKind)
+    || compareCompanyOrder(a, b)
+    || String(a.farmName || '').localeCompare(String(b.farmName || ''), 'ko-KR')
+    || String(a.houseName || a.houseId || '').localeCompare(String(b.houseName || b.houseId || ''), 'ko-KR')
+    || String(a.actualAt || a.actualDate || '').localeCompare(String(b.actualAt || b.actualDate || ''));
+}
+
+function buildSummaries(issueEvents, farmScopeEvents, activeIssues, flockMovementEvents) {
   const companies = Object.fromEntries(COMPANY_ORDER.map((company) => [company, createEmptyCompanySummary(company)]));
   const farms = new Map();
 
@@ -374,6 +526,31 @@ function buildSummaries(issueEvents, farmScopeEvents, activeIssues) {
     farms.set(key, farm);
   }
 
+  for (const event of flockMovementEvents) {
+    const company = companies[event.company] ?? companies.other;
+    if (event.movementKind === 'placement') {
+      company.placementRecordCount += 1;
+      company.placementBirdCount += event.birdCount;
+    } else {
+      company.shipmentRecordCount += 1;
+      company.shipmentBirdCount += event.birdCount;
+    }
+    if (event.reportBucket === 'registered_late') company.lateMovementRecordCount += 1;
+
+    const key = `${event.company}:${event.farmId}`;
+    const farm = farms.get(key) ?? createFarmSummary(event);
+    if (event.movementKind === 'placement') {
+      farm.placementRecordCount += 1;
+      farm.placementBirdCount += event.birdCount;
+    } else {
+      farm.shipmentRecordCount += 1;
+      farm.shipmentBirdCount += event.birdCount;
+    }
+    if (event.reportBucket === 'registered_late') farm.lateMovementRecordCount += 1;
+    pushFlockMovementMessage(farm, event);
+    farms.set(key, farm);
+  }
+
   for (const state of activeIssues) {
     const company = companies[state.company] ?? companies.other;
     company.activeIssueCount += 1;
@@ -394,13 +571,7 @@ function buildSummaries(issueEvents, farmScopeEvents, activeIssues) {
   }
 
   const notableFarms = Array.from(farms.values())
-    .sort((a, b) => (
-      b.activeIssueCount - a.activeIssueCount
-      || (b.openedCount + b.reopenedCount) - (a.openedCount + a.reopenedCount)
-      || b.issueEventCount - a.issueEventCount
-      || b.farmScopeEventCount - a.farmScopeEventCount
-      || String(b.lastEventAt || '').localeCompare(String(a.lastEventAt || ''))
-    ))
+    .sort(compareFarmSummaryPriority)
     .map((farm) => ({
       ...farm,
       messages: farm.messages.slice(0, 5),
@@ -437,9 +608,119 @@ function renderCompanyLine(company) {
     company.recoveringCount ? `이미지 재수신 ${company.recoveringCount}건` : '',
     company.resolvedCount ? `해결 ${company.resolvedCount}건` : '',
     company.farmScopeEventCount ? `감시범위 전환 ${company.farmScopeEventCount}건` : '',
+    company.placementRecordCount ? `입추 ${company.placementRecordCount}건/${formatBirdCount(company.placementBirdCount)}수` : '',
+    company.shipmentRecordCount ? `출하 ${company.shipmentRecordCount}건/${formatBirdCount(company.shipmentBirdCount)}수` : '',
+    company.lateMovementRecordCount ? `지연 등록 ${company.lateMovementRecordCount}건` : '',
     company.activeIssueCount ? `열린 문제 ${company.activeIssueCount}건` : '',
   ].filter(Boolean);
   return parts.length ? parts.join(', ') : '특이사항 없음';
+}
+
+function renderFarmSummaryLine(farm) {
+  const summary = [
+    farm.openedCount + farm.reopenedCount ? `문제확정 ${farm.openedCount + farm.reopenedCount}` : '',
+    farm.recoveringCount ? `재수신 ${farm.recoveringCount}` : '',
+    farm.resolvedCount ? `해결 ${farm.resolvedCount}` : '',
+    farm.farmScopeEventCount ? `감시범위 ${farm.farmScopeEventCount}` : '',
+    farm.placementRecordCount ? `입추 ${farm.placementRecordCount}/${formatBirdCount(farm.placementBirdCount)}수` : '',
+    farm.shipmentRecordCount ? `출하 ${farm.shipmentRecordCount}/${formatBirdCount(farm.shipmentBirdCount)}수` : '',
+    farm.lateMovementRecordCount ? `지연등록 ${farm.lateMovementRecordCount}` : '',
+    farm.activeIssueCount ? `열린 문제 ${farm.activeIssueCount}` : '',
+  ].filter(Boolean).join(', ');
+  return `- ${farm.farmName} ${farm.farmId}: ${summary || '특이사항'}`;
+}
+
+function renderFarmSummariesByCompany(lines, farms) {
+  if (!farms.length) {
+    lines.push('- 특이사항 없음.');
+    return;
+  }
+
+  for (const group of groupByCompany(farms)) {
+    lines.push(`### ${group.label}`);
+    for (const farm of group.items.slice(0, 30)) {
+      lines.push(renderFarmSummaryLine(farm));
+      for (const message of farm.messages.slice(0, 2)) {
+        lines.push(`  - ${message}`);
+      }
+    }
+    if (group.items.length > 30) {
+      lines.push(`- 외 ${formatBirdCount(group.items.length - 30)}개 농장 생략.`);
+    }
+    lines.push('');
+  }
+}
+
+function renderFlockMovementEvent(event, options = {}) {
+  const includeCompany = options.includeCompany !== false;
+  const farmText = includeCompany
+    ? `${event.companyLabel} / ${event.farmName} ${event.farmId}`
+    : `${event.farmName} ${event.farmId}`;
+  const actualText = event.actualAt ? formatKstDateTime(event.actualAt) : event.actualDate;
+  const registeredText = event.registeredAt ? ` · 등록 ${formatKstDateTime(event.registeredAt)}` : '';
+  const sourceText = event.source ? ` · ${event.source}` : '';
+  const typeText = event.movementType ? ` · ${event.movementType}` : '';
+  const weightText = event.averageWeight ? ` · 평균 ${formatBirdCount(event.averageWeight)}g` : '';
+  const remainingText = (event.inputCount || event.outputCount || event.deadCount || event.killCount || event.remainingEstimate)
+    ? ` · 잔존 추정 ${formatBirdCount(event.remainingEstimate)}수`
+    : '';
+  const memoText = event.memo ? ` · ${event.memo}` : '';
+  return `- ${farmText} / ${event.houseName || event.houseId}: ${event.movementLabel} ${formatBirdCount(event.birdCount)}수 · 실제 ${actualText}${registeredText}${typeText}${weightText}${sourceText}${remainingText}${memoText}`;
+}
+
+function renderFlockMovementBucket(lines, title, events) {
+  lines.push('', `### ${title}`);
+  if (!events.length) {
+    lines.push('- 없음.');
+    return;
+  }
+
+  for (const group of groupByCompany(events)) {
+    lines.push(`#### ${group.label}`);
+    for (const event of group.items.slice(0, 80)) {
+      lines.push(renderFlockMovementEvent(event, { includeCompany: false }));
+    }
+    if (group.items.length > 80) {
+      lines.push(`- 외 ${formatBirdCount(group.items.length - 80)}건 생략.`);
+    }
+  }
+}
+
+function renderActiveIssueLine(issue, options = {}) {
+  const includeCompany = options.includeCompany !== false;
+  const farmText = includeCompany
+    ? `${issue.companyLabel} / ${issue.farmName} ${issue.farmId}`
+    : `${issue.farmName} ${issue.farmId}`;
+  return `- ${farmText} / ${issue.houseName || issue.houseId} / ${issue.cameraName || issue.moduleId}: ${issue.status} · ${issue.message}`;
+}
+
+function renderActiveIssuesByCompany(lines, activeIssues) {
+  if (!activeIssues.length) {
+    lines.push('- 없음.');
+    return;
+  }
+
+  for (const group of groupByCompany(activeIssues)) {
+    lines.push(`### ${group.label}`);
+    for (const issue of group.items.slice(0, 80)) {
+      lines.push(renderActiveIssueLine(issue, { includeCompany: false }));
+    }
+    if (group.items.length > 80) {
+      lines.push(`- 외 ${formatBirdCount(group.items.length - 80)}건 생략.`);
+    }
+    lines.push('');
+  }
+}
+
+function renderFlockMovementSection(lines, report) {
+  const actualPlacements = report.flockMovementEvents.filter((event) => event.reportBucket === 'actual_date' && event.movementKind === 'placement');
+  const actualShipments = report.flockMovementEvents.filter((event) => event.reportBucket === 'actual_date' && event.movementKind === 'shipment');
+  const lateMovements = report.flockMovementEvents.filter((event) => event.reportBucket === 'registered_late');
+  lines.push('', '## 출하·입추 원장');
+
+  renderFlockMovementBucket(lines, '실제 출하', actualShipments);
+  renderFlockMovementBucket(lines, '실제 입추', actualPlacements);
+  renderFlockMovementBucket(lines, '지연 등록', lateMovements);
 }
 
 export function renderCctvUpDailyReportMarkdown(report) {
@@ -451,6 +732,9 @@ export function renderCctvUpDailyReportMarkdown(report) {
     `- 이미지 재수신: ${report.summary.recoveringCount}건`,
     `- 해결: ${report.summary.resolvedCount}건`,
     `- 감시범위 전환: ${report.summary.farmScopeEventCount}건`,
+    `- 실제 출하: ${report.summary.shipmentRecordCount}건 / ${formatBirdCount(report.summary.shipmentBirdCount)}수`,
+    `- 실제 입추: ${report.summary.placementRecordCount}건 / ${formatBirdCount(report.summary.placementBirdCount)}수`,
+    `- 지연 등록: ${report.summary.lateMovementRecordCount}건`,
     `- 계속 열려 있는 문제: ${report.summary.activeIssueCount}건`,
     '',
     '## 업체별 특이사항',
@@ -460,33 +744,13 @@ export function renderCctvUpDailyReportMarkdown(report) {
     lines.push(`### ${company.label}`, `- ${renderCompanyLine(company)}`, '');
   }
 
-  lines.push('## 농장별 확인 항목');
-  if (report.notableFarms.length) {
-    for (const farm of report.notableFarms.slice(0, 30)) {
-      const summary = [
-        farm.openedCount + farm.reopenedCount ? `문제확정 ${farm.openedCount + farm.reopenedCount}` : '',
-        farm.recoveringCount ? `재수신 ${farm.recoveringCount}` : '',
-        farm.resolvedCount ? `해결 ${farm.resolvedCount}` : '',
-        farm.farmScopeEventCount ? `감시범위 ${farm.farmScopeEventCount}` : '',
-        farm.activeIssueCount ? `열린 문제 ${farm.activeIssueCount}` : '',
-      ].filter(Boolean).join(', ');
-      lines.push(`- ${farm.companyLabel} / ${farm.farmName} ${farm.farmId}: ${summary || '특이사항'}`);
-      for (const message of farm.messages.slice(0, 2)) {
-        lines.push(`  - ${message}`);
-      }
-    }
-  } else {
-    lines.push('- 특이사항 없음.');
-  }
+  lines.push('## 업체별 주요 확인 항목');
+  renderFarmSummariesByCompany(lines, report.notableFarms);
+
+  renderFlockMovementSection(lines, report);
 
   lines.push('', '## 계속 열려 있는 문제');
-  if (report.activeIssues.length) {
-    for (const issue of report.activeIssues.slice(0, 50)) {
-      lines.push(`- ${issue.companyLabel} / ${issue.farmName} ${issue.farmId} / ${issue.houseName || issue.houseId} / ${issue.cameraName || issue.moduleId}: ${issue.status} · ${issue.message}`);
-    }
-  } else {
-    lines.push('- 없음.');
-  }
+  renderActiveIssuesByCompany(lines, report.activeIssues);
 
   const latestRun = report.checkRuns[0];
   lines.push(
@@ -494,7 +758,8 @@ export function renderCctvUpDailyReportMarkdown(report) {
     '## 생성 기준',
     `- 기준 기간: ${report.range.fromLabel} ~ ${report.range.toLabel}`,
     `- 생성 시각: ${formatKstDateTime(report.generatedAt)}`,
-    `- 원천: tbl_cctvup_issue_events, tbl_cctvup_farm_scope_events, tbl_cctvup_camera_states, tbl_cctvup_check_runs`,
+    `- 원천: tbl_cctvup_issue_events, tbl_cctvup_farm_scope_events, tbl_cctvup_camera_states, tbl_cctvup_check_runs, tbl_farm_diary_input, tbl_farm_diary_output, tbl_farm_diary_dead_kill`,
+    `- 잔존 추정: 입추수 - 출하수 - 폐사수 - 도태수 기준`,
     `- 최근 check run: ${latestRun ? `${formatKstDateTime(latestRun.checkedAt)} · issue ${latestRun.issueCount}` : '확인된 run 없음'}`,
     `- raw 파일: ${report.paths.rawPath}`,
   );
@@ -525,11 +790,19 @@ export function buildCctvUpDailyReportDocument(input) {
     .filter((event) => inRange(event.eventAt))
     .map((event) => sanitizeFarmScopeEvent(event, farmMetaMap))
     .sort((a, b) => String(b.eventAt).localeCompare(String(a.eventAt)));
+  const flockMovementEvents = (input.flockMovementEvents ?? [])
+    .filter((event) => event.reportBucket === 'registered_late' || String(event.actualDate || '') === date)
+    .map((event) => sanitizeFlockMovementEvent(event, farmMetaMap))
+    .sort(compareFlockMovementPriority);
   const activeIssues = (input.cameraStates ?? [])
     .filter((state) => state.status === 'open' || state.status === 'recovering' || state.status === 'watching')
     .map((state) => sanitizeCameraState(state, farmMetaMap))
     .sort((a, b) => (
-      (b.status === 'open' ? 1 : 0) - (a.status === 'open' ? 1 : 0)
+      compareCompanyOrder(a, b)
+      || String(a.farmName || '').localeCompare(String(b.farmName || ''), 'ko-KR')
+      || String(a.houseName || a.houseId || '').localeCompare(String(b.houseName || b.houseId || ''), 'ko-KR')
+      || String(a.cameraName || a.moduleId || '').localeCompare(String(b.cameraName || b.moduleId || ''), 'ko-KR')
+      || (b.status === 'open' ? 1 : 0) - (a.status === 'open' ? 1 : 0)
       || formatCount(b.missCount) - formatCount(a.missCount)
       || String(b.lastCheckedAt || '').localeCompare(String(a.lastCheckedAt || ''))
     ));
@@ -537,7 +810,12 @@ export function buildCctvUpDailyReportDocument(input) {
     .filter((run) => inRange(run.checkedAt))
     .map(sanitizeCheckRun)
     .sort((a, b) => String(b.checkedAt).localeCompare(String(a.checkedAt)));
-  const { companies, notableFarms } = buildSummaries(issueEvents, farmScopeEvents, activeIssues);
+  const { companies, notableFarms } = buildSummaries(issueEvents, farmScopeEvents, activeIssues, flockMovementEvents);
+  const farmPriorityMap = buildFarmPriorityMap(notableFarms);
+  activeIssues.sort((a, b) => (
+    compareActiveIssuePriority(a, b, farmPriorityMap)
+  ));
+  const actualFlockMovementEvents = flockMovementEvents.filter((event) => event.reportBucket === 'actual_date');
 
   const summary = {
     issueEventCount: issueEvents.length,
@@ -546,6 +824,15 @@ export function buildCctvUpDailyReportDocument(input) {
     reopenedCount: issueEvents.filter((event) => event.eventKind === 'reopened').length,
     recoveringCount: issueEvents.filter((event) => event.eventKind === 'recovering').length,
     resolvedCount: issueEvents.filter((event) => event.eventKind === 'resolved').length,
+    placementRecordCount: actualFlockMovementEvents.filter((event) => event.movementKind === 'placement').length,
+    placementBirdCount: actualFlockMovementEvents
+      .filter((event) => event.movementKind === 'placement')
+      .reduce((sum, event) => sum + event.birdCount, 0),
+    shipmentRecordCount: actualFlockMovementEvents.filter((event) => event.movementKind === 'shipment').length,
+    shipmentBirdCount: actualFlockMovementEvents
+      .filter((event) => event.movementKind === 'shipment')
+      .reduce((sum, event) => sum + event.birdCount, 0),
+    lateMovementRecordCount: flockMovementEvents.filter((event) => event.reportBucket === 'registered_late').length,
     activeIssueCount: activeIssues.length,
     notableFarmCount: notableFarms.length,
     checkRunCount: checkRuns.length,
@@ -564,6 +851,7 @@ export function buildCctvUpDailyReportDocument(input) {
     notableFarms,
     issueEvents,
     farmScopeEvents,
+    flockMovementEvents,
     activeIssues,
     checkRuns,
   };
@@ -591,6 +879,11 @@ export function normalizeCctvUpDailyReportManifest(value) {
         notableFarmCount: formatCount(report.notableFarmCount),
         issueEventCount: formatCount(report.issueEventCount),
         farmScopeEventCount: formatCount(report.farmScopeEventCount),
+        placementRecordCount: formatCount(report.placementRecordCount),
+        placementBirdCount: formatCount(report.placementBirdCount),
+        shipmentRecordCount: formatCount(report.shipmentRecordCount),
+        shipmentBirdCount: formatCount(report.shipmentBirdCount),
+        lateMovementRecordCount: formatCount(report.lateMovementRecordCount),
         activeIssueCount: formatCount(report.activeIssueCount),
         status: report.status || 'generated',
         markdownPath: report.markdownPath,
@@ -662,6 +955,11 @@ export async function writeCctvUpDailyReportFiles(report, rootDir = process.cwd(
     notableFarmCount: report.summary.notableFarmCount,
     issueEventCount: report.summary.issueEventCount,
     farmScopeEventCount: report.summary.farmScopeEventCount,
+    placementRecordCount: report.summary.placementRecordCount,
+    placementBirdCount: report.summary.placementBirdCount,
+    shipmentRecordCount: report.summary.shipmentRecordCount,
+    shipmentBirdCount: report.summary.shipmentBirdCount,
+    lateMovementRecordCount: report.summary.lateMovementRecordCount,
     activeIssueCount: report.summary.activeIssueCount,
     status: report.status,
     markdownPath: paths.markdownPath,

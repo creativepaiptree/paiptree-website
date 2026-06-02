@@ -1,9 +1,8 @@
 ---
 title: "/cctvup 페이지 운영 문서"
 author: ZORO
-last_updated: 26.05.17
+last_updated: 26.06.02
 ---
-
 # /cctvup 페이지 운영 문서
 
 ## 1. 문서 정보
@@ -93,7 +92,7 @@ last_updated: 26.05.17
 - 회복 정책: `open` 이후 이미지가 다시 들어오면 즉시 정상 삭제하지 않고 `recovering`으로 두며, 최근 12회 슬롯이 정상으로 밀려 채워진 뒤 `resolved` 처리한다.
 - check run의 `payload` JSON은 빈 객체 또는 최소 summary만 사용해 Supabase 저장량을 제한한다.
 - 문제로그 기준: 오른쪽 문제로그는 `tbl_cctvup_issue_events`의 카메라 상태전환과 `tbl_cctvup_farm_scope_events`의 농장 감시범위 전환을 함께 표시한다. 서버 DB의 event는 임의 삭제하지 않고 계속 보관하며, 화면 기본 조회만 최근 30일로 제한한다.
-- 일일 브리핑 기준: 하루 단위 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 `md`와 `raw.json` 파일로 저장한다. 이 파일은 GitHub 커밋 대상이며, 나중에 웹 배포 시 `/cctvup`의 `일일 브리핑` 탭에서 그대로 읽는다. 로컬 자동 생성은 `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 `npm run cctvup:daily-report -- --yesterday`를 실행해 전날 전체 보고서를 만든다. 상세 설계는 `docs/plans/2026-05-17-cctvup-daily-report-content-tab.md`를 따른다.
+- 일일 브리핑 기준: 하루 단위 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 `md`와 `raw.json` 파일로 저장한다. 이 파일은 GitHub 커밋 대상이며, 나중에 웹 배포 시 `/cctvup`의 `일일 브리핑` 탭에서 그대로 읽는다. 로컬 자동 생성은 `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 `npm run cctvup:daily-report -- --yesterday`를 실행해 전날 전체 보고서를 만든다. 보고서는 CCTV 이미지 이슈와 농장 감시범위 전환뿐 아니라 CCTVUP 활성 농장 범위의 `tbl_farm_diary_input`, `tbl_farm_diary_output`, `tbl_farm_diary_dead_kill` 원장을 읽어 실제 입추/출하, 지연 등록, 잔존 추정을 함께 기록한다. 문서 표시 순서는 요약, 업체별 특이사항, 업체별 주요 확인 항목, 출하·입추 원장, 계속 열려 있는 문제, 생성 기준이며 업체 그룹은 체리부로, 신우, 해외, 기타 순서로 정렬한다. 상세 설계는 `docs/plans/2026-05-17-cctvup-daily-report-content-tab.md`를 따른다.
 - 선택 카메라 상세의 히스토리는 `상태전환 기록`으로 표시한다. `missing · open`, `critical · open` 같은 기술 값 대신 `문제확정`, `이미지 재수신`, `해결`, `재확정` 운영 문구를 사용한다.
 - 레거시 스냅샷/인시던트 반복 목록은 기본 화면에서 제거한다. 관련 테이블은 compatibility 보조 정보로만 유지한다.
 - current issue 규칙: 화면의 1차 기준은 `/api/cctvup` 현재 row와 Supabase `tbl_cctvup_camera_states` 병합 결과이며, 레거시 `tbl_cctvup_current_issues`는 compatibility 보조 정보로만 본다.
@@ -101,7 +100,14 @@ last_updated: 26.05.17
 - 체크 주기: 24시간 로컬 PC에서는 `ops/launchd/com.paiptree.website-dev.plist`로 `localhost:3002` Next 서버를 유지하고, `ops/launchd/com.paiptree.cctvup-check.plist`로 `scripts/cctvup-check-local.mjs`를 5분마다 실행한다. `ops/launchd/com.paiptree.cctvup-daily-report.plist`는 매일 00:05에 전날 일일 브리핑을 생성한다. 외부 배포가 안정화되면 GitHub Actions cron 또는 서버 cron으로 옮긴다.
 - 체크/관리 보안: `CCTVUP_CRON_TRIGGER_SECRET`는 필수이며, `x-cctvup-cron-secret` 헤더와 일치해야 checker 적재와 history 쓰기를 허용한다. registry 쓰기는 배포 환경에서 `x-cctvup-admin-secret` 또는 `x-cctvup-cron-secret`을 요구하고, 로컬 개발 환경의 localhost 요청은 분류 편집을 막지 않도록 허용한다.
 - `운영 점검` smoke API는 현재 로컬 운영 편의용 읽기 전용 API다. 외부 웹 배포 시에는 관리자 인증, 내부망 제한, 또는 local-only 차단 중 하나를 붙이기 전까지 공개 노출하지 않는다.
+- 웹 배포 페이지 보안: production runtime에서는 `/cctvup` 페이지 자체가 Supabase Auth 세션 없이는 `/cctvup/login?next=/cctvup`로 이동한다. 로컬 개발의 localhost 운영은 기존 launchd/check 루프를 막지 않도록 기본 허용하며, 로컬에서도 강제 테스트가 필요하면 `CCTVUP_AUTH_REQUIRED=1`을 사용한다.
+- 웹 배포 로그인: `/cctvup/login`은 Supabase email-link Auth를 사용한다. 링크의 redirect는 `/auth/callback?next=/cctvup`이며, callback route에서 code를 세션 쿠키로 교환한 뒤 관제 화면으로 돌려보낸다.
+- 웹 배포 읽기 보안: production runtime에서는 `/api/cctvup`, `/api/cctvup/history`, `/api/cctvup/registry`, `/api/cctvup/smoke`, `/api/cctvup/images`, `/api/cctvup/analysis`, `/api/cctvup/daily-reports` 읽기 API가 기본적으로 secret을 요구한다. 브라우저에서는 상단 `관리 secret` 입력 후 Enter로 재조회하며, 서버는 `CCTVUP_READ_SECRET`, `CCTVUP_REGISTRY_ADMIN_SECRET`, `CCTVUP_CRON_TRIGGER_SECRET` 순서로 읽기 secret을 확인한다.
+- `CCTVUP_PUBLIC_READ=1`은 운영 농장명/상태/일일 브리핑을 공개해도 된다는 별도 승인 후에만 사용한다. 로컬 개발의 localhost 요청은 기존처럼 secret 없이 허용한다.
 - API 환경변수: `CCTVUP_DB_HOST`, `CCTVUP_DB_PORT`, `CCTVUP_DB_USER`, `CCTVUP_DB_PASSWORD`, `CCTVUP_DB_DATABASE`
+- 웹 배포 환경변수: Supabase Auth에는 `NEXT_PUBLIC_SUPABASE_URL`과 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 또는 기존 `NEXT_PUBLIC_SUPABASE_KEY`가 필요하다. `CCTVUP_READ_SECRET`은 production 읽기 API 보호용 secret이다. 설정하지 않으면 `CCTVUP_REGISTRY_ADMIN_SECRET`, 그다음 `CCTVUP_CRON_TRIGGER_SECRET`를 fallback으로 사용한다. 배포 workflow는 `CCTVUP_PUBLIC_READ=0`을 명시한다.
+- Supabase Auth redirect URL 허용 목록에는 실제 배포 origin의 `/auth/callback`을 추가해야 한다.
+- 배포 workflow의 secret 포함 CCTVUP 검증은 서버 내부 `http://127.0.0.1:3000`으로만 수행한다. 공개 IP HTTP 확인은 secret 없는 페이지/401 점검으로 제한한다.
 - 5분 저장 근거 환경변수: `CCTVUP_IMAGE_QUERY_TIMEOUT_MS` 기본값은 5000ms다.
 - cron 환경변수: `CCTVUP_CRON_TRIGGER_SECRET`
 - 개발 환경에서 DB 환경변수가 없으면 mock payload를 표시할 수 있지만, 운영 환경에서 DB 환경변수가 없거나 DB 조회가 실패하면 실제 목록 대신 `unavailable` 빈 응답을 반환한다.
@@ -165,6 +171,9 @@ last_updated: 26.05.17
 - [x] `운영 점검` 버튼이 `/api/cctvup/smoke/`를 읽기 전용으로 호출하고 launchd/API/history/stale state 결과를 화면에 표시하는지 확인
 - [x] `/api/cctvup/check/`가 Supabase에 1회 적재되는지 확인
 - [x] `/api/cctvup/check/`가 `check_runs.note`에 호출자 지문을 남기는지 확인
+- [x] production 읽기 API가 secret 없이 운영 데이터를 공개하지 않는지 확인
+- [x] 브라우저 상단 `관리 secret` 입력 후 Enter로 보호된 읽기 API를 다시 조회할 수 있는지 확인
+- [x] 배포 workflow가 `/api/cctvup/` 무인 접근 401과 secret 접근 `source=db`를 확인하는지 점검
 - [x] 자동 체크 최근 실행 상태가 정상/지연/멈춤 의심으로 표시되는지 확인
 - [x] 30일 상태전환 로그가 issue_events 기준으로 표시되는지 확인
 - [ ] 30일 상태전환 로그가 farm_scope_events의 입추/출하/감시범위 전환도 함께 표시하는지 확인

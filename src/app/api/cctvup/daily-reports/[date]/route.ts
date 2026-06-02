@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { buildCctvUpReadDeniedPayload, getCctvUpReadAccessState } from '@/lib/cctvup-access';
 import { readCctvUpDailyReportDetail } from '@/lib/cctvup-daily-report.js';
 
 export const runtime = 'nodejs';
@@ -14,7 +15,20 @@ function isReportDateValidationMessage(message: string) {
   return message.includes('YYYY-MM-DD') || message.includes('존재하지 않는 보고서 날짜');
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  const access = await getCctvUpReadAccessState(request);
+  if (!access.ok) {
+    return NextResponse.json(
+      {
+        ...buildCctvUpReadDeniedPayload(access),
+        date: context.params.date,
+        markdown: '',
+        raw: null,
+      },
+      { status: access.status, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   try {
     const detail = await readCctvUpDailyReportDetail(context.params.date, process.cwd());
     return NextResponse.json(

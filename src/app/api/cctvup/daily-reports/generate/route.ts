@@ -60,6 +60,7 @@ export async function POST(request: Request) {
           summary: result.report.summary,
           companies: result.report.companies,
           notableFarms: result.report.notableFarms,
+          flockMovementEvents: result.report.flockMovementEvents,
         },
         message: `${result.date} CCTVUP 일일 브리핑을 생성했습니다.`,
       },

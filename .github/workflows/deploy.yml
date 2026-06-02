@@ -24,6 +24,7 @@ jobs:
       env:
         PAIPTREE_RUNTIME_SERVER: '1'
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         NEXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         NEXT_PUBLIC_SUPABASE_PROJECT_ID: poc
@@ -87,8 +88,11 @@ jobs:
           PORT=3000
           HOSTNAME=0.0.0.0
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_SUPABASE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
+          CCTVUP_READ_SECRET=${{ secrets.CCTVUP_READ_SECRET }}
+          CCTVUP_PUBLIC_READ=0
           CCTVUP_CRON_TRIGGER_SECRET=${{ secrets.CCTVUP_CRON_TRIGGER_SECRET }}
           CCTVUP_DB_HOST=${{ secrets.CCTVUP_DB_HOST }}
           CCTVUP_DB_PORT=${{ secrets.CCTVUP_DB_PORT }}
@@ -250,10 +254,43 @@ jobs:
             exit 1
           fi
           sudo tail -n 80 /tmp/paiptree-website.log || true
-          curl -I -sS --max-time 10 http://${HOST_IP}/ | head -n 1
-          curl -I -sS --max-time 10 http://${HOST_IP}/cctvup/ | head -n 1
-          curl -I -sS --max-time 10 http://${HOST_IP}/storybook/ | head -n 1
-          curl -I -sS --max-time 10 http://${HOST_IP}/cherry_tms/grouping/?theme=light | head -n 1
+          PUBLIC_ORIGIN="http://52.79.116.76"
+          LOCAL_ORIGIN="http://127.0.0.1:3000"
+          curl -I -sS --max-time 10 "${PUBLIC_ORIGIN}/" | head -n 1
+          curl -I -sS --max-time 10 "${PUBLIC_ORIGIN}/cctvup/" | head -n 1
+          curl -I -sS --max-time 10 "${PUBLIC_ORIGIN}/storybook/" | head -n 1
+          curl -I -sS --max-time 10 "${PUBLIC_ORIGIN}/cherry_tms/grouping/?theme=light" | head -n 1
+
+          CCTVUP_READ_SECRET_VALUE='${{ secrets.CCTVUP_READ_SECRET }}'
+          if [ -z "$CCTVUP_READ_SECRET_VALUE" ]; then
+            CCTVUP_READ_SECRET_VALUE='${{ secrets.CCTVUP_CRON_TRIGGER_SECRET }}'
+          fi
+          if [ -z "$CCTVUP_READ_SECRET_VALUE" ]; then
+            echo "CCTVUP read secret is missing" >&2
+            exit 1
+          fi
+
+          CCTVUP_PUBLIC_STATUS="$(curl -sS --max-time 10 -o /tmp/cctvup-public.json -w '%{http_code}' "${PUBLIC_ORIGIN}/api/cctvup/" || true)"
+          if [ "$CCTVUP_PUBLIC_STATUS" != "401" ]; then
+            echo "Expected /api/cctvup/ without secret to return 401, got ${CCTVUP_PUBLIC_STATUS}" >&2
+            exit 1
+          fi
+
+          CCTVUP_PROTECTED_STATUS="$(curl -sS --max-time 30 -o /tmp/cctvup-protected.json -w '%{http_code}' -H "x-cctvup-admin-secret: ${CCTVUP_READ_SECRET_VALUE}" "${LOCAL_ORIGIN}/api/cctvup/" || true)"
+          if [ "$CCTVUP_PROTECTED_STATUS" != "200" ]; then
+            echo "Expected /api/cctvup/ with secret to return 200, got ${CCTVUP_PROTECTED_STATUS}" >&2
+            node -e "const fs=require('fs'); try { const p=JSON.parse(fs.readFileSync('/tmp/cctvup-protected.json','utf8')); console.error({ source:p.source, message:p.message, status:p.status }); } catch {}"
+            CCTVUP_CRON_SECRET_VALUE='${{ secrets.CCTVUP_CRON_TRIGGER_SECRET }}'
+            if [ -n "$CCTVUP_CRON_SECRET_VALUE" ]; then
+              curl -sS --max-time 15 -o /tmp/cctvup-health.json -H "x-cctvup-cron-secret: ${CCTVUP_CRON_SECRET_VALUE}" "${LOCAL_ORIGIN}/api/cctvup/health/" || true
+              node -e "const fs=require('fs'); try { const p=JSON.parse(fs.readFileSync('/tmp/cctvup-health.json','utf8')); console.error('CCTVUP DB health', { ok:p.ok, env:p.env, connection:p.connection, query:p.query }); } catch {}"
+            fi
+            exit 1
+          fi
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('/tmp/cctvup-protected.json','utf8')); if (p.source !== 'db') { console.error('Expected CCTVUP source=db, got', { source:p.source, message:p.message }); process.exit(1); } console.log('CCTVUP protected read ok', { farms:p.summary?.farms, cameras:p.summary?.cameras, source:p.source });"
+
+          CCTVUP_SMOKE_STATUS="$(curl -sS --max-time 40 -o /tmp/cctvup-smoke.json -w '%{http_code}' -H "x-cctvup-admin-secret: ${CCTVUP_READ_SECRET_VALUE}" "${LOCAL_ORIGIN}/api/cctvup/smoke/" || true)"
+          node -e "const fs=require('fs'); try { const p=JSON.parse(fs.readFileSync('/tmp/cctvup-smoke.json','utf8')); console.log('CCTVUP smoke summary', { httpStatus:'${CCTVUP_SMOKE_STATUS}', ok:p.ok, failureCount:p.failureCount, warningCount:p.warningCount, message:p.message }); } catch (error) { console.log('CCTVUP smoke response was not JSON', { httpStatus:'${CCTVUP_SMOKE_STATUS}' }); }"
 
           echo '=== nginx sockets ==='
           sudo ss -ltnp | grep -E ':(80|3000)\b' || true
