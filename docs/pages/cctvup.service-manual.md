@@ -106,6 +106,7 @@ last_updated: 26.05.29
 - 이전에 `watching/open/recovering` 상태였던 카메라가 현재 `감시중` 범위에서 빠지면 다음 체크 때 `tbl_cctvup_camera_states.status = resolved`로 닫아 활성 조회에서 제외한다. 이 처리는 감시범위 변경 정리이며 카메라 회복 이벤트로 보지 않으므로 `issue_events`에는 새 이벤트를 남기지 않는다.
 - Supabase history 읽기 timeout 기본값은 1500ms다. timeout이 나면 부분 응답 또는 `unavailable`로 빠르게 내려 화면을 유지한다.
 - Supabase camera_state 읽기 timeout 기본값은 1500ms다. timeout이 나면 운영 DB live 목록은 유지하고 상태머신만 미반영으로 표시한다.
+- 웹 배포 서버가 원본 운영 DB 현재 목록을 읽지 못하면 Supabase 활성 `camera_states`를 문제 전용 fallback row로 변환해 농장 그룹 리스트와 `지금 확인할 문제`에 표시한다. 이 fallback은 `watching/open/recovering` 카메라만 포함하므로 정상 농장을 포함한 전체 농장 리스트로 보지 않는다. 전체 리스트가 필요하면 원본 운영 DB read-only 네트워크 접근을 허용하거나 별도 승인된 read-only 요약 미러를 설계한다.
 
 ## 6. 상태머신 기준
 ### 상태 정의
@@ -575,6 +576,7 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 - `운영 점검` smoke API는 읽기 전용이지만 launchd/API/history 상태를 노출하므로 production에서는 같은 읽기 secret으로 보호한다.
 - `CCTVUP_PUBLIC_READ=1`은 공개 데모나 고객 공유처럼 운영 데이터 공개가 별도 승인된 경우에만 사용한다.
 - 배포 workflow는 `/cctvup/` 무인 접근이 로그인으로 이동하는지, `/api/cctvup/` 무인 접근이 401인지 hard gate로 확인한다. secret 접근은 서버 내부 `http://127.0.0.1:3000`으로만 수행하며, 200이면 `source=db`를 확인하고 503이면 auth 배포는 성공으로 두되 원본 DB 네트워크 접근을 후속 과제로 남긴다. 공개 IP HTTP 요청에는 secret을 싣지 않는다.
+- 배포 workflow는 standalone runtime에 `content/`를 함께 복사하고, 서버 내부 `/api/cctvup/daily-reports/` secret 조회가 `source=content`와 1개 이상 report를 반환하는지 확인한다.
 - 프론트에 secret 값을 하드코딩하지 않는다.
 - 원본 운영 DB 계정은 가능하면 read-only 권한으로 제한한다.
 - API 코드에서도 원본 DB 쿼리가 `SELECT/WITH`로 시작하는지 검사한다.
@@ -898,7 +900,7 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 - 운영 원칙:
   - 파일은 GitHub 커밋 대상이다.
   - 지금은 로컬 Next.js 생성 API로 만들고 로컬 `/cctvup`에서 본다.
-  - 나중에 웹 배포 시에는 배포 산출물에 포함된 같은 파일을 읽어 보여준다.
+  - 웹 배포 시에는 배포 산출물에 포함된 같은 파일을 읽어 보여준다. standalone runtime bundle은 `content/`를 포함해야 하며, deploy workflow에서 manifest report 수를 검증한다.
   - raw 파일은 공개 가능한 CCTVUP 운영 이벤트 원천만 담는다. DB credential, Supabase service key, 이미지 원본 URL, 운영 이미지 파일 경로 원문, 원본 운영 DB 전체 row dump는 저장하지 않는다.
   - Supabase에는 일일 보고서 본문을 중복 저장하지 않는다.
   - 원본 운영 DB에는 계속 쓰지 않는다.

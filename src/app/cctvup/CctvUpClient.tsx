@@ -2,7 +2,22 @@
 
 import { type ButtonHTMLAttributes, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
-import { type CctvUpCheckRun, type CctvUpIssueEventKind, type CctvUpMonitorScopeCode, type CctvUpPayload, type CctvUpRow, type CctvUpSlotStatus, type CctvUpStatus, minutesBetween } from '@/lib/cctvup';
+import {
+  CCTVUP_EXPECTED_1H,
+  type CctvUpCameraState,
+  type CctvUpCheckRun,
+  type CctvUpIssueEventKind,
+  type CctvUpMonitorScopeCode,
+  type CctvUpPayload,
+  type CctvUpRow,
+  type CctvUpSlotStatus,
+  type CctvUpStatus,
+  buildSlots,
+  formatTime as formatCctvUpTime,
+  getCctvUpStateLabel,
+  mapCctvUpStateStatusToLegacyStatus,
+  minutesBetween,
+} from '@/lib/cctvup';
 import { type CctvUpAnalysisPayload, type CctvUpAnalysisStatus } from '@/lib/cctvup-analysis';
 import { type CctvUpHistoryPayload } from '@/lib/cctvup-history';
 import { type CctvUpImageEvidenceItem, type CctvUpImageEvidencePayload } from '@/lib/cctvup-images';
@@ -1724,6 +1739,58 @@ function mergeRegistryEntry(row: CctvUpRow, entry?: CctvUpFarmRegistryEntry): Di
   };
 }
 
+function normalizeStateSlotsForFallback(state: CctvUpCameraState, status: CctvUpStatus) {
+  const recentSlots = Array.isArray(state.recentSlots)
+    ? state.recentSlots.filter((slot): slot is CctvUpSlotStatus => slot === 'ok' || slot === 'late' || slot === 'missing' || slot === 'paused').slice(-CCTVUP_EXPECTED_1H)
+    : [];
+  if (recentSlots.length === CCTVUP_EXPECTED_1H) return recentSlots;
+  return buildSlots(Number(state.ageMinutes ?? 999), status);
+}
+
+function buildFallbackRowsFromCameraStates(states: CctvUpCameraState[] = []): CctvUpRow[] {
+  return states
+    .filter((state) => state.status === 'watching' || state.status === 'open' || state.status === 'recovering')
+    .map((state) => {
+      const status = mapCctvUpStateStatusToLegacyStatus(state.status);
+      const slots = normalizeStateSlotsForFallback(state, status);
+      const latestImageDate = state.latestImageAt ? new Date(state.latestImageAt) : null;
+      const latestAtIso = latestImageDate && !Number.isNaN(latestImageDate.getTime()) ? latestImageDate.toISOString() : undefined;
+      const okSlotCount = slots.filter((slot) => slot === 'ok').length;
+      const cameraKey = state.cameraKey || `${state.farmId}-${state.houseId}-${state.moduleId}`;
+
+      return {
+        id: cameraKey,
+        farm: state.farmId,
+        farmName: state.farmName ?? undefined,
+        house: state.houseId,
+        houseName: state.houseName ?? undefined,
+        camera: state.moduleId,
+        cameraName: state.cameraName ?? undefined,
+        latestAt: latestAtIso ? formatCctvUpTime(latestAtIso) : '--:--',
+        latestAtIso,
+        ageMinutes: Number(state.ageMinutes ?? 999),
+        consecutiveMiss: Number(state.missCount ?? 0),
+        rate1h: `${okSlotCount}/${CCTVUP_EXPECTED_1H}`,
+        rate24h: '-',
+        reason: state.message || getCctvUpStateLabel(state.status),
+        status,
+        slots,
+        stateStatus: state.status,
+        stateLabel: getCctvUpStateLabel(state.status),
+        stateMessage: state.message,
+        missCount: state.missCount,
+        firstMissedAt: state.firstMissedAt,
+        openedAt: state.openedAt,
+        resolvedAt: state.resolvedAt,
+        lastCheckedAt: state.lastCheckedAt,
+        confirmedIssue: state.status === 'open',
+        monitorScopeCode: 'active' as const,
+        monitorScopeLabel: '감시중',
+      };
+    })
+    .sort((a, b) => b.ageMinutes - a.ageMinutes || a.farm.localeCompare(b.farm) || a.camera.localeCompare(b.camera));
+}
+
 function buildRegistrySeed(row: CctvUpRow): CctvUpFarmRegistryEntry {
   return {
     farmId: row.farm,
@@ -1900,7 +1967,11 @@ export default function CctvUpClient() {
   const [isIssueEventLogOpen, setIsIssueEventLogOpen] = useState(true);
   const [isChronicRiskOpen, setIsChronicRiskOpen] = useState(false);
   const [isWeightReferenceOpen, setIsWeightReferenceOpen] = useState(false);
-  const monitorRows = payload.rows;
+  const stateFallbackRows = useMemo(() => {
+    if (payload.rows.length > 0 || payload.source !== 'unavailable') return [];
+    return buildFallbackRowsFromCameraStates(historyPayload.cameraStates ?? []);
+  }, [historyPayload.cameraStates, payload.rows.length, payload.source]);
+  const monitorRows = payload.rows.length > 0 ? payload.rows : stateFallbackRows;
 
   const updateAdminSecret = useCallback((value: string) => {
     adminSecretRef.current = value;
@@ -2451,13 +2522,13 @@ export default function CctvUpClient() {
 
   const counts = useMemo(
     () => ({
-      ok: payload.summary.ok,
-      late: payload.summary.late,
-      missing: payload.summary.missing,
-      critical: payload.summary.critical,
-      paused: payload.summary.paused,
+      ok: monitorRows.filter((row) => row.status === 'ok').length,
+      late: monitorRows.filter((row) => row.status === 'late').length,
+      missing: monitorRows.filter((row) => row.status === 'missing').length,
+      critical: monitorRows.filter((row) => row.status === 'critical').length,
+      paused: monitorRows.filter((row) => row.status === 'paused').length,
     }),
-    [payload.summary],
+    [monitorRows],
   );
   const statusSummaryItems = useMemo(
     () => [
@@ -2586,6 +2657,11 @@ export default function CctvUpClient() {
     resolved: recentIssueEvents.filter((event) => event.eventKind === 'resolved').length,
   }), [recentIssueEvents]);
   const recentFarmScopeEventCount = recentFarmScopeEvents.length;
+  const isStateFallbackActive = payload.rows.length === 0 && stateFallbackRows.length > 0;
+  const currentListSourceLabel = isStateFallbackActive ? 'Supabase 문제상태' : '운영 DB';
+  const currentListFarmCount = isStateFallbackActive ? farmGroups.length : payload.summary.farms;
+  const currentListCameraCount = isStateFallbackActive ? monitorRows.length : payload.summary.cameras;
+  const currentListIssueCount = isStateFallbackActive ? problemRows.length : payload.summary.issueCount;
 
   const postRegistryItems = async (items: CctvUpFarmRegistryEntry[]) => {
     const secret = adminSecret.trim();
@@ -2857,7 +2933,7 @@ export default function CctvUpClient() {
             <h1 className="mt-1 flex flex-wrap items-end gap-2 text-2xl font-semibold leading-tight">
               <span>CCTVUP - AI 중량예측 입력 관제</span>
               <span className={`text-sm font-normal ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                (운영 DB · 농장 {payload.summary.farms}개 · 카메라 {payload.summary.cameras}개 · 확인 {formatClock(payload.checkedAt)} · 확정/회복 {payload.summary.issueCount}개)
+                ({currentListSourceLabel} · 농장 {currentListFarmCount}개 · 카메라 {currentListCameraCount}개 · 확인 {formatClock(payload.checkedAt)} · 확정/회복 {currentListIssueCount}개)
               </span>
             </h1>
           </div>
@@ -3037,7 +3113,7 @@ export default function CctvUpClient() {
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-semibold">운영 상태</h2>
                   <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                    농장 {payload.summary.farms}개 · 카메라 {payload.summary.cameras}대 · 확인 {formatClock(payload.checkedAt)}
+                    농장 {currentListFarmCount}개 · 카메라 {currentListCameraCount}대 · 확인 {formatClock(payload.checkedAt)}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -3333,6 +3409,11 @@ export default function CctvUpClient() {
                     </div>
                   </div>
                   {registryError ? <p className="mt-2 text-xs text-red-400">{registryError}</p> : null}
+                  {isStateFallbackActive ? (
+                    <p className={`mt-2 text-xs ${theme === 'light' ? 'text-amber-700' : 'text-amber-300'}`}>
+                      운영 DB 현재 목록을 읽지 못해 Supabase에 남은 활성 문제 상태만 표시합니다. 전체 정상 농장 목록은 원본 DB 연결이 복구되어야 보입니다.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>

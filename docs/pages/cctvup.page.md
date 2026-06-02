@@ -36,6 +36,8 @@ last_updated: 26.06.02
 ## 4. 데이터/상태
 - 주요 데이터 소스: `/api/cctvup` 읽기 전용 API
 - 현재 화면 데이터는 운영 DB를 직접 조회하며, Supabase 최신 payload fallback을 기본 경로로 쓰지 않는다.
+- 배포 서버가 운영 DB 현재 목록을 읽지 못하는 경우에는 `/api/cctvup/history`의 Supabase 활성 `camera_states`를 문제 전용 fallback으로 사용해 농장 그룹 리스트와 `지금 확인할 문제`에 표시한다. 이 fallback은 문제 있는 카메라/농장만 복구하며, 정상 농장을 포함한 전체 농장 리스트는 운영 DB 연결이 가능해야 표시된다.
+- Supabase에는 정상 row 전체를 저장하지 않는다. 전체 농장 목록을 웹에서 항상 보여야 한다면 운영 DB read-only 네트워크 접근을 허용하거나, 별도 승인된 read-only 요약 미러를 설계해야 한다.
 - 분석 상세 API: `/api/cctvup/analysis`는 선택한 카메라 1대에 대해서만 `tbl_farm_image_analysis_weight_v2`를 최근 2시간 기준으로 읽어 분석 결과 근거를 반환한다.
 - 5분 저장 근거 API: `/api/cctvup/images`는 선택한 카메라 1대에 대해서만 `tbl_farm_image`의 최신 저장, 문제 직전 저장, 회복 확인 저장을 읽어 저장 시각/크기/마스킹된 파일 참조만 반환한다.
 - 이미지 보기 API는 현재 제공하지 않는다. `/cctvup`의 1차 목적은 이미지 뷰어가 아니라 5분 저장 증거 관제이므로, 운영 이미지 서버 인증과 원본 URL 노출 문제를 피한다.
@@ -92,7 +94,7 @@ last_updated: 26.06.02
 - 회복 정책: `open` 이후 이미지가 다시 들어오면 즉시 정상 삭제하지 않고 `recovering`으로 두며, 최근 12회 슬롯이 정상으로 밀려 채워진 뒤 `resolved` 처리한다.
 - check run의 `payload` JSON은 빈 객체 또는 최소 summary만 사용해 Supabase 저장량을 제한한다.
 - 문제로그 기준: 오른쪽 문제로그는 `tbl_cctvup_issue_events`의 카메라 상태전환과 `tbl_cctvup_farm_scope_events`의 농장 감시범위 전환을 함께 표시한다. 서버 DB의 event는 임의 삭제하지 않고 계속 보관하며, 화면 기본 조회만 최근 30일로 제한한다.
-- 일일 브리핑 기준: 하루 단위 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 `md`와 `raw.json` 파일로 저장한다. 이 파일은 GitHub 커밋 대상이며, 나중에 웹 배포 시 `/cctvup`의 `일일 브리핑` 탭에서 그대로 읽는다. 로컬 자동 생성은 `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 `npm run cctvup:daily-report -- --yesterday`를 실행해 전날 전체 보고서를 만든다. 보고서는 CCTV 이미지 이슈와 농장 감시범위 전환뿐 아니라 CCTVUP 활성 농장 범위의 `tbl_farm_diary_input`, `tbl_farm_diary_output`, `tbl_farm_diary_dead_kill` 원장을 읽어 실제 입추/출하, 지연 등록, 잔존 추정을 함께 기록한다. 문서 표시 순서는 요약, 업체별 특이사항, 업체별 주요 확인 항목, 출하·입추 원장, 계속 열려 있는 문제, 생성 기준이며 업체 그룹은 체리부로, 신우, 해외, 기타 순서로 정렬한다. 상세 설계는 `docs/plans/2026-05-17-cctvup-daily-report-content-tab.md`를 따른다.
+- 일일 브리핑 기준: 하루 단위 운영 브리핑은 Supabase에 중복 저장하지 않고 프로젝트 내부 `content/cctvup/daily-reports/**`에 `md`와 `raw.json` 파일로 저장한다. 이 파일은 GitHub 커밋 대상이며, 웹 배포 runtime bundle에도 `content/`를 포함해 `/cctvup`의 `일일 브리핑` 탭에서 그대로 읽는다. 로컬 자동 생성은 `com.paiptree.cctvup-daily-report` launchd가 매일 00:05에 `npm run cctvup:daily-report -- --yesterday`를 실행해 전날 전체 보고서를 만든다. 보고서는 CCTV 이미지 이슈와 농장 감시범위 전환뿐 아니라 CCTVUP 활성 농장 범위의 `tbl_farm_diary_input`, `tbl_farm_diary_output`, `tbl_farm_diary_dead_kill` 원장을 읽어 실제 입추/출하, 지연 등록, 잔존 추정을 함께 기록한다. 문서 표시 순서는 요약, 업체별 특이사항, 업체별 주요 확인 항목, 출하·입추 원장, 계속 열려 있는 문제, 생성 기준이며 업체 그룹은 체리부로, 신우, 해외, 기타 순서로 정렬한다. 상세 설계는 `docs/plans/2026-05-17-cctvup-daily-report-content-tab.md`를 따른다.
 - 선택 카메라 상세의 히스토리는 `상태전환 기록`으로 표시한다. `missing · open`, `critical · open` 같은 기술 값 대신 `문제확정`, `이미지 재수신`, `해결`, `재확정` 운영 문구를 사용한다.
 - 레거시 스냅샷/인시던트 반복 목록은 기본 화면에서 제거한다. 관련 테이블은 compatibility 보조 정보로만 유지한다.
 - current issue 규칙: 화면의 1차 기준은 `/api/cctvup` 현재 row와 Supabase `tbl_cctvup_camera_states` 병합 결과이며, 레거시 `tbl_cctvup_current_issues`는 compatibility 보조 정보로만 본다.
