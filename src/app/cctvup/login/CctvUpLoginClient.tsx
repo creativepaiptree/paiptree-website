@@ -1,35 +1,43 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { ArrowRight, CheckCircle2, KeyRound } from 'lucide-react';
 import { createSupabaseBrowserClient, hasSupabaseBrowserConfig } from '@/lib/supabase/client';
 
 type CctvUpLoginClientProps = {
   nextPath: string;
+  sharedLoginEmail?: string;
   authError?: string;
   configMissing?: boolean;
 };
 
 function formatAuthError(value: string | undefined) {
   if (!value) return '';
-  if (value === 'callback') return '로그인 링크 처리에 실패했습니다.';
+  if (value === 'callback') return '로그인 callback 처리에 실패했습니다.';
   if (value === 'missing-code') return '로그인 코드가 없는 요청입니다.';
   return '로그인이 완료되지 않았습니다.';
 }
 
-export default function CctvUpLoginClient({ nextPath, authError, configMissing }: CctvUpLoginClientProps) {
-  const [email, setEmail] = useState('');
+function formatPasswordAuthError(message: string | undefined) {
+  if (!message) return '로그인에 실패했습니다.';
+  if (message.toLowerCase().includes('invalid login credentials')) {
+    return '아이디 또는 비밀번호가 맞지 않습니다.';
+  }
+  return message;
+}
+
+export default function CctvUpLoginClient({
+  nextPath,
+  sharedLoginEmail,
+  authError,
+  configMissing,
+}: CctvUpLoginClientProps) {
+  const [email, setEmail] = useState(sharedLoginEmail || '');
+  const [password, setPassword] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState(formatAuthError(authError));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConfigMissing = configMissing || !hasSupabaseBrowserConfig();
-
-  const callbackUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const url = new URL('/auth/callback', window.location.origin);
-    url.searchParams.set('next', nextPath);
-    return url.toString();
-  }, [nextPath]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +47,12 @@ export default function CctvUpLoginClient({ nextPath, authError, configMissing }
     setError('');
 
     if (!trimmedEmail) {
-      setError('이메일을 입력해야 합니다.');
+      setError('아이디를 입력해야 합니다.');
+      return;
+    }
+
+    if (!password) {
+      setError('비밀번호를 입력해야 합니다.');
       return;
     }
 
@@ -51,22 +64,20 @@ export default function CctvUpLoginClient({ nextPath, authError, configMissing }
     setIsSubmitting(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: signInError } = await supabase.auth.signInWithOtp({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
-        options: {
-          emailRedirectTo: callbackUrl,
-          shouldCreateUser: false,
-        },
+        password,
       });
 
       if (signInError) {
-        setError(signInError.message || '로그인 링크 요청에 실패했습니다.');
+        setError(formatPasswordAuthError(signInError.message));
         return;
       }
 
-      setStatus('로그인 링크를 보냈습니다.');
+      setStatus('로그인되었습니다. 이동 중입니다.');
+      window.location.assign(nextPath);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : '로그인 링크 요청에 실패했습니다.');
+      setError(submitError instanceof Error ? submitError.message : '로그인에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -97,7 +108,7 @@ export default function CctvUpLoginClient({ nextPath, authError, configMissing }
               </div>
               <div className="border border-slate-700 bg-[#101c2b] p-4">
                 <p className="text-xs font-semibold text-slate-400">인증 방식</p>
-                <p className="mt-2 text-lg font-semibold text-white">메일 링크</p>
+                <p className="mt-2 text-lg font-semibold text-white">비밀번호</p>
               </div>
               <div className="border border-slate-700 bg-[#101c2b] p-4">
                 <p className="text-xs font-semibold text-slate-400">다음 경로</p>
@@ -105,7 +116,7 @@ export default function CctvUpLoginClient({ nextPath, authError, configMissing }
               </div>
             </div>
             <div className="mt-5 border border-slate-700 bg-[#08111d] p-4 text-sm leading-6 text-slate-300">
-              등록된 계정의 이메일로 로그인 링크를 보내고, 확인이 끝나면 CCTVUP 관제 화면으로 돌아갑니다.
+              등록된 공용 계정으로 로그인하면 CCTVUP 관제 화면으로 이동합니다.
             </div>
           </div>
 
@@ -115,23 +126,40 @@ export default function CctvUpLoginClient({ nextPath, authError, configMissing }
                 <KeyRound size={20} aria-hidden="true" />
               </span>
               <div>
-                <h2 className="text-base font-semibold text-white">로그인 링크 요청</h2>
+                <h2 className="text-base font-semibold text-white">공용 계정 로그인</h2>
                 <p className="text-xs text-slate-400">Supabase Auth</p>
               </div>
             </div>
 
             <label htmlFor="cctvup-login-email" className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-              Email
+              ID
             </label>
             <input
               id="cctvup-login-email"
               type="email"
-              autoComplete="email"
+              autoComplete="username"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               disabled={isSubmitting || isConfigMissing}
               className="mt-2 h-11 w-full border border-slate-600 bg-[#08111d] px-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
-              placeholder="name@paiptree.com"
+              placeholder="공용 계정 이메일"
+            />
+
+            <label
+              htmlFor="cctvup-login-password"
+              className="mt-4 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-400"
+            >
+              Password
+            </label>
+            <input
+              id="cctvup-login-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              disabled={isSubmitting || isConfigMissing}
+              className="mt-2 h-11 w-full border border-slate-600 bg-[#08111d] px-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              placeholder="비밀번호"
             />
 
             <button
@@ -139,7 +167,7 @@ export default function CctvUpLoginClient({ nextPath, authError, configMissing }
               disabled={isSubmitting || isConfigMissing}
               className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 border border-sky-400 bg-sky-400 px-4 text-sm font-semibold text-[#06101d] transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:border-slate-600 disabled:bg-slate-700 disabled:text-slate-400"
             >
-              <span>{isSubmitting ? '요청 중' : '로그인 링크 보내기'}</span>
+              <span>{isSubmitting ? '로그인 중' : '로그인'}</span>
               <ArrowRight size={17} aria-hidden="true" />
             </button>
 

@@ -556,6 +556,7 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 - `CCTVUP_READ_SECRET`: production 읽기 API 보호용 secret. 없으면 `CCTVUP_REGISTRY_ADMIN_SECRET`, 그다음 `CCTVUP_CRON_TRIGGER_SECRET`를 사용한다.
 - `CCTVUP_AUTH_REQUIRED`: `1`이면 로컬 개발에서도 `/cctvup` Supabase Auth 보호를 강제한다.
 - `CCTVUP_AUTH_DISABLED`: `1`이면 production에서도 `/cctvup` Supabase Auth 보호를 끈다. 운영 공개 전환 중 긴급 우회 외에는 사용하지 않는다.
+- `NEXT_PUBLIC_CCTVUP_SHARED_LOGIN_EMAIL`: `/cctvup/login`에 기본 표시할 공용 Supabase Auth 계정 이메일. 비밀값이 아니며, 비밀번호는 코드와 환경변수에 저장하지 않는다.
 - `CCTVUP_PUBLIC_READ`: `1`일 때 production 읽기 API를 공개 모드로 연다. 운영 농장명/상태/브리핑 공개 승인이 없는 한 설정하지 않는다.
 - `CCTVUP_ALLOW_MOCK_FALLBACK`
 
@@ -563,8 +564,9 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 - `SUPABASE_SERVICE_KEY`는 서버에서만 사용한다.
 - `CCTVUP_CRON_TRIGGER_SECRET`도 서버/관리자 호출에만 사용한다.
 - production `/cctvup` 페이지는 Supabase Auth 세션 없이는 열면 안 된다. 로그인 화면과 callback route를 제외하고 페이지 본문은 middleware와 서버 컴포넌트 guard로 함께 보호한다.
-- `/cctvup/login`은 Supabase email-link Auth를 사용한다. 신규 가입을 열지 않도록 `shouldCreateUser=false`로 요청하며, Supabase Auth에 등록된 사용자만 로그인할 수 있다.
-- Supabase Dashboard의 Auth URL 설정에는 실제 배포 origin의 `/auth/callback`을 redirect URL로 허용해야 한다. 예: `http://52.79.116.76/auth/callback`, Vercel 사용 시 `https://<domain>/auth/callback`.
+- `/cctvup/login`은 Supabase email/password Auth를 사용한다. 화면에서 회원가입을 제공하지 않으며, Supabase Auth에 사전 등록된 공용 계정만 로그인할 수 있다.
+- 공용 계정 비밀번호는 Supabase Auth 사용자에서만 관리하고 repo, workflow, 환경변수, 문서에 저장하지 않는다.
+- 기존 email-link callback route는 남겨두지만 기본 로그인 흐름에서는 사용하지 않는다. Supabase Dashboard의 Auth URL 설정에는 기존 링크 호환과 향후 전환을 위해 실제 배포 origin의 `/auth/callback`을 redirect URL로 유지할 수 있다.
 - `/cctvup/logout`은 현재 브라우저 세션 쿠키를 제거하고 `/cctvup/login?next=/cctvup`로 이동한다.
 - registry 저장은 배포 환경에서 secret 없이 열면 안 된다. 로컬 개발 환경의 localhost registry 저장만 `local-registry` 모드로 허용한다.
 - check 실행, history 쓰기, health 진단은 로컬/배포 모두 secret 없이 열면 안 된다.
@@ -572,7 +574,7 @@ GitHub Actions의 `CCTVUP Check`는 현재 `workflow_dispatch` 수동 실행만 
 - production 읽기 API는 secret 없이 운영 데이터를 내려주면 안 된다. 대상은 `/api/cctvup`, `/api/cctvup/history`, `/api/cctvup/registry`, `/api/cctvup/smoke`, `/api/cctvup/images`, `/api/cctvup/analysis`, `/api/cctvup/daily-reports`다.
 - `운영 점검` smoke API는 읽기 전용이지만 launchd/API/history 상태를 노출하므로 production에서는 같은 읽기 secret으로 보호한다.
 - `CCTVUP_PUBLIC_READ=1`은 공개 데모나 고객 공유처럼 운영 데이터 공개가 별도 승인된 경우에만 사용한다.
-- 배포 workflow는 `/api/cctvup/` 무인 접근이 401인지, secret 접근이 200이고 `source=db`인지 hard gate로 확인한다. secret 포함 검증은 서버 내부 `http://127.0.0.1:3000`으로만 수행하고, 공개 IP HTTP 요청에는 secret을 싣지 않는다. `/api/cctvup/smoke/`는 운영 루프 stale 같은 외부 상태를 드러내므로 현재는 요약 출력으로만 남긴다.
+- 배포 workflow는 `/cctvup/` 무인 접근이 로그인으로 이동하는지, `/api/cctvup/` 무인 접근이 401인지 hard gate로 확인한다. secret 접근은 서버 내부 `http://127.0.0.1:3000`으로만 수행하며, 200이면 `source=db`를 확인하고 503이면 auth 배포는 성공으로 두되 원본 DB 네트워크 접근을 후속 과제로 남긴다. 공개 IP HTTP 요청에는 secret을 싣지 않는다.
 - 프론트에 secret 값을 하드코딩하지 않는다.
 - 원본 운영 DB 계정은 가능하면 read-only 권한으로 제한한다.
 - API 코드에서도 원본 DB 쿼리가 `SELECT/WITH`로 시작하는지 검사한다.

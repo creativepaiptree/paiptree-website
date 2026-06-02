@@ -101,11 +101,11 @@ last_updated: 26.06.02
 - 체크/관리 보안: `CCTVUP_CRON_TRIGGER_SECRET`는 필수이며, `x-cctvup-cron-secret` 헤더와 일치해야 checker 적재와 history 쓰기를 허용한다. registry 쓰기는 배포 환경에서 `x-cctvup-admin-secret` 또는 `x-cctvup-cron-secret`을 요구하고, 로컬 개발 환경의 localhost 요청은 분류 편집을 막지 않도록 허용한다.
 - `운영 점검` smoke API는 현재 로컬 운영 편의용 읽기 전용 API다. 외부 웹 배포 시에는 관리자 인증, 내부망 제한, 또는 local-only 차단 중 하나를 붙이기 전까지 공개 노출하지 않는다.
 - 웹 배포 페이지 보안: production runtime에서는 `/cctvup` 페이지 자체가 Supabase Auth 세션 없이는 `/cctvup/login?next=/cctvup`로 이동한다. 로컬 개발의 localhost 운영은 기존 launchd/check 루프를 막지 않도록 기본 허용하며, 로컬에서도 강제 테스트가 필요하면 `CCTVUP_AUTH_REQUIRED=1`을 사용한다.
-- 웹 배포 로그인: `/cctvup/login`은 Supabase email-link Auth를 사용한다. 링크의 redirect는 `/auth/callback?next=/cctvup`이며, callback route에서 code를 세션 쿠키로 교환한 뒤 관제 화면으로 돌려보낸다.
+- 웹 배포 로그인: `/cctvup/login`은 Supabase email/password Auth를 사용한다. 공용 계정 이메일은 필요하면 `NEXT_PUBLIC_CCTVUP_SHARED_LOGIN_EMAIL`로 화면에 기본 표시하고, 비밀번호는 Supabase Auth 사용자에서만 관리한다. 기존 `/auth/callback`은 email-link 호환용으로 남겨두지만 기본 로그인 흐름에서는 사용하지 않는다.
 - 웹 배포 읽기 보안: production runtime에서는 `/api/cctvup`, `/api/cctvup/history`, `/api/cctvup/registry`, `/api/cctvup/smoke`, `/api/cctvup/images`, `/api/cctvup/analysis`, `/api/cctvup/daily-reports` 읽기 API가 기본적으로 secret을 요구한다. 브라우저에서는 상단 `관리 secret` 입력 후 Enter로 재조회하며, 서버는 `CCTVUP_READ_SECRET`, `CCTVUP_REGISTRY_ADMIN_SECRET`, `CCTVUP_CRON_TRIGGER_SECRET` 순서로 읽기 secret을 확인한다.
 - `CCTVUP_PUBLIC_READ=1`은 운영 농장명/상태/일일 브리핑을 공개해도 된다는 별도 승인 후에만 사용한다. 로컬 개발의 localhost 요청은 기존처럼 secret 없이 허용한다.
 - API 환경변수: `CCTVUP_DB_HOST`, `CCTVUP_DB_PORT`, `CCTVUP_DB_USER`, `CCTVUP_DB_PASSWORD`, `CCTVUP_DB_DATABASE`
-- 웹 배포 환경변수: Supabase Auth에는 `NEXT_PUBLIC_SUPABASE_URL`과 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 또는 기존 `NEXT_PUBLIC_SUPABASE_KEY`가 필요하다. `CCTVUP_READ_SECRET`은 production 읽기 API 보호용 secret이다. 설정하지 않으면 `CCTVUP_REGISTRY_ADMIN_SECRET`, 그다음 `CCTVUP_CRON_TRIGGER_SECRET`를 fallback으로 사용한다. 배포 workflow는 `CCTVUP_PUBLIC_READ=0`을 명시한다.
+- 웹 배포 환경변수: Supabase Auth에는 `NEXT_PUBLIC_SUPABASE_URL`과 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 또는 기존 `NEXT_PUBLIC_SUPABASE_KEY`가 필요하다. `NEXT_PUBLIC_CCTVUP_SHARED_LOGIN_EMAIL`은 공용 계정 ID 기본값이며 비밀값이 아니다. `CCTVUP_READ_SECRET`은 production 읽기 API 보호용 secret이다. 설정하지 않으면 `CCTVUP_REGISTRY_ADMIN_SECRET`, 그다음 `CCTVUP_CRON_TRIGGER_SECRET`를 fallback으로 사용한다. 배포 workflow는 `CCTVUP_PUBLIC_READ=0`을 명시한다.
 - Supabase Auth redirect URL 허용 목록에는 실제 배포 origin의 `/auth/callback`을 추가해야 한다.
 - 배포 workflow의 secret 포함 CCTVUP 검증은 서버 내부 `http://127.0.0.1:3000`으로만 수행한다. 공개 IP HTTP 확인은 secret 없는 페이지/401 점검으로 제한한다.
 - 5분 저장 근거 환경변수: `CCTVUP_IMAGE_QUERY_TIMEOUT_MS` 기본값은 5000ms다.

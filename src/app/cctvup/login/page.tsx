@@ -21,6 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function CctvUpLoginPage({ searchParams }: CctvUpLoginPageProps) {
   const nextPath = sanitizeCctvUpNextPath(searchParams?.next);
   const configMissing = !getSupabasePublicConfig();
+  const sharedLoginEmail = process.env.NEXT_PUBLIC_CCTVUP_SHARED_LOGIN_EMAIL?.trim() || '';
 
   if (!configMissing) {
     const auth = await getSupabaseServerClaims();
@@ -30,6 +31,7 @@ export default async function CctvUpLoginPage({ searchParams }: CctvUpLoginPageP
   return (
     <CctvUpLoginClient
       nextPath={nextPath}
+      sharedLoginEmail={sharedLoginEmail}
       authError={searchParams?.error}
       configMissing={configMissing}
     />

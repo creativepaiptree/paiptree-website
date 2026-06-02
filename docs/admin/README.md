@@ -26,9 +26,9 @@ last_updated: 26.06.02
 
 ## 3. 요약
 - 총 라우트 페이지: **29**
-- 페이지 문서 생성됨: **24**
+- 페이지 문서 생성됨: **29**
 - 자동 신규 생성: **0**
-- 자동 메타 갱신(SYNCED): **5**
+- 자동 메타 갱신(SYNCED): **0**
 - 업데이트 필요(STALE): **0**
 - 활성 페이지 문서(root): **30**
 - 아카이브 페이지 문서: **16**
@@ -44,8 +44,8 @@ last_updated: 26.06.02
 | `/about` | `src/app/about/page.tsx` | `docs/pages/about.page.md` | OK |
 | `/blog` | `src/app/blog/page.tsx` | `docs/pages/blog.page.md` | OK |
 | `/careers` | `src/app/careers/page.tsx` | `docs/pages/careers.page.md` | OK |
-| `/cctvup` | `src/app/cctvup/page.tsx` | `docs/pages/cctvup.page.md` | SYNCED |
-| `/cctvup/login` | `src/app/cctvup/login/page.tsx` | `docs/pages/cctvup-login.page.md` | SYNCED |
+| `/cctvup` | `src/app/cctvup/page.tsx` | `docs/pages/cctvup.page.md` | OK |
+| `/cctvup/login` | `src/app/cctvup/login/page.tsx` | `docs/pages/cctvup-login.page.md` | OK |
 | `/cherry_tms` | `src/app/cherry_tms/page.tsx` | `docs/pages/cherry_tms.page.md` | OK |
 | `/cherry_tms/claim-docs` | `src/app/cherry_tms/claim-docs/page.tsx` | `docs/pages/cherry_tms-claim-docs.page.md` | OK |
 | `/cherry_tms/grouping` | `src/app/cherry_tms/grouping/page.tsx` | `docs/pages/cherry_tms-grouping.page.md` | OK |
@@ -54,17 +54,17 @@ last_updated: 26.06.02
 | `/cherry_tms/settlement-register` | `src/app/cherry_tms/settlement-register/page.tsx` | `docs/pages/cherry_tms-settlement-register.page.md` | OK |
 | `/cherry_tms/settlement-review` | `src/app/cherry_tms/settlement-review/page.tsx` | `docs/pages/cherry_tms-settlement-review.page.md` | OK |
 | `/culture` | `src/app/culture/page.tsx` | `docs/pages/culture.page.md` | OK |
-| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | SYNCED |
+| `/dash` | `src/app/dash/page.tsx` | `docs/pages/dash.page.md` | OK |
 | `/dash_2` | `src/app/dash_2/page.tsx` | `docs/pages/dash_2.page.md` | OK |
 | `/dash_3` | `src/app/dash_3/page.tsx` | `docs/pages/dash_3.page.md` | OK |
 | `/farm` | `src/app/farm/page.tsx` | `docs/pages/farm.page.md` | OK |
 | `/git` | `src/app/git/page.tsx` | `docs/pages/git.page.md` | OK |
 | `/i18n` | `src/app/i18n/page.tsx` | `docs/pages/i18n.page.md` | OK |
-| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | SYNCED |
+| `/m` | `src/app/m/page.tsx` | `docs/pages/m.page.md` | OK |
 | `/main` | `src/app/main/page.tsx` | `docs/pages/main.page.md` | OK |
 | `/news` | `src/app/news/page.tsx` | `docs/pages/news.page.md` | OK |
 | `/newsroom` | `src/app/newsroom/page.tsx` | `docs/pages/newsroom.page.md` | OK |
-| `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | SYNCED |
+| `/PoC` | `src/app/PoC/page.tsx` | `docs/pages/poc.page.md` | OK |
 | `/services` | `src/app/services/page.tsx` | `docs/pages/services.page.md` | OK |
 | `/style` | `src/app/style/page.tsx` | `docs/pages/style.page.md` | OK |
 | `/tms` | `src/app/tms/page.tsx` | `docs/pages/tms.page.md` | OK |
@@ -98,12 +98,12 @@ last_updated: 26.06.02
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
+- `docs/pages/cctvup.page.md` (26.06.02)
+- `docs/pages/cctvup.service-manual.md` (26.06.02)
+- `docs/pages/cctvup-login.page.md` (26.06.02)
 - `docs/pages/poc.page.md` (26.06.02)
 - `docs/pages/m.page.md` (26.06.02)
 - `docs/pages/dash.page.md` (26.06.02)
-- `docs/pages/cctvup-login.page.md` (26.06.02)
-- `docs/pages/cctvup.page.md` (26.06.02)
-- `docs/pages/cctvup.service-manual.md` (26.06.02)
 - `docs/admin/README.md` (26.06.02)
 - `docs/pages/무제 폴더/tms.page.md` (26.06.02)
 - `docs/pages/무제 폴더/tms-main.page.md` (26.06.02)
