@@ -19,7 +19,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build && next export"
+    "export": "next build && next export",
+    "cctvup:publish-daily-report": "bash scripts/cctvup-publish-daily-report.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
