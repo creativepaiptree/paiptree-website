@@ -340,8 +340,8 @@ const FarmBadgeLabels: Record<CctvUpFarmCategory, string> = {
 
 const FarmCategoryOptions = Object.entries(FarmBadgeLabels) as Array<[CctvUpFarmCategory, string]>;
 const ManagedFarmVendorLabels: Record<ManagedFarmVendorCode, string> = {
-  shinwoo: '신우',
   cheriburo: '체리부로',
+  shinwoo: '신우',
   cpf: 'CPF',
   prifoods: 'PRIFOODS',
   overseas: '해외',
@@ -349,8 +349,8 @@ const ManagedFarmVendorLabels: Record<ManagedFarmVendorCode, string> = {
 };
 const ManagedFarmVendorOptions = Object.entries(ManagedFarmVendorLabels) as Array<[ManagedFarmVendorCode, string]>;
 const ManagedFarmVendorOrder: Record<ManagedFarmVendorCode, number> = {
-  shinwoo: 0,
-  cheriburo: 1,
+  cheriburo: 0,
+  shinwoo: 1,
   cpf: 2,
   prifoods: 3,
   overseas: 4,
@@ -1099,13 +1099,14 @@ function ManagedFarmsPanel({
   const issueFarmCount = items.filter((item) => item.isProblem).length;
   const activeFarmCount = items.filter((item) => item.monitorScopeCode === 'active').length;
   const pocTagCount = items.filter((item) => item.hasPocTag).length;
-  const groupedItems = ManagedFarmVendorOptions
-    .map(([vendorCode, label]) => ({
-      vendorCode,
-      label,
-      items: filteredItems.filter((item) => item.vendorCode === vendorCode),
-    }))
-    .filter((section) => section.items.length > 0);
+  const visibleVendorOptions = vendorFilter === 'all'
+    ? ManagedFarmVendorOptions
+    : ManagedFarmVendorOptions.filter(([vendorCode]) => vendorCode === vendorFilter);
+  const laneSections = visibleVendorOptions.map(([vendorCode, label]) => ({
+    vendorCode,
+    label,
+    items: filteredItems.filter((item) => item.vendorCode === vendorCode),
+  }));
   const vendorCounts = items.reduce<Record<ManagedFarmVendorCode, number>>(
     (counts, item) => {
       counts[item.vendorCode] += 1;
@@ -1207,105 +1208,102 @@ function ManagedFarmsPanel({
           조건에 맞는 관리 농장이 없습니다.
         </div>
       ) : (
-        <div className="space-y-4 px-4 py-4">
-          {groupedItems.map((section) => (
-            <section key={section.vendorCode} className={`border ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0f1722]'}`}>
-              <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex h-7 items-center border px-2 text-xs font-semibold ${managedFarmVendorClass(theme, section.vendorCode)}`}>
-                    {section.label}
-                  </span>
-                  <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                    농장 {section.items.length}개 · 카메라 {section.items.reduce((total, item) => total + item.cameraCount, 0)}대
-                  </span>
-                </div>
-                <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  문제 {section.items.filter((item) => item.isProblem).length}개
-                </span>
-              </div>
+        <div className="overflow-x-auto px-4 py-4">
+          <div
+            className="grid w-max min-w-full gap-3"
+            style={{ gridTemplateColumns: `repeat(${Math.max(laneSections.length, 1)}, minmax(208px, 1fr))` }}
+          >
+            {laneSections.map((section) => {
+              const laneCameraCount = section.items.reduce((total, item) => total + item.cameraCount, 0);
+              const laneIssueCount = section.items.filter((item) => item.isProblem).length;
+              return (
+                <section key={section.vendorCode} className={`flex min-h-[520px] flex-col border ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0f1722]'}`}>
+                  <div className={`border-b px-3 py-3 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0a1019]'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`inline-flex h-7 items-center border px-2 text-xs font-semibold ${managedFarmVendorClass(theme, section.vendorCode)}`}>
+                        {section.label}
+                      </span>
+                      <span className={`text-xs tabular-nums ${laneIssueCount > 0 ? (theme === 'light' ? 'text-red-600' : 'text-red-200') : theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        문제 {laneIssueCount}
+                      </span>
+                    </div>
+                    <p className={`mt-2 text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      농장 {section.items.length}개 · 카메라 {laneCameraCount}대
+                    </p>
+                  </div>
 
-              <div className="overflow-x-auto">
-                <table className="min-w-full border-collapse text-left text-sm">
-                  <thead className={theme === 'light' ? 'bg-white text-slate-500' : 'bg-[#0f1722] text-slate-400'}>
-                    <tr>
-                      {['농장', '감시범위', '카메라', '최신 수신', '태그 / 메모', ''].map((head) => (
-                        <th key={head || 'action'} className={`border-b px-4 py-2 text-[11px] font-semibold whitespace-nowrap ${theme === 'light' ? 'border-slate-200' : 'border-[#243041]'}`}>
-                          {head}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.items.map((item) => {
+                  <div className="flex-1 space-y-2 overflow-y-auto p-2">
+                    {section.items.length === 0 ? (
+                      <div className={`flex min-h-[120px] items-center justify-center border border-dashed px-3 text-center text-xs ${theme === 'light' ? 'border-slate-200 bg-white text-slate-400' : 'border-[#314056] bg-[#0a1019] text-slate-500'}`}>
+                        조건에 맞는 농장이 없습니다.
+                      </div>
+                    ) : section.items.map((item) => {
                       const tone = statusTone[item.status];
                       return (
-                        <tr key={item.farmId} className={`border-b last:border-b-0 ${theme === 'light' ? 'border-slate-100 hover:bg-slate-50' : 'border-[#1b2636] hover:bg-[#0a1019]'}`}>
-                          <td className="min-w-[220px] px-4 py-3 align-top">
-                            <div className="flex min-w-0 items-start gap-2">
-                              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold">{item.farmName}</p>
-                                <p className={`mt-0.5 text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
-                                  {item.farmId} · 원본 {item.sourceAffiliates || '-'}/{item.sourceCountry || '-'}
-                                </p>
-                              </div>
+                        <article key={item.farmId} className={`border p-3 transition ${theme === 'light' ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-[#243041] bg-[#0a1019] hover:border-[#314056]'}`}>
+                          <div className="flex min-w-0 items-start gap-2">
+                            <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold">{item.farmName}</p>
+                              <p className={`mt-0.5 truncate text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                                {item.farmId} · {item.sourceAffiliates || '-'}/{item.sourceCountry || '-'}
+                              </p>
                             </div>
-                          </td>
-                          <td className="px-4 py-3 align-top">
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
                             <span className={`inline-flex h-6 items-center border px-2 text-[11px] font-semibold ${monitorScopeBadgeClass(theme, item.monitorScopeCode)}`}>
                               {item.monitorScopeLabel}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 align-top text-xs tabular-nums">
-                            <span className={item.problemCount > 0 ? (theme === 'light' ? 'text-red-600' : 'text-red-200') : undefined}>
-                              문제 {item.problemCount}
+                            <span className={`inline-flex h-6 items-center border px-2 text-[11px] tabular-nums ${item.problemCount > 0 ? statusSummaryBadgeClass(theme, 'critical') : theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
+                              문제 {item.problemCount} / 전체 {item.cameraCount}
                             </span>
-                            <span className={theme === 'light' ? 'text-slate-400' : 'text-slate-500'}> / </span>
-                            <span>전체 {item.cameraCount}</span>
-                          </td>
-                          <td className="px-4 py-3 align-top text-xs tabular-nums" title={item.latestAtIso || item.latestAt}>
-                            {formatEventTime(item.latestAtIso || item.latestAt)}
-                          </td>
-                          <td className="min-w-[260px] px-4 py-3 align-top">
-                            <div className="flex flex-wrap gap-1">
-                              {item.hasPocTag ? (
-                                <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${theme === 'light' ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100'}`}>
-                                  POC
-                                </span>
-                              ) : null}
-                              {item.tags.slice(0, 4).map((tag) => (
-                                <span key={`${item.farmId}-${tag}`} className={`inline-flex h-5 items-center border px-1.5 text-[10px] ${theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0a1019] text-slate-300'}`}>
-                                  {tag}
-                                </span>
-                              ))}
-                              {!item.tags.length ? (
-                                <span className={`text-xs ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>태그 없음</span>
-                              ) : null}
-                            </div>
-                            {item.memo ? (
-                              <p className={`mt-1 line-clamp-2 text-[11px] leading-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                                {item.memo}
-                              </p>
+                          </div>
+
+                          <div className={`mt-2 text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`} title={item.latestAtIso || item.latestAt}>
+                            최신 {formatEventTime(item.latestAtIso || item.latestAt)}
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.hasPocTag ? (
+                              <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${theme === 'light' ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100'}`}>
+                                POC
+                              </span>
                             ) : null}
-                          </td>
-                          <td className="px-4 py-3 text-right align-top">
+                            {item.tags.slice(0, 3).map((tag) => (
+                              <span key={`${item.farmId}-${tag}`} className={`inline-flex h-5 max-w-full items-center truncate border px-1.5 text-[10px] ${theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
+                                {tag}
+                              </span>
+                            ))}
+                            {!item.tags.length ? (
+                              <span className={`text-xs ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>태그 없음</span>
+                            ) : null}
+                          </div>
+
+                          {item.memo ? (
+                            <p className={`mt-2 line-clamp-2 text-[11px] leading-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {item.memo}
+                            </p>
+                          ) : null}
+
+                          <div className="mt-3 flex justify-end">
                             <button
                               type="button"
                               onClick={() => onOpenLive(item)}
-                              className={`inline-flex h-8 items-center gap-1 border px-2 text-xs font-semibold transition ${theme === 'light' ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'}`}
+                              className={`inline-flex h-8 items-center gap-1 border px-2 text-xs font-semibold transition ${theme === 'light' ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'border-[#314056] bg-[#0f1722] text-slate-200 hover:bg-white/5'}`}
                             >
                               관제
                               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
-                          </td>
-                        </tr>
+                          </div>
+                        </article>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
         </div>
       )}
     </section>
