@@ -49,6 +49,7 @@ type StatusSummaryTone = 'ok' | 'late' | 'missing' | 'critical';
 type MainTab = 'live' | 'farms' | 'daily';
 type ManagedFarmVendorCode = 'shinwoo' | 'cheriburo' | 'cpf' | 'prifoods' | 'overseas' | 'other';
 type ManagedFarmVendorFilter = 'all' | ManagedFarmVendorCode;
+type ManagedFarmVendorScopeFilter = 'core' | 'all';
 type ManagedFarmScopeFilter = 'all' | CctvUpMonitorScopeCode;
 type ManagedFarmStatusFilter = 'all' | 'issue' | 'normal';
 type PredictionInputDiagnostic = {
@@ -344,10 +345,11 @@ const ManagedFarmVendorLabels: Record<ManagedFarmVendorCode, string> = {
   shinwoo: '신우',
   cpf: 'CPF',
   prifoods: 'PRIFOODS',
-  overseas: '해외',
+  overseas: '대만',
   other: '기타',
 };
 const ManagedFarmVendorOptions = Object.entries(ManagedFarmVendorLabels) as Array<[ManagedFarmVendorCode, string]>;
+const ManagedFarmCoreVendorCodes: ManagedFarmVendorCode[] = ['cheriburo', 'shinwoo'];
 const ManagedFarmVendorOrder: Record<ManagedFarmVendorCode, number> = {
   cheriburo: 0,
   shinwoo: 1,
@@ -1067,6 +1069,7 @@ function ManagedFarmsPanel({
   items,
   filteredItems,
   query,
+  vendorScopeFilter,
   vendorFilter,
   scopeFilter,
   statusFilter,
@@ -1074,6 +1077,7 @@ function ManagedFarmsPanel({
   isRegistryLoading,
   isStateFallbackActive,
   onQueryChange,
+  onVendorScopeFilterChange,
   onVendorFilterChange,
   onScopeFilterChange,
   onStatusFilterChange,
@@ -1083,6 +1087,7 @@ function ManagedFarmsPanel({
   items: ManagedFarmItem[];
   filteredItems: ManagedFarmItem[];
   query: string;
+  vendorScopeFilter: ManagedFarmVendorScopeFilter;
   vendorFilter: ManagedFarmVendorFilter;
   scopeFilter: ManagedFarmScopeFilter;
   statusFilter: ManagedFarmStatusFilter;
@@ -1090,6 +1095,7 @@ function ManagedFarmsPanel({
   isRegistryLoading: boolean;
   isStateFallbackActive: boolean;
   onQueryChange: (value: string) => void;
+  onVendorScopeFilterChange: (value: ManagedFarmVendorScopeFilter) => void;
   onVendorFilterChange: (value: ManagedFarmVendorFilter) => void;
   onScopeFilterChange: (value: ManagedFarmScopeFilter) => void;
   onStatusFilterChange: (value: ManagedFarmStatusFilter) => void;
@@ -1099,9 +1105,11 @@ function ManagedFarmsPanel({
   const issueFarmCount = items.filter((item) => item.isProblem).length;
   const activeFarmCount = items.filter((item) => item.monitorScopeCode === 'active').length;
   const pocTagCount = items.filter((item) => item.hasPocTag).length;
-  const visibleVendorOptions = vendorFilter === 'all'
-    ? ManagedFarmVendorOptions
-    : ManagedFarmVendorOptions.filter(([vendorCode]) => vendorCode === vendorFilter);
+  const visibleVendorOptions = vendorFilter !== 'all'
+    ? ManagedFarmVendorOptions.filter(([vendorCode]) => vendorCode === vendorFilter)
+    : vendorScopeFilter === 'core'
+      ? ManagedFarmVendorOptions.filter(([vendorCode]) => ManagedFarmCoreVendorCodes.includes(vendorCode))
+      : ManagedFarmVendorOptions;
   const laneSections = visibleVendorOptions.map(([vendorCode, label]) => ({
     vendorCode,
     label,
@@ -1161,13 +1169,22 @@ function ManagedFarmsPanel({
           })}
         </div>
 
-        <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_160px_150px_140px]">
+        <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_150px_160px_150px_140px]">
           <input
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="농장명 / 농장코드 / 업체 / 태그 / 메모 검색"
+            placeholder="농장명 / 농장코드 / 업체 검색"
             className={`h-9 min-w-0 border px-3 py-2 text-sm outline-none ${inputClass(theme)}`}
           />
+          <select
+            value={vendorScopeFilter}
+            onChange={(event) => onVendorScopeFilterChange(event.target.value as ManagedFarmVendorScopeFilter)}
+            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            aria-label="관리 농장 기본 범위"
+          >
+            <option value="core">체리부로·신우</option>
+            <option value="all">전체 보기</option>
+          </select>
           <select
             value={vendorFilter}
             onChange={(event) => onVendorFilterChange(event.target.value as ManagedFarmVendorFilter)}
@@ -1240,63 +1257,37 @@ function ManagedFarmsPanel({
                     ) : section.items.map((item) => {
                       const tone = statusTone[item.status];
                       return (
-                        <article key={item.farmId} className={`border p-3 transition ${theme === 'light' ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-[#243041] bg-[#0a1019] hover:border-[#314056]'}`}>
+                        <button
+                          key={item.farmId}
+                          type="button"
+                          onClick={() => onOpenLive(item)}
+                          className={`block w-full border p-2 text-left transition ${theme === 'light' ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-[#243041] bg-[#0a1019] hover:border-[#314056]'}`}
+                          aria-label={`${item.farmName} 실시간 관제로 이동`}
+                        >
                           <div className="flex min-w-0 items-start gap-2">
-                            <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
+                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold">{item.farmName}</p>
-                              <p className={`mt-0.5 truncate text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                              <div className="flex min-w-0 items-start justify-between gap-2">
+                                <p className="min-w-0 truncate text-sm font-semibold">{item.farmName}</p>
+                                <span className={`shrink-0 text-[10px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`} title={item.latestAtIso || item.latestAt}>
+                                  {formatEventTime(item.latestAtIso || item.latestAt)}
+                                </span>
+                              </div>
+                              <p className={`mt-0.5 truncate text-[10px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
                                 {item.farmId} · {item.sourceAffiliates || '-'}/{item.sourceCountry || '-'}
                               </p>
                             </div>
                           </div>
 
-                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                            <span className={`inline-flex h-6 items-center border px-2 text-[11px] font-semibold ${monitorScopeBadgeClass(theme, item.monitorScopeCode)}`}>
+                          <div className="mt-2 flex flex-wrap items-center gap-1">
+                            <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${monitorScopeBadgeClass(theme, item.monitorScopeCode)}`}>
                               {item.monitorScopeLabel}
                             </span>
-                            <span className={`inline-flex h-6 items-center border px-2 text-[11px] tabular-nums ${item.problemCount > 0 ? statusSummaryBadgeClass(theme, 'critical') : theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
+                            <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] tabular-nums ${item.problemCount > 0 ? statusSummaryBadgeClass(theme, 'critical') : theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
                               문제 {item.problemCount} / 전체 {item.cameraCount}
                             </span>
                           </div>
-
-                          <div className={`mt-2 text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`} title={item.latestAtIso || item.latestAt}>
-                            최신 {formatEventTime(item.latestAtIso || item.latestAt)}
-                          </div>
-
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {item.hasPocTag ? (
-                              <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${theme === 'light' ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100'}`}>
-                                POC
-                              </span>
-                            ) : null}
-                            {item.tags.slice(0, 3).map((tag) => (
-                              <span key={`${item.farmId}-${tag}`} className={`inline-flex h-5 max-w-full items-center truncate border px-1.5 text-[10px] ${theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
-                                {tag}
-                              </span>
-                            ))}
-                            {!item.tags.length ? (
-                              <span className={`text-xs ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>태그 없음</span>
-                            ) : null}
-                          </div>
-
-                          {item.memo ? (
-                            <p className={`mt-2 line-clamp-2 text-[11px] leading-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                              {item.memo}
-                            </p>
-                          ) : null}
-
-                          <div className="mt-3 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => onOpenLive(item)}
-                              className={`inline-flex h-8 items-center gap-1 border px-2 text-xs font-semibold transition ${theme === 'light' ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'border-[#314056] bg-[#0f1722] text-slate-200 hover:bg-white/5'}`}
-                            >
-                              관제
-                              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-                            </button>
-                          </div>
-                        </article>
+                        </button>
                       );
                     })}
                   </div>
@@ -2287,6 +2278,7 @@ export default function CctvUpClient() {
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('live');
   const [query, setQuery] = useState('');
   const [managedFarmQuery, setManagedFarmQuery] = useState('');
+  const [managedFarmVendorScopeFilter, setManagedFarmVendorScopeFilter] = useState<ManagedFarmVendorScopeFilter>('core');
   const [managedFarmVendorFilter, setManagedFarmVendorFilter] = useState<ManagedFarmVendorFilter>('all');
   const [managedFarmScopeFilter, setManagedFarmScopeFilter] = useState<ManagedFarmScopeFilter>('all');
   const [managedFarmStatusFilter, setManagedFarmStatusFilter] = useState<ManagedFarmStatusFilter>('all');
@@ -2648,7 +2640,11 @@ export default function CctvUpClient() {
   const filteredManagedFarmItems = useMemo(() => {
     const q = managedFarmQuery.trim().toLowerCase();
     return managedFarmItems
-      .filter((item) => managedFarmVendorFilter === 'all' || item.vendorCode === managedFarmVendorFilter)
+      .filter((item) => {
+        if (managedFarmVendorFilter !== 'all') return item.vendorCode === managedFarmVendorFilter;
+        if (managedFarmVendorScopeFilter === 'core') return ManagedFarmCoreVendorCodes.includes(item.vendorCode);
+        return true;
+      })
       .filter((item) => managedFarmScopeFilter === 'all' || item.monitorScopeCode === managedFarmScopeFilter)
       .filter((item) => {
         if (managedFarmStatusFilter === 'issue') return item.isProblem;
@@ -2656,7 +2652,7 @@ export default function CctvUpClient() {
         return true;
       })
       .filter((item) => matchesManagedFarmItem(item, q));
-  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmStatusFilter, managedFarmVendorFilter]);
+  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmStatusFilter, managedFarmVendorFilter, managedFarmVendorScopeFilter]);
 
   const farmCategoryCounts = useMemo(() => {
     return farmGroups.reduce<Record<CctvUpFarmCategory, number>>(
@@ -4680,6 +4676,7 @@ export default function CctvUpClient() {
             items={managedFarmItems}
             filteredItems={filteredManagedFarmItems}
             query={managedFarmQuery}
+            vendorScopeFilter={managedFarmVendorScopeFilter}
             vendorFilter={managedFarmVendorFilter}
             scopeFilter={managedFarmScopeFilter}
             statusFilter={managedFarmStatusFilter}
@@ -4687,6 +4684,7 @@ export default function CctvUpClient() {
             isRegistryLoading={isRegistryLoading}
             isStateFallbackActive={isStateFallbackActive}
             onQueryChange={setManagedFarmQuery}
+            onVendorScopeFilterChange={setManagedFarmVendorScopeFilter}
             onVendorFilterChange={setManagedFarmVendorFilter}
             onScopeFilterChange={setManagedFarmScopeFilter}
             onStatusFilterChange={setManagedFarmStatusFilter}

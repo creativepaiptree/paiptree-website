@@ -50,17 +50,17 @@ export type CctvUpManagedFarmsPayload = {
 };
 
 const VENDOR_LABELS: Record<CctvUpManagedFarmVendorCode, string> = {
-  shinwoo: '신우',
   cheriburo: '체리부로',
+  shinwoo: '신우',
   cpf: 'CPF',
   prifoods: 'PRIFOODS',
-  overseas: '해외',
+  overseas: '대만',
   other: '기타',
 };
 
 const VENDOR_ORDER: Record<CctvUpManagedFarmVendorCode, number> = {
-  shinwoo: 0,
-  cheriburo: 1,
+  cheriburo: 0,
+  shinwoo: 1,
   cpf: 2,
   prifoods: 3,
   overseas: 4,
