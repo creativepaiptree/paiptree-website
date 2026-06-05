@@ -46,7 +46,11 @@ type MonitorFilter = 'all' | 'ok' | 'issue';
 type FarmSortMode = 'issue' | 'severity' | 'category' | 'name';
 type InputReadinessTone = 'ok' | 'watch' | 'blocked' | 'pending';
 type StatusSummaryTone = 'ok' | 'late' | 'missing' | 'critical';
-type MainTab = 'live' | 'daily';
+type MainTab = 'live' | 'farms' | 'daily';
+type ManagedFarmVendorCode = 'shinwoo' | 'cheriburo' | 'cpf' | 'prifoods' | 'overseas' | 'other';
+type ManagedFarmVendorFilter = 'all' | ManagedFarmVendorCode;
+type ManagedFarmScopeFilter = 'all' | CctvUpMonitorScopeCode;
+type ManagedFarmStatusFilter = 'all' | 'issue' | 'normal';
 type PredictionInputDiagnostic = {
   step: number;
   label: string;
@@ -201,6 +205,30 @@ type DisplayRow = CctvUpRow & {
 
 type FarmGroup = ReturnType<typeof buildCctvUpFarmGroups>[number];
 
+type ManagedFarmItem = {
+  group: FarmGroup;
+  farmId: string;
+  farmName: string;
+  vendorCode: ManagedFarmVendorCode;
+  vendorLabel: string;
+  category: CctvUpFarmCategory;
+  monitorScopeCode: CctvUpMonitorScopeCode;
+  monitorScopeLabel: string;
+  status: CctvUpStatus;
+  isProblem: boolean;
+  cameraCount: number;
+  problemCount: number;
+  okCount: number;
+  latestAt: string;
+  latestAtIso: string;
+  latestRowId: string;
+  tags: string[];
+  hasPocTag: boolean;
+  memo: string;
+  sourceAffiliates: string;
+  sourceCountry: string;
+};
+
 function buildLocalStorageEvidencePayload(row: DisplayRow): CctvUpImageEvidencePayload {
   const latestAvailable = Boolean(row.latestAtIso);
 
@@ -311,6 +339,23 @@ const FarmBadgeLabels: Record<CctvUpFarmCategory, string> = {
 };
 
 const FarmCategoryOptions = Object.entries(FarmBadgeLabels) as Array<[CctvUpFarmCategory, string]>;
+const ManagedFarmVendorLabels: Record<ManagedFarmVendorCode, string> = {
+  shinwoo: '신우',
+  cheriburo: '체리부로',
+  cpf: 'CPF',
+  prifoods: 'PRIFOODS',
+  overseas: '해외',
+  other: '기타',
+};
+const ManagedFarmVendorOptions = Object.entries(ManagedFarmVendorLabels) as Array<[ManagedFarmVendorCode, string]>;
+const ManagedFarmVendorOrder: Record<ManagedFarmVendorCode, number> = {
+  shinwoo: 0,
+  cheriburo: 1,
+  cpf: 2,
+  prifoods: 3,
+  overseas: 4,
+  other: 5,
+};
 const INITIAL_FARM_CATEGORY_FILTERS: Record<CctvUpFarmCategory, boolean> = {
   overseas: true,
   shinwoo: true,
@@ -1017,6 +1062,256 @@ function DailyReportPanel({
   );
 }
 
+function ManagedFarmsPanel({
+  theme,
+  items,
+  filteredItems,
+  query,
+  vendorFilter,
+  scopeFilter,
+  statusFilter,
+  registrySource,
+  isRegistryLoading,
+  isStateFallbackActive,
+  onQueryChange,
+  onVendorFilterChange,
+  onScopeFilterChange,
+  onStatusFilterChange,
+  onOpenLive,
+}: {
+  theme: ThemeMode;
+  items: ManagedFarmItem[];
+  filteredItems: ManagedFarmItem[];
+  query: string;
+  vendorFilter: ManagedFarmVendorFilter;
+  scopeFilter: ManagedFarmScopeFilter;
+  statusFilter: ManagedFarmStatusFilter;
+  registrySource: CctvUpFarmRegistryPayload['source'];
+  isRegistryLoading: boolean;
+  isStateFallbackActive: boolean;
+  onQueryChange: (value: string) => void;
+  onVendorFilterChange: (value: ManagedFarmVendorFilter) => void;
+  onScopeFilterChange: (value: ManagedFarmScopeFilter) => void;
+  onStatusFilterChange: (value: ManagedFarmStatusFilter) => void;
+  onOpenLive: (item: ManagedFarmItem) => void;
+}) {
+  const cameraCount = items.reduce((total, item) => total + item.cameraCount, 0);
+  const issueFarmCount = items.filter((item) => item.isProblem).length;
+  const activeFarmCount = items.filter((item) => item.monitorScopeCode === 'active').length;
+  const pocTagCount = items.filter((item) => item.hasPocTag).length;
+  const groupedItems = ManagedFarmVendorOptions
+    .map(([vendorCode, label]) => ({
+      vendorCode,
+      label,
+      items: filteredItems.filter((item) => item.vendorCode === vendorCode),
+    }))
+    .filter((section) => section.items.length > 0);
+  const vendorCounts = items.reduce<Record<ManagedFarmVendorCode, number>>(
+    (counts, item) => {
+      counts[item.vendorCode] += 1;
+      return counts;
+    },
+    { shinwoo: 0, cheriburo: 0, cpf: 0, prifoods: 0, overseas: 0, other: 0 },
+  );
+  const summaryTiles = [
+    { label: '전체 농장', value: items.length, meta: `카메라 ${cameraCount}대`, tone: 'base' },
+    { label: '감시중', value: activeFarmCount, meta: '현재 문제판정 대상', tone: 'active' },
+    { label: '문제 농장', value: issueFarmCount, meta: '비정상 카메라 포함', tone: 'issue' },
+    { label: 'POC 태그', value: pocTagCount, meta: 'registry tag 기준', tone: 'poc' },
+  ];
+
+  return (
+    <section className={`border ${panelBg(theme)}`}>
+      <div className={`border-b px-4 py-4 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold">관리 농장</h2>
+            <p className={`mt-1 text-sm leading-6 ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+              운영 DB 현재 목록과 Supabase registry 표시값을 합쳐 업체, 태그, 감시범위 기준으로 봅니다.
+            </p>
+          </div>
+          <div className={`shrink-0 text-xs leading-5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+            registry {isRegistryLoading ? '동기화 중' : registrySource} · source {isStateFallbackActive ? 'camera_state fallback' : 'current list'}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {summaryTiles.map((tile) => {
+            const tileClass = tile.tone === 'active'
+              ? monitorScopeBadgeClass(theme, 'active')
+              : tile.tone === 'issue'
+                ? statusSummaryBadgeClass(theme, 'critical')
+                : tile.tone === 'poc'
+                  ? theme === 'light'
+                    ? 'border-cyan-200 bg-cyan-50 text-cyan-800'
+                    : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100'
+                  : theme === 'light'
+                    ? 'border-slate-200 bg-white text-slate-700'
+                    : 'border-[#243041] bg-[#0f1722] text-slate-200';
+            return (
+              <div key={tile.label} className={`border px-3 py-3 ${tileClass}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold">{tile.label}</span>
+                  <span className="text-lg font-semibold tabular-nums">{tile.value}</span>
+                </div>
+                <p className="mt-1 text-[11px] opacity-75">{tile.meta}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_160px_150px_140px]">
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="농장명 / 농장코드 / 업체 / 태그 / 메모 검색"
+            className={`h-9 min-w-0 border px-3 py-2 text-sm outline-none ${inputClass(theme)}`}
+          />
+          <select
+            value={vendorFilter}
+            onChange={(event) => onVendorFilterChange(event.target.value as ManagedFarmVendorFilter)}
+            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            aria-label="관리 농장 업체 필터"
+          >
+            <option value="all">업체 전체</option>
+            {ManagedFarmVendorOptions.map(([vendorCode, label]) => (
+              <option key={vendorCode} value={vendorCode}>{label} ({vendorCounts[vendorCode]})</option>
+            ))}
+          </select>
+          <select
+            value={scopeFilter}
+            onChange={(event) => onScopeFilterChange(event.target.value as ManagedFarmScopeFilter)}
+            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            aria-label="관리 농장 감시범위 필터"
+          >
+            <option value="all">감시범위 전체</option>
+            {MonitorScopeOptions.map(([scope, label]) => (
+              <option key={scope} value={scope}>{label}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(event) => onStatusFilterChange(event.target.value as ManagedFarmStatusFilter)}
+            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            aria-label="관리 농장 상태 필터"
+          >
+            <option value="all">상태 전체</option>
+            <option value="issue">문제 있음</option>
+            <option value="normal">문제 없음</option>
+          </select>
+        </div>
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <div className={`px-4 py-12 text-center text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+          조건에 맞는 관리 농장이 없습니다.
+        </div>
+      ) : (
+        <div className="space-y-4 px-4 py-4">
+          {groupedItems.map((section) => (
+            <section key={section.vendorCode} className={`border ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0f1722]'}`}>
+              <div className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0a1019]'}`}>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex h-7 items-center border px-2 text-xs font-semibold ${managedFarmVendorClass(theme, section.vendorCode)}`}>
+                    {section.label}
+                  </span>
+                  <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    농장 {section.items.length}개 · 카메라 {section.items.reduce((total, item) => total + item.cameraCount, 0)}대
+                  </span>
+                </div>
+                <span className={`text-xs tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  문제 {section.items.filter((item) => item.isProblem).length}개
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className={theme === 'light' ? 'bg-white text-slate-500' : 'bg-[#0f1722] text-slate-400'}>
+                    <tr>
+                      {['농장', '감시범위', '카메라', '최신 수신', '태그 / 메모', ''].map((head) => (
+                        <th key={head || 'action'} className={`border-b px-4 py-2 text-[11px] font-semibold whitespace-nowrap ${theme === 'light' ? 'border-slate-200' : 'border-[#243041]'}`}>
+                          {head}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.items.map((item) => {
+                      const tone = statusTone[item.status];
+                      return (
+                        <tr key={item.farmId} className={`border-b last:border-b-0 ${theme === 'light' ? 'border-slate-100 hover:bg-slate-50' : 'border-[#1b2636] hover:bg-[#0a1019]'}`}>
+                          <td className="min-w-[220px] px-4 py-3 align-top">
+                            <div className="flex min-w-0 items-start gap-2">
+                              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold">{item.farmName}</p>
+                                <p className={`mt-0.5 text-[11px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                                  {item.farmId} · 원본 {item.sourceAffiliates || '-'}/{item.sourceCountry || '-'}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <span className={`inline-flex h-6 items-center border px-2 text-[11px] font-semibold ${monitorScopeBadgeClass(theme, item.monitorScopeCode)}`}>
+                              {item.monitorScopeLabel}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 align-top text-xs tabular-nums">
+                            <span className={item.problemCount > 0 ? (theme === 'light' ? 'text-red-600' : 'text-red-200') : undefined}>
+                              문제 {item.problemCount}
+                            </span>
+                            <span className={theme === 'light' ? 'text-slate-400' : 'text-slate-500'}> / </span>
+                            <span>전체 {item.cameraCount}</span>
+                          </td>
+                          <td className="px-4 py-3 align-top text-xs tabular-nums" title={item.latestAtIso || item.latestAt}>
+                            {formatEventTime(item.latestAtIso || item.latestAt)}
+                          </td>
+                          <td className="min-w-[260px] px-4 py-3 align-top">
+                            <div className="flex flex-wrap gap-1">
+                              {item.hasPocTag ? (
+                                <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${theme === 'light' ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100'}`}>
+                                  POC
+                                </span>
+                              ) : null}
+                              {item.tags.slice(0, 4).map((tag) => (
+                                <span key={`${item.farmId}-${tag}`} className={`inline-flex h-5 items-center border px-1.5 text-[10px] ${theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0a1019] text-slate-300'}`}>
+                                  {tag}
+                                </span>
+                              ))}
+                              {!item.tags.length ? (
+                                <span className={`text-xs ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>태그 없음</span>
+                              ) : null}
+                            </div>
+                            {item.memo ? (
+                              <p className={`mt-1 line-clamp-2 text-[11px] leading-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                                {item.memo}
+                              </p>
+                            ) : null}
+                          </td>
+                          <td className="px-4 py-3 text-right align-top">
+                            <button
+                              type="button"
+                              onClick={() => onOpenLive(item)}
+                              className={`inline-flex h-8 items-center gap-1 border px-2 text-xs font-semibold transition ${theme === 'light' ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'border-[#314056] bg-[#0a1019] text-slate-200 hover:bg-white/5'}`}
+                            >
+                              관제
+                              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function stateSyncPillClass(theme: ThemeMode, status?: NonNullable<CctvUpPayload['stateSync']>['status']) {
   if (status === 'applied') {
     return theme === 'light'
@@ -1598,6 +1893,89 @@ function classifyFarmBadge(row: Pick<CctvUpRow, 'farmName' | 'farmAlias' | 'farm
   return 'other' as const;
 }
 
+function normalizeManagedFarmText(value: unknown) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getManagedFarmVendorCode(group: FarmGroup): ManagedFarmVendorCode {
+  const rows = group.rows as DisplayRow[];
+  const text = [
+    group.farmId,
+    group.farmName,
+    group.category,
+    ...rows.flatMap((row) => [
+      row.farmName,
+      row.farmAlias,
+      row.displayFarmName,
+      row.farmAffiliates,
+      row.country,
+      ...row.displayTags,
+    ]),
+  ].map(normalizeManagedFarmText).join(' ');
+  const countries = rows.map((row) => String(row.country || '').trim().toUpperCase());
+
+  if (/(^|\s)(shinwoo|신우)($|\s)/.test(text) || group.category === 'shinwoo') return 'shinwoo';
+  if (/cherry|cheriburo|체리/.test(text) || group.category === 'cheriburo') return 'cheriburo';
+  if (/(^|\s)(cpf|cpgroup|cp group|태국|thailand)($|\s)/.test(text) || countries.includes('TH')) return 'cpf';
+  if (/prifoods|pri foods|일본|japan|tohzai/.test(text) || countries.includes('JP')) return 'prifoods';
+  if (group.category === 'overseas') return 'overseas';
+  return 'other';
+}
+
+function hasManagedFarmPocTag(rows: DisplayRow[]) {
+  return rows.some((row) => row.displayTags.some((tag) => /(^|\s|,)(poc|실증)($|\s|,)/i.test(tag)));
+}
+
+function buildManagedFarmItem(group: FarmGroup): ManagedFarmItem {
+  const rows = group.rows as DisplayRow[];
+  const latestRow = rows.find((row) => row.id === group.latestRowId) ?? rows[0];
+  const vendorCode = getManagedFarmVendorCode(group);
+  const tags = Array.from(new Set(rows.flatMap((row) => row.displayTags).map((tag) => tag.trim()).filter(Boolean)));
+  const monitorScopeCode = getFarmGroupMonitorScope(group);
+
+  return {
+    group,
+    farmId: group.farmId,
+    farmName: group.farmName,
+    vendorCode,
+    vendorLabel: ManagedFarmVendorLabels[vendorCode],
+    category: group.category as CctvUpFarmCategory,
+    monitorScopeCode,
+    monitorScopeLabel: MonitorScopeLabels[monitorScopeCode],
+    status: group.status as CctvUpStatus,
+    isProblem: group.isProblem,
+    cameraCount: group.cameraCount,
+    problemCount: group.problemCount,
+    okCount: group.okCount,
+    latestAt: group.latestAt,
+    latestAtIso: group.latestAtIso,
+    latestRowId: group.latestRowId || latestRow?.id || '',
+    tags,
+    hasPocTag: hasManagedFarmPocTag(rows),
+    memo: rows.find((row) => row.displayMemo)?.displayMemo || '',
+    sourceAffiliates: latestRow?.farmAffiliates || '',
+    sourceCountry: latestRow?.country || '',
+  };
+}
+
+function matchesManagedFarmItem(item: ManagedFarmItem, query: string) {
+  if (!query) return true;
+  return [
+    item.farmId,
+    item.farmName,
+    item.vendorLabel,
+    item.monitorScopeLabel,
+    item.status,
+    item.sourceAffiliates,
+    item.sourceCountry,
+    item.memo,
+    item.tags.join(' '),
+    item.group.rows.map((row: DisplayRow) => `${row.house} ${row.houseName} ${row.camera} ${row.cameraName}`).join(' '),
+  ]
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(query));
+}
+
 function farmCategoryButtonClass(theme: ThemeMode, category: CctvUpFarmCategory, isActive: boolean) {
   if (isActive) {
     if (category === 'overseas') return theme === 'light'
@@ -1631,6 +2009,27 @@ function farmCategoryFilterButtonClass(theme: ThemeMode, category: CctvUpFarmCat
   return theme === 'light'
     ? 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600'
     : 'border-[#243041] bg-[#0a1019] text-slate-500 hover:border-[#314056] hover:text-slate-300';
+}
+
+function managedFarmVendorClass(theme: ThemeMode, vendor: ManagedFarmVendorCode) {
+  if (vendor === 'shinwoo') return theme === 'light'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100';
+  if (vendor === 'cheriburo') return theme === 'light'
+    ? 'border-violet-200 bg-violet-50 text-violet-800'
+    : 'border-violet-500/25 bg-violet-500/10 text-violet-100';
+  if (vendor === 'cpf') return theme === 'light'
+    ? 'border-lime-200 bg-lime-50 text-lime-800'
+    : 'border-lime-500/25 bg-lime-500/10 text-lime-100';
+  if (vendor === 'prifoods') return theme === 'light'
+    ? 'border-cyan-200 bg-cyan-50 text-cyan-800'
+    : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100';
+  if (vendor === 'overseas') return theme === 'light'
+    ? 'border-amber-200 bg-amber-50 text-amber-800'
+    : 'border-amber-500/25 bg-amber-500/10 text-amber-100';
+  return theme === 'light'
+    ? 'border-slate-200 bg-slate-50 text-slate-700'
+    : 'border-slate-500/30 bg-slate-500/10 text-slate-200';
 }
 
 function monitorScopeBadgeClass(theme: ThemeMode, scope: CctvUpMonitorScopeCode, isActive = true) {
@@ -1889,6 +2288,10 @@ export default function CctvUpClient() {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('live');
   const [query, setQuery] = useState('');
+  const [managedFarmQuery, setManagedFarmQuery] = useState('');
+  const [managedFarmVendorFilter, setManagedFarmVendorFilter] = useState<ManagedFarmVendorFilter>('all');
+  const [managedFarmScopeFilter, setManagedFarmScopeFilter] = useState<ManagedFarmScopeFilter>('all');
+  const [managedFarmStatusFilter, setManagedFarmStatusFilter] = useState<ManagedFarmStatusFilter>('all');
   const [statusFilter, setStatusFilter] = useState<MonitorFilter>('issue');
   const [farmCategoryFilters, setFarmCategoryFilters] = useState<Record<CctvUpFarmCategory, boolean>>(INITIAL_FARM_CATEGORY_FILTERS);
   const [monitorScopeFilters, setMonitorScopeFilters] = useState<Record<CctvUpMonitorScopeCode, boolean>>(INITIAL_MONITOR_SCOPE_FILTERS);
@@ -2233,6 +2636,29 @@ export default function CctvUpClient() {
   const farmGroups = useMemo<FarmGroup[]>(() => {
     return buildCctvUpFarmGroups(displayRows).slice().sort((a, b) => compareCctvUpFarmGroups(a, b, farmSortMode));
   }, [displayRows, farmSortMode]);
+
+  const managedFarmItems = useMemo<ManagedFarmItem[]>(() => {
+    return farmGroups
+      .map(buildManagedFarmItem)
+      .sort((a, b) => (
+        ManagedFarmVendorOrder[a.vendorCode] - ManagedFarmVendorOrder[b.vendorCode]
+        || a.farmName.localeCompare(b.farmName, 'ko-KR')
+        || a.farmId.localeCompare(b.farmId)
+      ));
+  }, [farmGroups]);
+
+  const filteredManagedFarmItems = useMemo(() => {
+    const q = managedFarmQuery.trim().toLowerCase();
+    return managedFarmItems
+      .filter((item) => managedFarmVendorFilter === 'all' || item.vendorCode === managedFarmVendorFilter)
+      .filter((item) => managedFarmScopeFilter === 'all' || item.monitorScopeCode === managedFarmScopeFilter)
+      .filter((item) => {
+        if (managedFarmStatusFilter === 'issue') return item.isProblem;
+        if (managedFarmStatusFilter === 'normal') return !item.isProblem;
+        return true;
+      })
+      .filter((item) => matchesManagedFarmItem(item, q));
+  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmStatusFilter, managedFarmVendorFilter]);
 
   const farmCategoryCounts = useMemo(() => {
     return farmGroups.reduce<Record<CctvUpFarmCategory, number>>(
@@ -3252,6 +3678,7 @@ export default function CctvUpClient() {
             <div className="flex flex-wrap gap-2">
               {([
                 ['live', '실시간 관제'],
+                ['farms', '관리 농장'],
                 ['daily', '일일 브리핑'],
               ] as const).map(([key, label]) => (
                 <button
@@ -3268,7 +3695,9 @@ export default function CctvUpClient() {
             <p className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
               {activeMainTab === 'live'
                 ? '5분 저장 상태와 현재 문제를 실시간으로 봅니다.'
-                : '하루 단위 MD/raw 보고서를 파일 기준으로 봅니다.'}
+                : activeMainTab === 'farms'
+                  ? '업체, 태그, 감시범위 기준으로 관리 농장 목록을 봅니다.'
+                  : '하루 단위 MD/raw 보고서를 파일 기준으로 봅니다.'}
             </p>
           </div>
         </section>
@@ -4247,6 +4676,29 @@ export default function CctvUpClient() {
           </aside>
 
         </section>
+        ) : activeMainTab === 'farms' ? (
+          <ManagedFarmsPanel
+            theme={theme}
+            items={managedFarmItems}
+            filteredItems={filteredManagedFarmItems}
+            query={managedFarmQuery}
+            vendorFilter={managedFarmVendorFilter}
+            scopeFilter={managedFarmScopeFilter}
+            statusFilter={managedFarmStatusFilter}
+            registrySource={registryPayload.source}
+            isRegistryLoading={isRegistryLoading}
+            isStateFallbackActive={isStateFallbackActive}
+            onQueryChange={setManagedFarmQuery}
+            onVendorFilterChange={setManagedFarmVendorFilter}
+            onScopeFilterChange={setManagedFarmScopeFilter}
+            onStatusFilterChange={setManagedFarmStatusFilter}
+            onOpenLive={(item) => {
+              setExpandedFarmIds((current) => ({ ...current, [item.farmId]: true }));
+              if (item.latestRowId) setSelectedId(item.latestRowId);
+              setStatusFilter('all');
+              setActiveMainTab('live');
+            }}
+          />
         ) : (
           <DailyReportPanel
             theme={theme}

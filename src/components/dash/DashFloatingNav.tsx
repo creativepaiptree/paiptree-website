@@ -79,7 +79,7 @@ type Props = {
 };
 
 export default function DashFloatingNav({ current }: Props) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[9999] flex flex-row items-stretch">
