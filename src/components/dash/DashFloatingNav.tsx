@@ -48,6 +48,12 @@ const TOOLS: { href: string; name: string; badge: string; badgeColor: string; ex
     badgeColor: '#ff7700',
   },
   {
+    href: '/cctvup',
+    name: 'CCTVUP',
+    badge: 'PROTOTYPE',
+    badgeColor: '#ff7700',
+  },
+  {
     href: '/storybook',
     name: 'Storybook(3.0)',
     badge: 'UI/UX DOCS',

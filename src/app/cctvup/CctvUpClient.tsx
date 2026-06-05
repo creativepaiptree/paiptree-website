@@ -50,6 +50,7 @@ type MainTab = 'live' | 'farms' | 'daily';
 type ManagedFarmVendorCode = 'shinwoo' | 'cheriburo' | 'cpf' | 'prifoods' | 'overseas' | 'other';
 type ManagedFarmVendorFilter = 'all' | ManagedFarmVendorCode;
 type ManagedFarmVendorSelection = Record<ManagedFarmVendorCode, boolean>;
+type ManagedFarmSortMode = 'name' | 'farm_id' | 'scope';
 type ManagedFarmScopeFilter = 'all' | CctvUpMonitorScopeCode;
 type ManagedFarmStatusFilter = 'all' | 'issue' | 'normal';
 type PredictionInputDiagnostic = {
@@ -365,6 +366,12 @@ const ManagedFarmVendorOrder: Record<ManagedFarmVendorCode, number> = {
   overseas: 4,
   other: 5,
 };
+const ManagedFarmSortOptions: Array<[ManagedFarmSortMode, string]> = [
+  ['name', '농장명 가나다순'],
+  ['farm_id', '팜아이디순'],
+  ['scope', '현재 상태순'],
+];
+const MANAGED_FARM_TOTAL_LAYOUT_SLOTS = 8;
 const INITIAL_FARM_CATEGORY_FILTERS: Record<CctvUpFarmCategory, boolean> = {
   overseas: true,
   shinwoo: true,
@@ -378,12 +385,67 @@ const MonitorScopeLabels: Record<CctvUpMonitorScopeCode, string> = {
   uninstalled: '미설치',
 };
 const MonitorScopeOptions = Object.entries(MonitorScopeLabels) as Array<[CctvUpMonitorScopeCode, string]>;
+const ManagedFarmMonitorScopeSortOrder: Record<CctvUpMonitorScopeCode, number> = {
+  active: 0,
+  needs_review: 1,
+  resting: 2,
+  uninstalled: 3,
+};
 const INITIAL_MONITOR_SCOPE_FILTERS: Record<CctvUpMonitorScopeCode, boolean> = {
   active: true,
   resting: true,
   needs_review: false,
   uninstalled: false,
 };
+
+function distributeManagedFarmSlots(sectionCount: number) {
+  if (sectionCount <= 0) return [];
+  const baseSlotCount = Math.floor(MANAGED_FARM_TOTAL_LAYOUT_SLOTS / sectionCount);
+  const extraSlotCount = MANAGED_FARM_TOTAL_LAYOUT_SLOTS % sectionCount;
+  return Array.from({ length: sectionCount }, (_, index) => (
+    Math.max(1, baseSlotCount + (index < extraSlotCount ? 1 : 0))
+  ));
+}
+
+function distributeManagedFarmItemsIntoColumns<T>(items: T[], slotCount: number) {
+  const safeSlotCount = Math.max(1, slotCount);
+  const baseItemCount = Math.floor(items.length / safeSlotCount);
+  const extraItemCount = items.length % safeSlotCount;
+  const columnSizes = Array.from({ length: safeSlotCount }, (_, index) => (
+    baseItemCount + (index < extraItemCount ? 1 : 0)
+  ));
+  const columns: T[][] = columnSizes.map(() => []);
+  const maxColumnSize = Math.max(0, ...columnSizes);
+  let itemIndex = 0;
+
+  for (let rowIndex = 0; rowIndex < maxColumnSize; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < safeSlotCount; columnIndex += 1) {
+      if (rowIndex < columnSizes[columnIndex] && itemIndex < items.length) {
+        columns[columnIndex].push(items[itemIndex]);
+        itemIndex += 1;
+      }
+    }
+  }
+
+  return columns;
+}
+
+function compareManagedFarmItems(a: ManagedFarmItem, b: ManagedFarmItem, sortMode: ManagedFarmSortMode) {
+  if (sortMode === 'farm_id') {
+    return a.farmId.localeCompare(b.farmId, 'ko-KR', { numeric: true })
+      || a.farmName.localeCompare(b.farmName, 'ko-KR')
+      || ManagedFarmVendorOrder[a.vendorCode] - ManagedFarmVendorOrder[b.vendorCode];
+  }
+
+  if (sortMode === 'scope') {
+    return ManagedFarmMonitorScopeSortOrder[a.monitorScopeCode] - ManagedFarmMonitorScopeSortOrder[b.monitorScopeCode]
+      || a.farmName.localeCompare(b.farmName, 'ko-KR')
+      || a.farmId.localeCompare(b.farmId, 'ko-KR', { numeric: true });
+  }
+
+  return a.farmName.localeCompare(b.farmName, 'ko-KR')
+    || a.farmId.localeCompare(b.farmId, 'ko-KR', { numeric: true });
+}
 
 const statusTone: Record<CameraStatus, { label: string; badge: string; dot: string }> = {
   ok: { label: '정상', badge: 'border-sky-500/30 bg-sky-500/10 text-sky-200', dot: 'bg-sky-400' },
@@ -1076,6 +1138,7 @@ function ManagedFarmsPanel({
   items,
   filteredItems,
   query,
+  sortMode,
   vendorSelection,
   vendorFilter,
   scopeFilter,
@@ -1084,6 +1147,7 @@ function ManagedFarmsPanel({
   isRegistryLoading,
   isStateFallbackActive,
   onQueryChange,
+  onSortModeChange,
   onVendorSelectionChange,
   onVendorFilterChange,
   onScopeFilterChange,
@@ -1094,6 +1158,7 @@ function ManagedFarmsPanel({
   items: ManagedFarmItem[];
   filteredItems: ManagedFarmItem[];
   query: string;
+  sortMode: ManagedFarmSortMode;
   vendorSelection: ManagedFarmVendorSelection;
   vendorFilter: ManagedFarmVendorFilter;
   scopeFilter: ManagedFarmScopeFilter;
@@ -1102,6 +1167,7 @@ function ManagedFarmsPanel({
   isRegistryLoading: boolean;
   isStateFallbackActive: boolean;
   onQueryChange: (value: string) => void;
+  onSortModeChange: (value: ManagedFarmSortMode) => void;
   onVendorSelectionChange: (vendorCode: ManagedFarmVendorCode, isSelected: boolean) => void;
   onVendorFilterChange: (value: ManagedFarmVendorFilter) => void;
   onScopeFilterChange: (value: ManagedFarmScopeFilter) => void;
@@ -1115,11 +1181,18 @@ function ManagedFarmsPanel({
   const visibleVendorOptions = vendorFilter !== 'all'
     ? ManagedFarmVendorOptions.filter(([vendorCode]) => vendorCode === vendorFilter)
     : ManagedFarmVendorOptions.filter(([vendorCode]) => vendorSelection[vendorCode]);
-  const laneSections = visibleVendorOptions.map(([vendorCode, label]) => ({
-    vendorCode,
-    label,
-    items: filteredItems.filter((item) => item.vendorCode === vendorCode),
-  }));
+  const sectionSlotCounts = distributeManagedFarmSlots(visibleVendorOptions.length);
+  const laneSections = visibleVendorOptions.map(([vendorCode, label], index) => {
+    const sectionItems = filteredItems.filter((item) => item.vendorCode === vendorCode);
+    const slotCount = sectionSlotCounts[index] ?? 1;
+    return {
+      vendorCode,
+      label,
+      items: sectionItems,
+      slotCount,
+      columns: distributeManagedFarmItemsIntoColumns(sectionItems, slotCount),
+    };
+  });
   const vendorCounts = items.reduce<Record<ManagedFarmVendorCode, number>>(
     (counts, item) => {
       counts[item.vendorCode] += 1;
@@ -1174,32 +1247,42 @@ function ManagedFarmsPanel({
           })}
         </div>
 
-        <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)_160px_150px_140px]">
+        <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:flex-nowrap lg:items-center">
+          <select
+            value={sortMode}
+            onChange={(event) => onSortModeChange(event.target.value as ManagedFarmSortMode)}
+            className={`h-9 w-full shrink-0 border px-2 text-xs outline-none lg:w-28 ${inputClass(theme)}`}
+            aria-label="관리 농장 정렬"
+          >
+            {ManagedFarmSortOptions.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
           <input
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="농장명 / 농장코드 / 업체 검색"
-            className={`h-9 min-w-0 border px-3 py-2 text-sm outline-none ${inputClass(theme)}`}
+            className={`h-9 w-full min-w-0 border px-3 py-2 text-sm outline-none lg:flex-[1_1_240px] ${inputClass(theme)}`}
           />
           <div
-            className={`flex min-h-9 flex-wrap items-center gap-1 border px-2 py-1 ${inputClass(theme)}`}
+            className="flex min-h-9 w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-1 lg:w-auto lg:flex-[0_0_auto] lg:flex-nowrap"
             aria-label="관리 농장 업체 체크"
           >
             {ManagedFarmVendorOptions.map(([vendorCode, label]) => {
               const isSelected = vendorSelection[vendorCode];
               const inactiveClass = theme === 'light'
-                ? 'border-slate-200 bg-white text-slate-500'
-                : 'border-[#314056] bg-[#0a1019] text-slate-400';
+                ? 'border-slate-200 bg-white text-slate-600'
+                : 'border-[#314056] bg-[#0f1722] text-slate-300';
               return (
                 <label
                   key={vendorCode}
-                  className={`inline-flex h-7 cursor-pointer items-center gap-1.5 border px-2 text-[11px] font-semibold ${isSelected ? managedFarmVendorClass(theme, vendorCode) : inactiveClass}`}
+                  className={`inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 border px-1 text-[10px] font-semibold ${isSelected ? managedFarmVendorClass(theme, vendorCode) : inactiveClass}`}
                 >
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={(event) => onVendorSelectionChange(vendorCode, event.target.checked)}
-                    className="h-3.5 w-3.5 accent-sky-500"
+                    className="h-3 w-3 accent-sky-500"
                   />
                   <span>{label}</span>
                 </label>
@@ -1209,7 +1292,7 @@ function ManagedFarmsPanel({
           <select
             value={vendorFilter}
             onChange={(event) => onVendorFilterChange(event.target.value as ManagedFarmVendorFilter)}
-            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            className={`h-9 w-full shrink-0 border px-2 text-xs outline-none lg:w-24 ${inputClass(theme)}`}
             aria-label="관리 농장 업체 필터"
           >
             <option value="all">업체 전체</option>
@@ -1220,7 +1303,7 @@ function ManagedFarmsPanel({
           <select
             value={scopeFilter}
             onChange={(event) => onScopeFilterChange(event.target.value as ManagedFarmScopeFilter)}
-            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            className={`h-9 w-full shrink-0 border px-2 text-xs outline-none lg:w-28 ${inputClass(theme)}`}
             aria-label="관리 농장 감시범위 필터"
           >
             <option value="all">감시범위 전체</option>
@@ -1231,7 +1314,7 @@ function ManagedFarmsPanel({
           <select
             value={statusFilter}
             onChange={(event) => onStatusFilterChange(event.target.value as ManagedFarmStatusFilter)}
-            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
+            className={`h-9 w-full shrink-0 border px-2 text-xs outline-none lg:w-24 ${inputClass(theme)}`}
             aria-label="관리 농장 상태 필터"
           >
             <option value="all">상태 전체</option>
@@ -1246,19 +1329,25 @@ function ManagedFarmsPanel({
           조건에 맞는 관리 농장이 없습니다.
         </div>
       ) : (
-        <div className="overflow-x-auto px-4 py-4">
+        <div className="px-4 py-4">
           <div
-            className="grid w-max min-w-full gap-3"
-            style={{ gridTemplateColumns: `repeat(${Math.max(laneSections.length, 1)}, minmax(208px, 1fr))` }}
+            className="grid min-w-0 grid-cols-8 gap-3"
+            data-managed-farm-layout="slot-grid"
           >
             {laneSections.map((section) => {
               const laneCameraCount = section.items.reduce((total, item) => total + item.cameraCount, 0);
               const laneIssueCount = section.items.filter((item) => item.isProblem).length;
               return (
-                <section key={section.vendorCode} className={`flex min-h-[520px] flex-col border ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0f1722]'}`}>
+                <section
+                  key={section.vendorCode}
+                  className={`flex min-w-0 flex-col border ${theme === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#243041] bg-[#0f1722]'}`}
+                  data-managed-farm-vendor={section.vendorCode}
+                  data-managed-farm-slot-count={section.slotCount}
+                  style={{ gridColumn: `span ${section.slotCount} / span ${section.slotCount}` }}
+                >
                   <div className={`border-b px-3 py-3 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-[#243041] bg-[#0a1019]'}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`inline-flex h-7 items-center border px-2 text-xs font-semibold ${managedFarmVendorClass(theme, section.vendorCode)}`}>
+                      <span className={`text-lg font-bold leading-7 ${managedFarmVendorTextClass(theme, section.vendorCode)}`}>
                         {section.label}
                       </span>
                       <span className={`text-xs tabular-nums ${laneIssueCount > 0 ? (theme === 'light' ? 'text-red-600' : 'text-red-200') : theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -1270,47 +1359,61 @@ function ManagedFarmsPanel({
                     </p>
                   </div>
 
-                  <div className="flex-1 space-y-2 overflow-y-auto p-2">
+                  <div
+                    className="grid flex-1 gap-2 p-2"
+                    data-managed-farm-column-count={section.columns.length}
+                    style={{ gridTemplateColumns: `repeat(${section.slotCount}, minmax(0, 1fr))` }}
+                  >
                     {section.items.length === 0 ? (
-                      <div className={`flex min-h-[120px] items-center justify-center border border-dashed px-3 text-center text-xs ${theme === 'light' ? 'border-slate-200 bg-white text-slate-400' : 'border-[#314056] bg-[#0a1019] text-slate-500'}`}>
+                      <div
+                        className={`flex min-h-[120px] items-center justify-center border border-dashed px-3 text-center text-xs ${theme === 'light' ? 'border-slate-200 bg-white text-slate-400' : 'border-[#314056] bg-[#0a1019] text-slate-500'}`}
+                        style={{ gridColumn: `span ${section.slotCount} / span ${section.slotCount}` }}
+                      >
                         조건에 맞는 농장이 없습니다.
                       </div>
-                    ) : section.items.map((item) => {
-                      const tone = statusTone[item.status];
-                      return (
-                        <button
-                          key={item.farmId}
-                          type="button"
-                          onClick={() => onOpenLive(item)}
-                          className={`block w-full border p-2 text-left transition ${theme === 'light' ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-[#243041] bg-[#0a1019] hover:border-[#314056]'}`}
-                          aria-label={`${item.farmName} 실시간 관제로 이동`}
-                        >
-                          <div className="flex min-w-0 items-start gap-2">
-                            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex min-w-0 items-start justify-between gap-2">
-                                <p className="min-w-0 truncate text-sm font-semibold">{item.farmName}</p>
-                                <span className={`shrink-0 text-[10px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`} title={item.latestAtIso || item.latestAt}>
-                                  {formatEventTime(item.latestAtIso || item.latestAt)}
-                                </span>
+                    ) : section.columns.map((columnItems, columnIndex) => (
+                      <div
+                        key={`${section.vendorCode}-slot-${columnIndex}`}
+                        className="min-w-0 space-y-2"
+                        data-managed-farm-column-index={columnIndex}
+                        data-managed-farm-column-size={columnItems.length}
+                      >
+                        {columnItems.map((item) => {
+                          const tone = statusTone[item.status];
+                          return (
+                            <button
+                              key={item.farmId}
+                              type="button"
+                              onClick={() => onOpenLive(item)}
+                              className={`block w-full min-w-0 border p-2 text-left transition ${theme === 'light' ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-[#243041] bg-[#0a1019] hover:border-[#314056]'}`}
+                              aria-label={`${item.farmName} 실시간 관제로 이동`}
+                            >
+                              <div className="flex min-w-0 items-start gap-2">
+                                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} title={tone.label} aria-label={tone.label} />
+                                <p className="min-w-0 flex-1 truncate text-sm font-semibold">{item.farmName}</p>
                               </div>
-                              <p className={`mt-0.5 truncate text-[10px] tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+
+                              <p className={`mt-1 truncate text-[11px] leading-4 tabular-nums ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
                                 {item.farmId} · {item.sourceAffiliates || '-'}/{item.sourceCountry || '-'}
                               </p>
-                            </div>
-                          </div>
 
-                          <div className="mt-2 flex flex-wrap items-center gap-1">
-                            <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${monitorScopeBadgeClass(theme, item.monitorScopeCode)}`}>
-                              {item.monitorScopeLabel}
-                            </span>
-                            <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] tabular-nums ${item.problemCount > 0 ? statusSummaryBadgeClass(theme, 'critical') : theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
-                              문제 {item.problemCount} / 전체 {item.cameraCount}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
+                              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                                <span className={`inline-flex h-4 items-center border px-1 text-[9px] font-semibold ${monitorScopeBadgeClass(theme, item.monitorScopeCode)}`}>
+                                  {item.monitorScopeLabel}
+                                </span>
+                                <span className={`inline-flex h-4 items-center border px-1 text-[9px] tabular-nums ${item.problemCount > 0 ? statusSummaryBadgeClass(theme, 'critical') : theme === 'light' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-[#314056] bg-[#0f1722] text-slate-300'}`}>
+                                  문제 {item.problemCount} / 전체 {item.cameraCount}
+                                </span>
+                              </div>
+
+                              <p className={`mt-1 truncate text-[9px] leading-3 tabular-nums ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`} title={item.latestAtIso || item.latestAt}>
+                                {formatEventTime(item.latestAtIso || item.latestAt)}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </section>
               );
@@ -2042,6 +2145,15 @@ function managedFarmVendorClass(theme: ThemeMode, vendor: ManagedFarmVendorCode)
     : 'border-slate-500/30 bg-slate-500/10 text-slate-200';
 }
 
+function managedFarmVendorTextClass(theme: ThemeMode, vendor: ManagedFarmVendorCode) {
+  if (vendor === 'shinwoo') return theme === 'light' ? 'text-emerald-800' : 'text-emerald-100';
+  if (vendor === 'cheriburo') return theme === 'light' ? 'text-violet-800' : 'text-violet-100';
+  if (vendor === 'cpf') return theme === 'light' ? 'text-lime-800' : 'text-lime-100';
+  if (vendor === 'prifoods') return theme === 'light' ? 'text-cyan-800' : 'text-cyan-100';
+  if (vendor === 'overseas') return theme === 'light' ? 'text-amber-800' : 'text-amber-100';
+  return theme === 'light' ? 'text-slate-800' : 'text-slate-100';
+}
+
 function monitorScopeBadgeClass(theme: ThemeMode, scope: CctvUpMonitorScopeCode, isActive = true) {
   if (!isActive) {
     return theme === 'light'
@@ -2300,6 +2412,7 @@ export default function CctvUpClient() {
   const [query, setQuery] = useState('');
   const [managedFarmQuery, setManagedFarmQuery] = useState('');
   const [managedFarmVendorSelection, setManagedFarmVendorSelection] = useState<ManagedFarmVendorSelection>(INITIAL_MANAGED_FARM_VENDOR_SELECTION);
+  const [managedFarmSortMode, setManagedFarmSortMode] = useState<ManagedFarmSortMode>('name');
   const [managedFarmVendorFilter, setManagedFarmVendorFilter] = useState<ManagedFarmVendorFilter>('all');
   const [managedFarmScopeFilter, setManagedFarmScopeFilter] = useState<ManagedFarmScopeFilter>('all');
   const [managedFarmStatusFilter, setManagedFarmStatusFilter] = useState<ManagedFarmStatusFilter>('all');
@@ -2678,8 +2791,9 @@ export default function CctvUpClient() {
         if (managedFarmStatusFilter === 'normal') return !item.isProblem;
         return true;
       })
-      .filter((item) => matchesManagedFarmItem(item, q));
-  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmStatusFilter, managedFarmVendorFilter, managedFarmVendorSelection]);
+      .filter((item) => matchesManagedFarmItem(item, q))
+      .sort((a, b) => compareManagedFarmItems(a, b, managedFarmSortMode));
+  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmSortMode, managedFarmStatusFilter, managedFarmVendorFilter, managedFarmVendorSelection]);
 
   const farmCategoryCounts = useMemo(() => {
     return farmGroups.reduce<Record<CctvUpFarmCategory, number>>(
@@ -4703,6 +4817,7 @@ export default function CctvUpClient() {
             items={managedFarmItems}
             filteredItems={filteredManagedFarmItems}
             query={managedFarmQuery}
+            sortMode={managedFarmSortMode}
             vendorSelection={managedFarmVendorSelection}
             vendorFilter={managedFarmVendorFilter}
             scopeFilter={managedFarmScopeFilter}
@@ -4711,6 +4826,7 @@ export default function CctvUpClient() {
             isRegistryLoading={isRegistryLoading}
             isStateFallbackActive={isStateFallbackActive}
             onQueryChange={setManagedFarmQuery}
+            onSortModeChange={setManagedFarmSortMode}
             onVendorSelectionChange={updateManagedFarmVendorSelection}
             onVendorFilterChange={setManagedFarmVendorFilter}
             onScopeFilterChange={setManagedFarmScopeFilter}
