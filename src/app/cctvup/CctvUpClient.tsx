@@ -49,7 +49,7 @@ type StatusSummaryTone = 'ok' | 'late' | 'missing' | 'critical';
 type MainTab = 'live' | 'farms' | 'daily';
 type ManagedFarmVendorCode = 'shinwoo' | 'cheriburo' | 'cpf' | 'prifoods' | 'overseas' | 'other';
 type ManagedFarmVendorFilter = 'all' | ManagedFarmVendorCode;
-type ManagedFarmVendorScopeFilter = 'core' | 'all';
+type ManagedFarmVendorSelection = Record<ManagedFarmVendorCode, boolean>;
 type ManagedFarmScopeFilter = 'all' | CctvUpMonitorScopeCode;
 type ManagedFarmStatusFilter = 'all' | 'issue' | 'normal';
 type PredictionInputDiagnostic = {
@@ -349,7 +349,14 @@ const ManagedFarmVendorLabels: Record<ManagedFarmVendorCode, string> = {
   other: '기타',
 };
 const ManagedFarmVendorOptions = Object.entries(ManagedFarmVendorLabels) as Array<[ManagedFarmVendorCode, string]>;
-const ManagedFarmCoreVendorCodes: ManagedFarmVendorCode[] = ['cheriburo', 'shinwoo'];
+const INITIAL_MANAGED_FARM_VENDOR_SELECTION: ManagedFarmVendorSelection = {
+  cheriburo: true,
+  shinwoo: true,
+  cpf: false,
+  prifoods: false,
+  overseas: false,
+  other: false,
+};
 const ManagedFarmVendorOrder: Record<ManagedFarmVendorCode, number> = {
   cheriburo: 0,
   shinwoo: 1,
@@ -1069,7 +1076,7 @@ function ManagedFarmsPanel({
   items,
   filteredItems,
   query,
-  vendorScopeFilter,
+  vendorSelection,
   vendorFilter,
   scopeFilter,
   statusFilter,
@@ -1077,7 +1084,7 @@ function ManagedFarmsPanel({
   isRegistryLoading,
   isStateFallbackActive,
   onQueryChange,
-  onVendorScopeFilterChange,
+  onVendorSelectionChange,
   onVendorFilterChange,
   onScopeFilterChange,
   onStatusFilterChange,
@@ -1087,7 +1094,7 @@ function ManagedFarmsPanel({
   items: ManagedFarmItem[];
   filteredItems: ManagedFarmItem[];
   query: string;
-  vendorScopeFilter: ManagedFarmVendorScopeFilter;
+  vendorSelection: ManagedFarmVendorSelection;
   vendorFilter: ManagedFarmVendorFilter;
   scopeFilter: ManagedFarmScopeFilter;
   statusFilter: ManagedFarmStatusFilter;
@@ -1095,7 +1102,7 @@ function ManagedFarmsPanel({
   isRegistryLoading: boolean;
   isStateFallbackActive: boolean;
   onQueryChange: (value: string) => void;
-  onVendorScopeFilterChange: (value: ManagedFarmVendorScopeFilter) => void;
+  onVendorSelectionChange: (vendorCode: ManagedFarmVendorCode, isSelected: boolean) => void;
   onVendorFilterChange: (value: ManagedFarmVendorFilter) => void;
   onScopeFilterChange: (value: ManagedFarmScopeFilter) => void;
   onStatusFilterChange: (value: ManagedFarmStatusFilter) => void;
@@ -1107,9 +1114,7 @@ function ManagedFarmsPanel({
   const pocTagCount = items.filter((item) => item.hasPocTag).length;
   const visibleVendorOptions = vendorFilter !== 'all'
     ? ManagedFarmVendorOptions.filter(([vendorCode]) => vendorCode === vendorFilter)
-    : vendorScopeFilter === 'core'
-      ? ManagedFarmVendorOptions.filter(([vendorCode]) => ManagedFarmCoreVendorCodes.includes(vendorCode))
-      : ManagedFarmVendorOptions;
+    : ManagedFarmVendorOptions.filter(([vendorCode]) => vendorSelection[vendorCode]);
   const laneSections = visibleVendorOptions.map(([vendorCode, label]) => ({
     vendorCode,
     label,
@@ -1169,22 +1174,38 @@ function ManagedFarmsPanel({
           })}
         </div>
 
-        <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_150px_160px_150px_140px]">
+        <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)_160px_150px_140px]">
           <input
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="농장명 / 농장코드 / 업체 검색"
             className={`h-9 min-w-0 border px-3 py-2 text-sm outline-none ${inputClass(theme)}`}
           />
-          <select
-            value={vendorScopeFilter}
-            onChange={(event) => onVendorScopeFilterChange(event.target.value as ManagedFarmVendorScopeFilter)}
-            className={`h-9 border px-2 text-xs outline-none ${inputClass(theme)}`}
-            aria-label="관리 농장 기본 범위"
+          <div
+            className={`flex min-h-9 flex-wrap items-center gap-1 border px-2 py-1 ${inputClass(theme)}`}
+            aria-label="관리 농장 업체 체크"
           >
-            <option value="core">체리부로·신우</option>
-            <option value="all">전체 보기</option>
-          </select>
+            {ManagedFarmVendorOptions.map(([vendorCode, label]) => {
+              const isSelected = vendorSelection[vendorCode];
+              const inactiveClass = theme === 'light'
+                ? 'border-slate-200 bg-white text-slate-500'
+                : 'border-[#314056] bg-[#0a1019] text-slate-400';
+              return (
+                <label
+                  key={vendorCode}
+                  className={`inline-flex h-7 cursor-pointer items-center gap-1.5 border px-2 text-[11px] font-semibold ${isSelected ? managedFarmVendorClass(theme, vendorCode) : inactiveClass}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(event) => onVendorSelectionChange(vendorCode, event.target.checked)}
+                    className="h-3.5 w-3.5 accent-sky-500"
+                  />
+                  <span>{label}</span>
+                </label>
+              );
+            })}
+          </div>
           <select
             value={vendorFilter}
             onChange={(event) => onVendorFilterChange(event.target.value as ManagedFarmVendorFilter)}
@@ -2278,7 +2299,7 @@ export default function CctvUpClient() {
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('live');
   const [query, setQuery] = useState('');
   const [managedFarmQuery, setManagedFarmQuery] = useState('');
-  const [managedFarmVendorScopeFilter, setManagedFarmVendorScopeFilter] = useState<ManagedFarmVendorScopeFilter>('core');
+  const [managedFarmVendorSelection, setManagedFarmVendorSelection] = useState<ManagedFarmVendorSelection>(INITIAL_MANAGED_FARM_VENDOR_SELECTION);
   const [managedFarmVendorFilter, setManagedFarmVendorFilter] = useState<ManagedFarmVendorFilter>('all');
   const [managedFarmScopeFilter, setManagedFarmScopeFilter] = useState<ManagedFarmScopeFilter>('all');
   const [managedFarmStatusFilter, setManagedFarmStatusFilter] = useState<ManagedFarmStatusFilter>('all');
@@ -2373,6 +2394,13 @@ export default function CctvUpClient() {
   }, []);
 
   const getProtectedReadHeaders = useCallback(() => buildProtectedReadHeaders(adminSecretRef.current), []);
+
+  const updateManagedFarmVendorSelection = useCallback((vendorCode: ManagedFarmVendorCode, isSelected: boolean) => {
+    setManagedFarmVendorSelection((current) => ({
+      ...current,
+      [vendorCode]: isSelected,
+    }));
+  }, []);
 
   useEffect(() => {
     const storedSecret = window.sessionStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
@@ -2642,8 +2670,7 @@ export default function CctvUpClient() {
     return managedFarmItems
       .filter((item) => {
         if (managedFarmVendorFilter !== 'all') return item.vendorCode === managedFarmVendorFilter;
-        if (managedFarmVendorScopeFilter === 'core') return ManagedFarmCoreVendorCodes.includes(item.vendorCode);
-        return true;
+        return managedFarmVendorSelection[item.vendorCode];
       })
       .filter((item) => managedFarmScopeFilter === 'all' || item.monitorScopeCode === managedFarmScopeFilter)
       .filter((item) => {
@@ -2652,7 +2679,7 @@ export default function CctvUpClient() {
         return true;
       })
       .filter((item) => matchesManagedFarmItem(item, q));
-  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmStatusFilter, managedFarmVendorFilter, managedFarmVendorScopeFilter]);
+  }, [managedFarmItems, managedFarmQuery, managedFarmScopeFilter, managedFarmStatusFilter, managedFarmVendorFilter, managedFarmVendorSelection]);
 
   const farmCategoryCounts = useMemo(() => {
     return farmGroups.reduce<Record<CctvUpFarmCategory, number>>(
@@ -4676,7 +4703,7 @@ export default function CctvUpClient() {
             items={managedFarmItems}
             filteredItems={filteredManagedFarmItems}
             query={managedFarmQuery}
-            vendorScopeFilter={managedFarmVendorScopeFilter}
+            vendorSelection={managedFarmVendorSelection}
             vendorFilter={managedFarmVendorFilter}
             scopeFilter={managedFarmScopeFilter}
             statusFilter={managedFarmStatusFilter}
@@ -4684,7 +4711,7 @@ export default function CctvUpClient() {
             isRegistryLoading={isRegistryLoading}
             isStateFallbackActive={isStateFallbackActive}
             onQueryChange={setManagedFarmQuery}
-            onVendorScopeFilterChange={setManagedFarmVendorScopeFilter}
+            onVendorSelectionChange={updateManagedFarmVendorSelection}
             onVendorFilterChange={setManagedFarmVendorFilter}
             onScopeFilterChange={setManagedFarmScopeFilter}
             onStatusFilterChange={setManagedFarmStatusFilter}

@@ -98,8 +98,8 @@ last_updated: 26.06.05
 3. PoC 작업만 `docs/3.0-design-system.md`를 기준으로 본다.
 
 ## 8. 최근 수정 문서 (상위 10개)
-- `docs/pages/cctvup.page.md` (26.06.05)
 - `docs/admin/README.md` (26.06.05)
+- `docs/pages/cctvup.page.md` (26.06.05)
 - `docs/pages/cctvup-login.page.md` (26.06.05)
 - `docs/pages/cctvup.service-manual.md` (26.06.05)
 - `docs/pages/poc.page.md` (26.06.02)
