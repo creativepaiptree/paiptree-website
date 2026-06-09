@@ -20,9 +20,7 @@ const PERMISSION_RANK = {
 
 const fail = (message, detail) => {
   console.error(`\n[repo-guard] ${message}`);
-  if (detail) {
-    console.error(detail);
-  }
+  if (detail) console.error(detail);
   process.exit(1);
 };
 
@@ -47,12 +45,12 @@ if (!existsSync(CONFIG_PATH)) {
 
 const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 const expectedRepo = config.expectedRepo;
+const expectedGithubUser = config.expectedGithubUser;
+const autoSwitchGithubUser = config.autoSwitchGithubUser !== false;
 const allowedPermissions = config.allowedPermissions ?? ['WRITE', 'MAINTAIN', 'ADMIN'];
 const requiredPermission = config.requiredPermission ?? 'WRITE';
 
-if (!expectedRepo) {
-  fail('repo-guard.config.json is missing expectedRepo.');
-}
+if (!expectedRepo) fail('repo-guard.config.json is missing expectedRepo.');
 
 let remoteUrl;
 try {
@@ -61,26 +59,18 @@ try {
   fail('Could not read git origin remote.', error.message);
 }
 
-const match = remoteUrl.match(/github\.com[:/]([^/]+\/[^/.]+)(?:\.git)?$/i);
-if (!match) {
-  fail('Origin remote is not a recognizable GitHub repo URL.', `origin = ${remoteUrl}`);
-}
+const match = remoteUrl.match(/github\.com[^:/]*[:/]([^/]+\/[^/.]+)(?:\.git)?$/i);
+if (!match) fail('Origin remote is not a recognizable GitHub repo URL.', `origin = ${remoteUrl}`);
 
 const actualRepo = match[1];
 if (actualRepo !== expectedRepo) {
-  fail(
-    'Origin remote does not match this project\'s declared company repo.',
-    `expected = ${expectedRepo}\nactual   = ${actualRepo}`,
-  );
+  fail('Origin remote does not match this project\'s declared GitHub repo.', `expected = ${expectedRepo}\nactual   = ${actualRepo}`);
 }
 
 try {
   run('gh', ['auth', 'status']);
-} catch (error) {
-  fail(
-    'GitHub CLI is not authenticated. Refusing push-related operations for this company project.',
-    'Run: gh auth login (with the company account that has write access)',
-  );
+} catch {
+  fail('GitHub CLI is not authenticated. Refusing push-related operations for this project.', 'Run: gh auth login with an account that has write access');
 }
 
 let ghUser;
@@ -88,6 +78,34 @@ try {
   ghUser = run('gh', ['api', 'user', '--jq', '.login']);
 } catch (error) {
   fail('Could not determine current GitHub login.', error.message);
+}
+
+let switchedGithubUser = null;
+if (expectedGithubUser && ghUser !== expectedGithubUser) {
+  if (!autoSwitchGithubUser) {
+    fail(
+      'Current GitHub account does not match this project\'s declared GitHub user.',
+      `expected = ${expectedGithubUser}\nactual   = ${ghUser}`,
+    );
+  }
+
+  try {
+    run('gh', ['auth', 'switch', '--hostname', 'github.com', '--user', expectedGithubUser]);
+    switchedGithubUser = `${ghUser} -> ${expectedGithubUser}`;
+    ghUser = run('gh', ['api', 'user', '--jq', '.login']);
+  } catch (error) {
+    fail(
+      'Could not auto-switch GitHub account for this project.',
+      `expected = ${expectedGithubUser}\nactual   = ${ghUser}\nreason   = ${error.message}`,
+    );
+  }
+
+  if (ghUser !== expectedGithubUser) {
+    fail(
+      'GitHub account auto-switch did not select the expected account.',
+      `expected = ${expectedGithubUser}\nactual   = ${ghUser}`,
+    );
+  }
 }
 
 let repoMeta;
@@ -104,14 +122,12 @@ const allowList = allowedPermissions.map((item) => String(item).toUpperCase());
 const allowSet = new Set(allowList);
 
 if (!allowSet.has(viewerPermission) || actualRank < requiredRank) {
-  fail(
-    'Current GitHub account does not have enough permission for this company repo.',
-    `repo      = ${expectedRepo}\naccount   = ${ghUser}\npermission= ${viewerPermission}\nrequired  = ${requiredPermission}+`,
-  );
+  fail('Current GitHub account does not have enough permission for this repo.', `repo      = ${expectedRepo}\naccount   = ${ghUser}\npermission= ${viewerPermission}\nrequired  = ${requiredPermission}+`);
 }
 
 console.log('\n[repo-guard] OK');
 console.log(`repo       : ${expectedRepo}`);
 console.log(`origin     : ${remoteUrl}`);
 console.log(`gh account : ${ghUser}`);
+if (switchedGithubUser) console.log(`auto-switch: ${switchedGithubUser}`);
 console.log(`permission : ${viewerPermission}`);
