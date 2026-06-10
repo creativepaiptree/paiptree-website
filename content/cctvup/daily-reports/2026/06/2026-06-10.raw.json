@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "date": "2026-06-10",
   "title": "2026-06-10 CCTVUP 일일 브리핑",
-  "generatedAt": "2026-06-10T15:25:26.163Z",
+  "generatedAt": "2026-06-10T23:17:52.793Z",
   "range": {
     "date": "2026-06-10",
     "timezone": "Asia/Seoul",
@@ -32,7 +32,7 @@
     "shipmentRecordCount": 1,
     "shipmentBirdCount": 21972,
     "lateMovementRecordCount": 6,
-    "activeIssueCount": 24,
+    "activeIssueCount": 22,
     "notableFarmCount": 21,
     "checkRunCount": 286
   },
@@ -50,7 +50,7 @@
       "restingStartedCount": 0,
       "reviewNeededCount": 0,
       "uninstalledCount": 0,
-      "activeIssueCount": 20,
+      "activeIssueCount": 18,
       "placementRecordCount": 6,
       "placementBirdCount": 64000,
       "shipmentRecordCount": 0,
@@ -143,33 +143,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
-    },
-    {
-      "farmId": "FA0197",
-      "farmName": "예림농장",
-      "company": "cheriburo",
-      "companyLabel": "체리부로",
-      "issueEventCount": 23,
-      "openedCount": 10,
-      "reopenedCount": 0,
-      "recoveringCount": 10,
-      "resolvedCount": 3,
-      "farmScopeEventCount": 0,
-      "activeIssueCount": 3,
-      "placementRecordCount": 0,
-      "placementBirdCount": 0,
-      "shipmentRecordCount": 0,
-      "shipmentBirdCount": 0,
-      "lateMovementRecordCount": 0,
-      "messages": [
-        "이미지 재수신: 이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다.",
-        "문제확정: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다.",
-        "해결: 최근 1시간 슬롯이 정상으로 채워져 해결 처리했습니다.",
-        "회복중: 1/3회 미수집 관찰 중입니다.",
-        "회복중: 이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다."
-      ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0096",
@@ -193,7 +167,7 @@
         "이미지 재수신: 이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다.",
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0012",
@@ -215,7 +189,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0023",
@@ -237,7 +211,32 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
+    },
+    {
+      "farmId": "FA0197",
+      "farmName": "예림농장",
+      "company": "cheriburo",
+      "companyLabel": "체리부로",
+      "issueEventCount": 23,
+      "openedCount": 10,
+      "reopenedCount": 0,
+      "recoveringCount": 10,
+      "resolvedCount": 3,
+      "farmScopeEventCount": 0,
+      "activeIssueCount": 1,
+      "placementRecordCount": 0,
+      "placementBirdCount": 0,
+      "shipmentRecordCount": 0,
+      "shipmentBirdCount": 0,
+      "lateMovementRecordCount": 0,
+      "messages": [
+        "이미지 재수신: 이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다.",
+        "문제확정: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다.",
+        "해결: 최근 1시간 슬롯이 정상으로 채워져 해결 처리했습니다.",
+        "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
+      ],
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0013",
@@ -261,7 +260,7 @@
         "이미지 재수신: 이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다.",
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0128",
@@ -287,7 +286,7 @@
         "입추: 2동 10,000수 · 잔존 추정 10,000수",
         "입추: 3동 10,000수 · 잔존 추정 10,000수"
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0019",
@@ -309,7 +308,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0225",
@@ -331,7 +330,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0194",
@@ -353,7 +352,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0213",
@@ -375,7 +374,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0121",
@@ -422,7 +421,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0350",
@@ -444,7 +443,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0087",
@@ -582,7 +581,7 @@
       "messages": [
         "열린 문제: 15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
       ],
-      "lastEventAt": "2026-06-10T15:22:37.707Z"
+      "lastEventAt": "2026-06-10T23:15:55.076Z"
     },
     {
       "farmId": "FA0230",
@@ -2506,8 +2505,8 @@
       "cameraName": "1동 분석(1층)",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 9907,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 10001,
       "firstMissedAt": "2026-05-06T14:56:29.763Z",
       "openedAt": "2026-05-06T14:56:29.763Z",
       "resolvedAt": null,
@@ -2527,8 +2526,8 @@
       "cameraName": "1동 분석(1층)",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 9907,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 10001,
       "firstMissedAt": "2026-05-06T14:56:29.763Z",
       "openedAt": "2026-05-06T14:56:29.763Z",
       "resolvedAt": null,
@@ -2548,8 +2547,8 @@
       "cameraName": "2동 분석(2층)",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 9907,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 10001,
       "firstMissedAt": "2026-05-06T14:56:29.763Z",
       "openedAt": "2026-05-06T14:56:29.763Z",
       "resolvedAt": null,
@@ -2569,76 +2568,13 @@
       "cameraName": "2동 분석(2층)",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 9907,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 10001,
       "firstMissedAt": "2026-05-06T14:56:29.763Z",
       "openedAt": "2026-05-06T14:56:29.763Z",
       "resolvedAt": null,
       "ageMinutes": 999,
       "message": "15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
-    },
-    {
-      "id": "2c473686-f2f3-4a06-82b6-7c312ee5ce6b",
-      "cameraKey": "FA0197-H02-CT04,1",
-      "farmId": "FA0197",
-      "farmName": "예림농장",
-      "company": "cheriburo",
-      "companyLabel": "체리부로",
-      "houseId": "H02",
-      "houseName": "2동",
-      "moduleId": "CT04",
-      "cameraName": "2동 분석",
-      "status": "recovering",
-      "latestImageAt": "2026-06-10T15:20:00.000Z",
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 0,
-      "firstMissedAt": null,
-      "openedAt": "2026-06-10T15:17:35.372Z",
-      "resolvedAt": null,
-      "ageMinutes": 2,
-      "message": "이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다."
-    },
-    {
-      "id": "9cbbf809-999a-4bb5-a18c-aa1498afaf86",
-      "cameraKey": "FA0197-H03-CT07,1",
-      "farmId": "FA0197",
-      "farmName": "예림농장",
-      "company": "cheriburo",
-      "companyLabel": "체리부로",
-      "houseId": "H03",
-      "houseName": "3동",
-      "moduleId": "CT07",
-      "cameraName": "3동 분석",
-      "status": "recovering",
-      "latestImageAt": "2026-06-10T15:20:00.000Z",
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 0,
-      "firstMissedAt": null,
-      "openedAt": "2026-06-10T15:17:35.372Z",
-      "resolvedAt": null,
-      "ageMinutes": 2,
-      "message": "이미지는 다시 들어왔지만 최근 1시간 슬롯에 문제 이력이 남아 회복 중입니다."
-    },
-    {
-      "id": "f7d94dda-88a9-4c9e-9d04-7500e95aa26a",
-      "cameraKey": "FA0197-H01-CT01,1",
-      "farmId": "FA0197",
-      "farmName": "예림농장",
-      "company": "cheriburo",
-      "companyLabel": "체리부로",
-      "houseId": "H01",
-      "houseName": "1동",
-      "moduleId": "CT01",
-      "cameraName": "1동 분석",
-      "status": "watching",
-      "latestImageAt": "2026-06-10T15:10:00.000Z",
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 1,
-      "firstMissedAt": "2026-06-10T15:22:37.707Z",
-      "openedAt": null,
-      "resolvedAt": null,
-      "ageMinutes": 12,
-      "message": "1/3회 미수집 관찰 중입니다."
     },
     {
       "id": "d4d52041-a710-48ab-b4d3-d9b263ff8e82",
@@ -2653,8 +2589,8 @@
       "cameraName": "2동 분석",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 3558,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 3652,
       "firstMissedAt": "2026-05-28T06:41:30.183Z",
       "openedAt": "2026-05-28T06:41:30.183Z",
       "resolvedAt": null,
@@ -2674,8 +2610,8 @@
       "cameraName": "6동 분석",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 3557,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 3651,
       "firstMissedAt": "2026-05-28T06:46:33.715Z",
       "openedAt": "2026-05-28T06:46:33.715Z",
       "resolvedAt": null,
@@ -2695,12 +2631,12 @@
       "cameraName": "1동 분석",
       "status": "open",
       "latestImageAt": "2026-06-10T08:50:00.000Z",
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 77,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 171,
       "firstMissedAt": "2026-06-10T08:59:51.597Z",
       "openedAt": "2026-06-10T09:09:56.975Z",
       "resolvedAt": null,
-      "ageMinutes": 392,
+      "ageMinutes": 865,
       "message": "15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
     },
     {
@@ -2716,8 +2652,8 @@
       "cameraName": "중간",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 3461,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 3555,
       "firstMissedAt": "2026-05-29T04:36:02.739Z",
       "openedAt": "2026-05-29T04:36:02.739Z",
       "resolvedAt": null,
@@ -2737,8 +2673,8 @@
       "cameraName": "중간",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 3461,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 3555,
       "firstMissedAt": "2026-05-29T04:36:02.739Z",
       "openedAt": "2026-05-29T04:36:02.739Z",
       "resolvedAt": null,
@@ -2758,8 +2694,8 @@
       "cameraName": "분석1",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 6002,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 6096,
       "firstMissedAt": "2026-05-19T12:29:28.949Z",
       "openedAt": "2026-05-19T12:29:28.949Z",
       "resolvedAt": null,
@@ -2779,12 +2715,33 @@
       "cameraName": "분석2",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 6002,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 6096,
       "firstMissedAt": "2026-05-19T12:29:28.949Z",
       "openedAt": "2026-05-19T12:29:28.949Z",
       "resolvedAt": null,
       "ageMinutes": 999,
+      "message": "15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
+    },
+    {
+      "id": "f7d94dda-88a9-4c9e-9d04-7500e95aa26a",
+      "cameraKey": "FA0197-H01-CT01,1",
+      "farmId": "FA0197",
+      "farmName": "예림농장",
+      "company": "cheriburo",
+      "companyLabel": "체리부로",
+      "houseId": "H01",
+      "houseName": "1동",
+      "moduleId": "CT01",
+      "cameraName": "1동 분석",
+      "status": "open",
+      "latestImageAt": "2026-06-10T15:35:00.000Z",
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 91,
+      "firstMissedAt": "2026-06-10T15:47:48.423Z",
+      "openedAt": "2026-06-10T15:52:50.991Z",
+      "resolvedAt": null,
+      "ageMinutes": 460,
       "message": "15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
     },
     {
@@ -2799,13 +2756,13 @@
       "moduleId": "CT07",
       "cameraName": "분석1",
       "status": "open",
-      "latestImageAt": "2026-06-09T17:25:00.000Z",
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 261,
-      "firstMissedAt": "2026-06-09T17:33:04.982Z",
-      "openedAt": "2026-06-09T17:43:08.809Z",
+      "latestImageAt": "2026-06-10T18:00:39.000Z",
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 62,
+      "firstMissedAt": "2026-06-10T18:08:49.404Z",
+      "openedAt": "2026-06-10T18:18:53.116Z",
       "resolvedAt": null,
-      "ageMinutes": 1317,
+      "ageMinutes": 315,
       "message": "15분 이상 새 이미지가 감지되지 않아 문제로 확정했습니다."
     },
     {
@@ -2821,8 +2778,8 @@
       "cameraName": "3동 분석",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 111,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 205,
       "firstMissedAt": "2026-06-10T06:18:40.400Z",
       "openedAt": "2026-06-10T06:18:40.400Z",
       "resolvedAt": null,
@@ -2842,8 +2799,8 @@
       "cameraName": "분석1",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 2574,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 2668,
       "firstMissedAt": "2026-06-01T07:50:49.141Z",
       "openedAt": "2026-06-01T07:50:49.141Z",
       "resolvedAt": null,
@@ -2863,8 +2820,8 @@
       "cameraName": "4동 분석",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 1516,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 1610,
       "firstMissedAt": "2026-06-05T07:45:34.382Z",
       "openedAt": "2026-06-05T07:45:34.382Z",
       "resolvedAt": null,
@@ -2884,8 +2841,8 @@
       "cameraName": "7동 분석",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 3834,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 3928,
       "firstMissedAt": "2026-05-27T07:20:39.499Z",
       "openedAt": "2026-05-27T07:20:39.499Z",
       "resolvedAt": null,
@@ -2905,8 +2862,8 @@
       "cameraName": "312동(수닭) - 회전형 카메라(H04)",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 9907,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 10001,
       "firstMissedAt": "2026-05-06T14:56:29.763Z",
       "openedAt": "2026-05-06T14:56:29.763Z",
       "resolvedAt": null,
@@ -2926,8 +2883,8 @@
       "cameraName": "1동",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 4127,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 4221,
       "firstMissedAt": "2026-05-26T06:30:07.286Z",
       "openedAt": "2026-05-26T06:30:07.286Z",
       "resolvedAt": null,
@@ -2947,8 +2904,8 @@
       "cameraName": "2동",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 4127,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 4221,
       "firstMissedAt": "2026-05-26T06:30:07.286Z",
       "openedAt": "2026-05-26T06:30:07.286Z",
       "resolvedAt": null,
@@ -2968,8 +2925,8 @@
       "cameraName": "2동",
       "status": "open",
       "latestImageAt": "2026-06-02T09:30:02.000Z",
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 2320,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 2414,
       "firstMissedAt": "2026-06-02T09:42:47.585Z",
       "openedAt": "2026-06-02T09:47:51.412Z",
       "resolvedAt": null,
@@ -2989,8 +2946,8 @@
       "cameraName": "",
       "status": "open",
       "latestImageAt": null,
-      "lastCheckedAt": "2026-06-10T15:22:37.707Z",
-      "missCount": 9907,
+      "lastCheckedAt": "2026-06-10T23:15:55.076Z",
+      "missCount": 10001,
       "firstMissedAt": "2026-05-06T14:56:29.763Z",
       "openedAt": "2026-05-06T14:56:29.763Z",
       "resolvedAt": null,
