@@ -1,7 +1,25 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-10T23:17:52.793Z",
+  "updatedAt": "2026-06-11T15:25:36.038Z",
   "reports": [
+    {
+      "date": "2026-06-11",
+      "title": "2026-06-11 CCTVUP 일일 브리핑",
+      "companyCount": 4,
+      "notableFarmCount": 24,
+      "issueEventCount": 56,
+      "farmScopeEventCount": 2,
+      "placementRecordCount": 0,
+      "placementBirdCount": 0,
+      "shipmentRecordCount": 7,
+      "shipmentBirdCount": 128185,
+      "lateMovementRecordCount": 13,
+      "activeIssueCount": 22,
+      "status": "generated",
+      "markdownPath": "2026/06/2026-06-11.md",
+      "rawPath": "2026/06/2026-06-11.raw.json",
+      "generatedAt": "2026-06-11T15:25:36.038Z"
+    },
     {
       "date": "2026-06-10",
       "title": "2026-06-10 CCTVUP 일일 브리핑",
