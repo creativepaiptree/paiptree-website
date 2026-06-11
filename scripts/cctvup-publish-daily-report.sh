@@ -24,7 +24,27 @@ BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 BAD_BEFORE="$(git status --porcelain | awk '$2 !~ /^content\/cctvup\/daily-reports\// {print}')"
 [ -z "$BAD_BEFORE" ] || fail "브리핑 외 변경사항 존재"
 
+GH_USER_BEFORE="$(gh api user --jq .login 2>/dev/null || true)"
+restore_gh_user() {
+  if [ -n "${GH_USER_BEFORE:-}" ]; then
+    gh auth switch --hostname github.com --user "$GH_USER_BEFORE" >/dev/null 2>&1 || true
+  fi
+}
+trap restore_gh_user EXIT
+
+node scripts/github-repo-guard.mjs >/dev/null 2>&1 \
+  || fail "GitHub 쓰기 권한 확인 실패"
+
 if [ -z "$(git status --porcelain)" ]; then
+  git fetch origin main >/dev/null || fail "git fetch 실패"
+  AHEAD_COUNT="$(git rev-list --count origin/main..HEAD)"
+  if [ "$AHEAD_COUNT" != "0" ]; then
+    BAD_AHEAD="$(git diff --name-only origin/main..HEAD | awk '$1 !~ /^content\/cctvup\/daily-reports\// {print}')"
+    [ -z "$BAD_AHEAD" ] || fail "브리핑 외 ahead 커밋 존재"
+    git push origin main >/dev/null || fail "기존 브리핑 커밋 push 실패"
+    echo "[SILENT]"
+    exit 0
+  fi
   git pull --ff-only origin main >/dev/null || fail "git pull 실패"
 fi
 
